@@ -99,3 +99,49 @@ Assertions:
 - Added `gateway.providerConcurrency` config knob and enforced provider lane nesting.
 - Added proof log line for provider concurrency overrides.
 - Rebuilt smoke test to be deterministic and then pinned to Codex using JSON receipts.
+
+---
+
+## Next Sprint: Telemetry MVP (planned)
+
+### Goals
+
+Add minimal observability so we can prove the governor behaves under strike-team load without guessing from logs.
+
+### Core live signals (must-have)
+
+- Active runs: global, provider-level (`openai-codex`), optionally per-agent
+- Queue depth: global pending + provider pending (`openai-codex` lane)
+- Outcome counters: success, error, timeout, cancel (rolling 1h + since-start)
+
+### Operational guardrails (derived checks)
+
+- Assert `openai-codex active <= 2` at all times
+- Alert if provider queue depth stays >0 for sustained window (e.g., >60s)
+- Alert on error-rate spike (e.g., >5% over last 50 runs)
+
+### Minimal implementation shape
+
+- Emit structured events at run lifecycle points:
+  - `queued`, `started`, `completed`, `failed`, `timed_out`, `cancelled`
+- Tags on each event: `provider`, `model`, `agentId`, `sessionKey`, `runId`, `durationMs`
+- Maintain in-memory counters + rolling window aggregates
+- Expose one JSON snapshot endpoint/view for dashboard + automation
+
+### Dashboard MVP (single panel)
+
+- Big numbers: `Codex Active`, `Codex Queue`, `Global Queue`, `Success% (1h)`, `Errors (1h)`
+- Trend: queue depth + error count
+- Last 20 failures: timestamp, agent, error class, duration
+
+### First controlled strike-team run (go/no-go)
+
+- Preflight: smoke test PASS + config invariants match SSOT
+- During run: `Codex Active <= 2` always; queue drains predictably; no cascading retries
+- Pass threshold:
+  - ≥95% success
+  - 0 uncaught systemic failure modes
+  - queue returns to baseline within 2–5 min cool-down
+  - no silent model/provider fallback
+- Rollback trigger:
+  - sustained provider queue growth + elevated error rate for >N minutes
