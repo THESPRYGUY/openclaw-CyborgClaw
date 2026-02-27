@@ -13,6 +13,7 @@ import { createDefaultDeps } from "../cli/deps.js";
 import { agentCommand } from "../commands/agent.js";
 import type { ImageContent } from "../commands/agent/types.js";
 import type { GatewayHttpResponsesConfig } from "../config/types.gateway.js";
+import { governorExecute } from "../governor/governor.js";
 import { emitAgentEvent, onAgentEvent } from "../infra/agent-events.js";
 import { logWarn } from "../logger.js";
 import {
@@ -451,15 +452,19 @@ export async function handleOpenResponsesHttpRequest(
 
   if (!stream) {
     try {
-      const result = await runResponsesAgentCommand({
-        message: prompt.message,
-        images,
-        clientTools: resolvedClientTools,
-        extraSystemPrompt,
-        streamParams,
-        sessionKey,
-        runId: responseId,
-        deps,
+      const result = await governorExecute({
+        agentId,
+        fn: async () =>
+          await runResponsesAgentCommand({
+            message: prompt.message,
+            images,
+            clientTools: resolvedClientTools,
+            extraSystemPrompt,
+            streamParams,
+            sessionKey,
+            runId: responseId,
+            deps,
+          }),
       });
 
       const payloads = (result as { payloads?: Array<{ text?: string }> } | null)?.payloads;
@@ -683,15 +688,19 @@ export async function handleOpenResponsesHttpRequest(
 
   void (async () => {
     try {
-      const result = await runResponsesAgentCommand({
-        message: prompt.message,
-        images,
-        clientTools: resolvedClientTools,
-        extraSystemPrompt,
-        streamParams,
-        sessionKey,
-        runId: responseId,
-        deps,
+      const result = await governorExecute({
+        agentId,
+        fn: async () =>
+          await runResponsesAgentCommand({
+            message: prompt.message,
+            images,
+            clientTools: resolvedClientTools,
+            extraSystemPrompt,
+            streamParams,
+            sessionKey,
+            runId: responseId,
+            deps,
+          }),
       });
 
       finalUsage = extractUsageFromResult(result);
