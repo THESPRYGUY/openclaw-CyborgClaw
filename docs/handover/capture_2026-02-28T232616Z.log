@@ -1,0 +1,348 @@
+== time ==
+Sat Feb 28 11:26:16 PM UTC 2026
+Sat Feb 28 11:26:16 PM UTC 2026
+== git ==
+sprint/local-silent-token-override
+6c330234a243a44bd26a180a7ad89ba795e3a8aa
+?? docs/handover/capture_2026-02-28T232616Z.log
+6c330234a docs: handover for local silent token override sprint
+e8288c8ec sprint: env-driven silent reply token plumbing
+f9ba72de8 Merge pull request #2 from THESPRYGUY/cyborg/v2026.2.26
+9ee155082 Merge origin/main into cyborg/v2026.2.26 (resolve run.ts)
+f17aca38e Telemetry: track lane queue depth via diagnostic events
+9fab1abf4 Add telemetry.get gateway method (v0 diagnostics snapshot)
+== services ==
+● openclaw-gateway.service - OpenClaw Gateway (v2026.2.26)
+     Loaded: loaded (/home/spryguy/.config/systemd/user/openclaw-gateway.service; enabled; preset: enabled)
+    Drop-In: /home/spryguy/.config/systemd/user/openclaw-gateway.service.d
+             └─override-silent-token.conf, override.conf
+     Active: active (running) since Sat 2026-02-28 22:29:44 UTC; 56min ago
+   Main PID: 672626 (openclaw-gatewa)
+      Tasks: 11 (limit: 74383)
+     Memory: 425.7M (peak: 1.4G)
+        CPU: 20.986s
+     CGroup: /user.slice/user-1000.slice/user@1000.service/app.slice/openclaw-gateway.service
+             └─672626 openclaw-gateway
+
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.343Z [gateway] listening on ws://127.0.0.1:18789, ws://[::1]:18789 (PID 672626)
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.348Z [gateway] log file: /tmp/openclaw/openclaw-2026-02-28.log
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.406Z [browser/server] Browser control listening on http://127.0.0.1:18791/ (auth=token)
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.419Z [whatsapp] [default] starting provider (+15197713733)
+Feb 28 22:29:53 voltaris node[672626]: 2026-02-28T22:29:53.306Z [whatsapp] Listening for personal WhatsApp inbound messages.
+Feb 28 22:33:24 voltaris node[672626]: 2026-02-28T22:33:24.669Z [agent/embedded] embedded run timeout: runId=39a5e145-f8d9-4e16-9b45-cc43b0e3f9a0 sessionId=a79c67e6-9c62-4888-88ee-2f6e85390b7f timeoutMs=120000
+Feb 28 22:33:24 voltaris node[672626]: 2026-02-28T22:33:24.728Z [agent/embedded] Profile ollama:default timed out. Trying next account...
+Feb 28 22:43:32 voltaris node[672626]: 2026-02-28T22:43:32.518Z [agent/embedded] embedded run timeout: runId=c34a8829-3ef7-45ea-adb5-d08f3f362231 sessionId=a79c67e6-9c62-4888-88ee-2f6e85390b7f timeoutMs=300000
+Feb 28 22:43:32 voltaris node[672626]: 2026-02-28T22:43:32.571Z [agent/embedded] Profile ollama:default timed out. Trying next account...
+Feb 28 22:43:32 voltaris node[672626]: 2026-02-28T22:43:32.625+00:00 This operation was aborted
+
+● ollama.service - Ollama Service
+     Loaded: loaded (/home/spryguy/.config/systemd/user/ollama.service; enabled; preset: enabled)
+    Drop-In: /home/spryguy/.config/systemd/user/ollama.service.d
+             └─override.conf
+     Active: active (running) since Sat 2026-02-28 18:45:10 UTC; 4h 41min ago
+   Main PID: 663208 (ollama)
+      Tasks: 21 (limit: 74383)
+     Memory: 20.8G (peak: 53.7G)
+        CPU: 4h 47min 7.573s
+     CGroup: /user.slice/user-1000.slice/user@1000.service/app.slice/ollama.service
+             └─663208 /home/spryguy/.local/bin/ollama serve
+
+Feb 28 22:38:38 voltaris ollama[663208]: llama_kv_cache: size = 6144.00 MiB ( 32768 cells,  48 layers,  1/1 seqs), K (f16): 3072.00 MiB, V (f16): 3072.00 MiB
+Feb 28 22:38:38 voltaris ollama[663208]: llama_context: Flash Attention was auto, set to enabled
+Feb 28 22:38:38 voltaris ollama[663208]: llama_context:        CPU compute buffer size =   307.00 MiB
+Feb 28 22:38:38 voltaris ollama[663208]: llama_context: graph nodes  = 1639
+Feb 28 22:38:38 voltaris ollama[663208]: llama_context: graph splits = 1
+Feb 28 22:38:38 voltaris ollama[663208]: time=2026-02-28T22:38:38.859Z level=INFO source=server.go:1387 msg="llama runner started in 5.54 seconds"
+Feb 28 22:38:38 voltaris ollama[663208]: time=2026-02-28T22:38:38.859Z level=INFO source=sched.go:537 msg="loaded runners" count=1
+Feb 28 22:38:38 voltaris ollama[663208]: time=2026-02-28T22:38:38.859Z level=INFO source=server.go:1349 msg="waiting for llama runner to start responding"
+Feb 28 22:38:38 voltaris ollama[663208]: time=2026-02-28T22:38:38.859Z level=INFO source=server.go:1387 msg="llama runner started in 5.55 seconds"
+Feb 28 22:43:32 voltaris ollama[663208]: [GIN] 2026/02/28 - 22:43:32 | 500 |         4m59s |       127.0.0.1 | POST     "/api/chat"
+== env ==
+Environment=HOME=/home/spryguy TMPDIR=/tmp PATH=/home/spryguy/.local/share/pnpm:/home/spryguy/.local/bin:/home/spryguy/.npm-global/bin:/home/spryguy/bin:/home/spryguy/.volta/bin:/home/spryguy/.asdf/shims:/home/spryguy/.bun/bin:/home/spryguy/.nvm/current/bin:/home/spryguy/.fnm/current/bin:/usr/local/bin:/usr/bin:/bin OPENCLAW_GATEWAY_PORT=18789 OPENCLAW_GATEWAY_TOKEN=gPUA220L-LzPamtSkW0_y1ci9tS1ycrMtMxKTKJxRyk OPENCLAW_SYSTEMD_UNIT=openclaw-gateway.service OPENCLAW_SERVICE_MARKER=openclaw OPENCLAW_SERVICE_KIND=gateway OPENCLAW_SERVICE_VERSION=2026.2.23 OPENCLAW_SILENT_REPLY_TOKEN=QUIET_TOKEN_9F3A
+Environment=OLLAMA_HOST=127.0.0.1:11434 OLLAMA_NUM_PARALLEL=1 OLLAMA_CONTEXT_LENGTH=8192 OLLAMA_VULKAN=1
+== recent logs: gateway ==
+Feb 28 02:52:50 voltaris node[636845]: 2026-02-28T02:52:50.859Z [canvas] host mounted at http://127.0.0.1:18789/__openclaw__/canvas/ (root /home/spryguy/.openclaw/canvas)
+Feb 28 02:52:50 voltaris node[636845]: 2026-02-28T02:52:50.865+00:00 [gateway/lanes] providerConcurrency overrides: openai-codex=2
+Feb 28 02:52:50 voltaris node[636845]: 2026-02-28T02:52:50.925Z [heartbeat] started
+Feb 28 02:52:50 voltaris node[636845]: 2026-02-28T02:52:50.932Z [health-monitor] started (interval: 300s, grace: 60s)
+Feb 28 02:52:50 voltaris node[636845]: 2026-02-28T02:52:50.941Z [gateway] agent model: openai-codex/gpt-5.3-codex
+Feb 28 02:52:50 voltaris node[636845]: 2026-02-28T02:52:50.944Z [gateway] listening on ws://127.0.0.1:18789, ws://[::1]:18789 (PID 636845)
+Feb 28 02:52:50 voltaris node[636845]: 2026-02-28T02:52:50.951Z [gateway] log file: /tmp/openclaw/openclaw-2026-02-28.log
+Feb 28 02:52:50 voltaris node[636845]: 2026-02-28T02:52:50.984Z [browser/server] Browser control listening on http://127.0.0.1:18791/ (auth=token)
+Feb 28 02:52:50 voltaris node[636845]: 2026-02-28T02:52:50.996Z [whatsapp] [default] starting provider (+15197713733)
+Feb 28 02:52:53 voltaris node[636845]: 2026-02-28T02:52:53.256Z [whatsapp] Listening for personal WhatsApp inbound messages.
+Feb 28 02:56:38 voltaris systemd[914]: Stopping openclaw-gateway.service - OpenClaw Gateway (v2026.2.26)...
+Feb 28 02:56:38 voltaris node[636845]: 2026-02-28T02:56:38.306Z [gateway] signal SIGTERM received
+Feb 28 02:56:38 voltaris node[636845]: 2026-02-28T02:56:38.313Z [gateway] received SIGTERM; shutting down
+Feb 28 02:56:38 voltaris node[636845]: 2026-02-28T02:56:38.359Z [gmail-watcher] gmail watcher stopped
+Feb 28 02:56:38 voltaris systemd[914]: Stopped openclaw-gateway.service - OpenClaw Gateway (v2026.2.26).
+Feb 28 02:56:38 voltaris systemd[914]: openclaw-gateway.service: Consumed 14.728s CPU time.
+Feb 28 18:45:10 voltaris systemd[914]: Started openclaw-gateway.service - OpenClaw Gateway (v2026.2.26).
+Feb 28 18:45:12 voltaris node[663209]: 2026-02-28T18:45:12.422Z [canvas] host mounted at http://127.0.0.1:18789/__openclaw__/canvas/ (root /home/spryguy/.openclaw/canvas)
+Feb 28 18:45:12 voltaris node[663209]: 2026-02-28T18:45:12.427+00:00 [gateway/lanes] providerConcurrency overrides: openai-codex=2
+Feb 28 18:45:12 voltaris node[663209]: 2026-02-28T18:45:12.478Z [heartbeat] started
+Feb 28 18:45:12 voltaris node[663209]: 2026-02-28T18:45:12.485Z [health-monitor] started (interval: 300s, grace: 60s)
+Feb 28 18:45:12 voltaris node[663209]: 2026-02-28T18:45:12.492Z [gateway] agent model: openai-codex/gpt-5.3-codex
+Feb 28 18:45:12 voltaris node[663209]: 2026-02-28T18:45:12.498Z [gateway] listening on ws://127.0.0.1:18789, ws://[::1]:18789 (PID 663209)
+Feb 28 18:45:12 voltaris node[663209]: 2026-02-28T18:45:12.503Z [gateway] log file: /tmp/openclaw/openclaw-2026-02-28.log
+Feb 28 18:45:12 voltaris node[663209]: 2026-02-28T18:45:12.567Z [browser/server] Browser control listening on http://127.0.0.1:18791/ (auth=token)
+Feb 28 18:45:12 voltaris node[663209]: 2026-02-28T18:45:12.577Z [whatsapp] [default] starting provider (+15197713733)
+Feb 28 18:45:13 voltaris node[663209]: 2026-02-28T18:45:13.801Z [whatsapp] Listening for personal WhatsApp inbound messages.
+Feb 28 18:45:14 voltaris node[663209]: 2026-02-28T18:45:14.062+00:00 Closing open session in favor of incoming prekey bundle
+Feb 28 18:45:14 voltaris node[663209]: 2026-02-28T18:45:14.498+00:00 Closing open session in favor of incoming prekey bundle
+Feb 28 18:45:38 voltaris node[663209]: 2026-02-28T18:45:38.938Z [whatsapp] Inbound message +15197713733 -> +15197713733 (direct, 58 chars)
+Feb 28 18:45:41 voltaris node[663209]: 2026-02-28T18:45:41.266Z [whatsapp] Auto-replied to +15197713733
+Feb 28 18:50:52 voltaris systemd[914]: Stopping openclaw-gateway.service - OpenClaw Gateway (v2026.2.26)...
+Feb 28 18:50:52 voltaris node[663209]: 2026-02-28T18:50:52.084Z [gateway] signal SIGTERM received
+Feb 28 18:50:52 voltaris node[663209]: 2026-02-28T18:50:52.088Z [gateway] received SIGTERM; shutting down
+Feb 28 18:50:52 voltaris node[663209]: 2026-02-28T18:50:52.114Z [gmail-watcher] gmail watcher stopped
+Feb 28 18:50:52 voltaris systemd[914]: Stopped openclaw-gateway.service - OpenClaw Gateway (v2026.2.26).
+Feb 28 18:50:52 voltaris systemd[914]: openclaw-gateway.service: Consumed 5.610s CPU time, 5.4M memory peak, 0B memory swap peak.
+Feb 28 18:50:52 voltaris systemd[914]: Started openclaw-gateway.service - OpenClaw Gateway (v2026.2.26).
+Feb 28 18:50:57 voltaris node[663850]: 2026-02-28T18:50:57.867Z [gateway] Control UI assets missing; building (ui:build, auto-installs UI deps)…
+Feb 28 18:50:59 voltaris node[663850]: 2026-02-28T18:50:59.338Z [canvas] host mounted at http://127.0.0.1:18789/__openclaw__/canvas/ (root /home/spryguy/.openclaw/canvas)
+Feb 28 18:50:59 voltaris node[663850]: 2026-02-28T18:50:59.343+00:00 [gateway/lanes] providerConcurrency overrides: openai-codex=2
+Feb 28 18:50:59 voltaris node[663850]: 2026-02-28T18:50:59.398Z [heartbeat] started
+Feb 28 18:50:59 voltaris node[663850]: 2026-02-28T18:50:59.404Z [health-monitor] started (interval: 300s, grace: 60s)
+Feb 28 18:50:59 voltaris node[663850]: 2026-02-28T18:50:59.408Z [gateway] agent model: openai-codex/gpt-5.3-codex
+Feb 28 18:50:59 voltaris node[663850]: 2026-02-28T18:50:59.411Z [gateway] listening on ws://127.0.0.1:18789, ws://[::1]:18789 (PID 663850)
+Feb 28 18:50:59 voltaris node[663850]: 2026-02-28T18:50:59.417Z [gateway] log file: /tmp/openclaw/openclaw-2026-02-28.log
+Feb 28 18:50:59 voltaris node[663850]: 2026-02-28T18:50:59.447Z [browser/server] Browser control listening on http://127.0.0.1:18791/ (auth=token)
+Feb 28 18:50:59 voltaris node[663850]: 2026-02-28T18:50:59.457Z [whatsapp] [default] starting provider (+15197713733)
+Feb 28 18:51:01 voltaris node[663850]: 2026-02-28T18:51:01.832Z [whatsapp] Listening for personal WhatsApp inbound messages.
+Feb 28 18:54:44 voltaris node[663850]: 2026-02-28T18:54:44.249Z [agent/embedded] embedded run timeout: runId=c341ba13-e1c3-4688-b7da-089dfeb60d1a sessionId=a79c67e6-9c62-4888-88ee-2f6e85390b7f timeoutMs=60000
+Feb 28 18:54:44 voltaris node[663850]: 2026-02-28T18:54:44.310Z [agent/embedded] Profile ollama:default timed out. Trying next account...
+Feb 28 18:54:44 voltaris node[663850]: 2026-02-28T18:54:44.364+00:00 This operation was aborted
+Feb 28 19:00:14 voltaris node[663850]: 2026-02-28T19:00:14.981Z [agent/embedded] embedded run timeout: runId=c00a0217-a6e0-4c94-a0a4-9af6fd746a22 sessionId=a79c67e6-9c62-4888-88ee-2f6e85390b7f timeoutMs=120000
+Feb 28 19:00:15 voltaris node[663850]: 2026-02-28T19:00:15.030Z [agent/embedded] Profile ollama:default timed out. Trying next account...
+Feb 28 19:00:15 voltaris node[663850]: 2026-02-28T19:00:15.071+00:00 This operation was aborted
+Feb 28 20:30:47 voltaris node[663850]: 2026-02-28T20:30:47.939Z [whatsapp] Inbound message +15197713733 -> +15197713733 (direct, 141 chars)
+Feb 28 20:30:54 voltaris node[663850]: 2026-02-28T20:30:54.912Z [whatsapp] Auto-replied to +15197713733
+Feb 28 20:39:06 voltaris node[663850]: 2026-02-28T20:39:06.837Z [whatsapp] Inbound message +15197713733 -> +15197713733 (direct, 97 chars)
+Feb 28 20:39:16 voltaris node[663850]: 2026-02-28T20:39:16.265Z [whatsapp] Auto-replied to +15197713733
+Feb 28 20:41:13 voltaris node[663850]: 2026-02-28T20:41:13.845Z [ws] ⇄ res ✓ agent.wait 120002ms conn=2c30b305…4094 id=b9ef08c7…09b1
+Feb 28 20:41:13 voltaris node[663850]: 2026-02-28T20:41:13.951Z [agent/embedded] embedded run timeout: runId=d654f280-a24a-44de-aebe-3d69667ce175 sessionId=9b15cf76-29b7-4b3f-858d-aa3ea5a02fa7 timeoutMs=120000
+Feb 28 20:41:14 voltaris node[663850]: 2026-02-28T20:41:14.011Z [agent/embedded] Profile ollama:default timed out. Trying next account...
+Feb 28 20:41:14 voltaris node[663850]: 2026-02-28T20:41:14.019Z [diagnostic] lane task error: lane=subagent durationMs=120141 error="FailoverError: LLM request timed out."
+Feb 28 20:41:14 voltaris node[663850]: 2026-02-28T20:41:14.026Z [diagnostic] lane task error: lane=provider:ollama durationMs=120157 error="FailoverError: LLM request timed out."
+Feb 28 20:41:14 voltaris node[663850]: 2026-02-28T20:41:14.035Z [diagnostic] lane wait exceeded: lane=provider:ollama waitedMs=120008 queueAhead=0
+Feb 28 20:41:14 voltaris node[663850]: 2026-02-28T20:41:14.064Z [diagnostic] lane task error: lane=session:agent:main:subagent:55f4e69f-71cf-4181-8563-e8fd18c6d182 durationMs=120203 error="FailoverError: LLM request timed out."
+Feb 28 20:41:14 voltaris node[663850]: 2026-02-28T20:41:14.121Z [ws] ⇄ res ✓ agent.wait 120109ms conn=03455af9…bab7 id=8b1b53ec…b36e
+Feb 28 20:41:15 voltaris node[663850]: 2026-02-28T20:41:15.797+00:00 OK local14
+Feb 28 20:41:15 voltaris node[663850]: Ran the smoke test successfully.
+Feb 28 20:41:15 voltaris node[663850]: 2026-02-28T20:41:15.982Z [whatsapp] Sending message -> sha256:b29dcb56918a
+Feb 28 20:41:17 voltaris node[663850]: 2026-02-28T20:41:17.117Z [whatsapp] Sent message 3EB0C54EE9FF97D8C86C68 -> sha256:b29dcb56918a (1148ms)
+Feb 28 20:41:17 voltaris node[663850]: 2026-02-28T20:41:17.125Z [ws] ⇄ res ✓ send 1167ms channel=whatsapp conn=a2faa2d0…b5b1 id=c8f62e38…ad7a
+Feb 28 20:41:29 voltaris node[663850]: 2026-02-28T20:41:29.910Z [whatsapp] Sending message -> sha256:b29dcb56918a
+Feb 28 20:41:29 voltaris node[663850]: 2026-02-28T20:41:29.928Z [whatsapp] Sent message 3EB04280DEFEF95DD1657F -> sha256:b29dcb56918a (25ms)
+Feb 28 20:43:01 voltaris node[663850]: 2026-02-28T20:43:01.186Z [whatsapp] Inbound message +15197713733 -> +15197713733 (direct, 73 chars)
+Feb 28 20:43:04 voltaris node[663850]: 2026-02-28T20:43:04.900Z [whatsapp] Auto-replied to +15197713733
+Feb 28 20:43:14 voltaris node[663850]: 2026-02-28T20:43:14.376Z [agent/embedded] embedded run timeout: runId=d0aeaaf8-b236-446d-a560-2b6d414d582a sessionId=a6d90a0b-79dd-4bb7-9961-13713bcf9539 timeoutMs=120000
+Feb 28 20:43:14 voltaris node[663850]: 2026-02-28T20:43:14.487Z [agent/embedded] Profile ollama:default timed out. Trying next account...
+Feb 28 20:43:14 voltaris node[663850]: 2026-02-28T20:43:14.499Z [diagnostic] lane task error: lane=subagent durationMs=120430 error="FailoverError: LLM request timed out."
+Feb 28 20:43:14 voltaris node[663850]: 2026-02-28T20:43:14.519Z [diagnostic] lane task error: lane=provider:ollama durationMs=120457 error="FailoverError: LLM request timed out."
+Feb 28 20:43:14 voltaris node[663850]: 2026-02-28T20:43:14.528Z [diagnostic] lane task error: lane=session:agent:main:subagent:6d6e0b8d-023c-45e2-b28a-260a8528209a durationMs=240501 error="FailoverError: LLM request timed out."
+Feb 28 20:43:16 voltaris node[663850]: 2026-02-28T20:43:16.516+00:00 OK local32 I ran the smoke test.
+Feb 28 20:43:19 voltaris node[663850]: 2026-02-28T20:43:19.744Z [whatsapp] Inbound message +15197713733 -> +15197713733 (direct, 57 chars)
+Feb 28 20:43:23 voltaris node[663850]: 2026-02-28T20:43:23.219Z [whatsapp] Auto-replied to +15197713733
+Feb 28 20:48:21 voltaris node[663850]: 2026-02-28T20:48:21.960Z [ws] ⇄ res ✓ agent.wait 300004ms conn=f96d7ff7…3073 id=7a7c3bd4…e984
+Feb 28 20:48:22 voltaris node[663850]: 2026-02-28T20:48:22.315Z [agent/embedded] embedded run timeout: runId=1efec6aa-00ea-47ae-8059-2f3217d061b8 sessionId=0b9c2adb-9140-405f-bbce-f4467710094d timeoutMs=300000
+Feb 28 20:48:22 voltaris node[663850]: 2026-02-28T20:48:22.383Z [agent/embedded] Profile ollama:default timed out. Trying next account...
+Feb 28 20:48:22 voltaris node[663850]: 2026-02-28T20:48:22.391Z [diagnostic] lane task error: lane=subagent durationMs=300346 error="FailoverError: LLM request timed out."
+Feb 28 20:48:22 voltaris node[663850]: 2026-02-28T20:48:22.401Z [diagnostic] lane task error: lane=provider:ollama durationMs=300372 error="FailoverError: LLM request timed out."
+Feb 28 20:48:22 voltaris node[663850]: 2026-02-28T20:48:22.408Z [diagnostic] lane task error: lane=session:agent:main:subagent:d86e5ea6-ef90-42b6-a336-49b28f0aa84f durationMs=300404 error="FailoverError: LLM request timed out."
+Feb 28 20:48:23 voltaris node[663850]: 2026-02-28T20:48:23.712+00:00 OK local32
+Feb 28 20:48:23 voltaris node[663850]: 2026-02-28T20:48:23.796Z [whatsapp] Sending message -> sha256:b29dcb56918a
+Feb 28 20:48:24 voltaris node[663850]: 2026-02-28T20:48:24.907Z [whatsapp] Sent message 3EB04435C6824378096DE3 -> sha256:b29dcb56918a (1118ms)
+Feb 28 20:48:24 voltaris node[663850]: 2026-02-28T20:48:24.917Z [ws] ⇄ res ✓ send 1135ms channel=whatsapp conn=1287b103…b141 id=7c2a4256…a245
+Feb 28 21:14:02 voltaris node[663850]: 2026-02-28T21:14:02.071Z [whatsapp] No messages received in 30m - restarting connection
+Feb 28 21:14:02 voltaris node[663850]: 2026-02-28T21:14:02.075Z [whatsapp] Web connection closed (status 499). Retry 1/12 in 2.28s… (status=499)
+Feb 28 21:14:05 voltaris node[663850]: 2026-02-28T21:14:05.191Z [whatsapp] Listening for personal WhatsApp inbound messages.
+Feb 28 22:29:44 voltaris systemd[914]: Stopping openclaw-gateway.service - OpenClaw Gateway (v2026.2.26)...
+Feb 28 22:29:44 voltaris node[663850]: 2026-02-28T22:29:44.539Z [gateway] signal SIGTERM received
+Feb 28 22:29:44 voltaris node[663850]: 2026-02-28T22:29:44.542Z [gateway] received SIGTERM; shutting down
+Feb 28 22:29:44 voltaris node[663850]: 2026-02-28T22:29:44.575Z [gmail-watcher] gmail watcher stopped
+Feb 28 22:29:44 voltaris systemd[914]: Stopped openclaw-gateway.service - OpenClaw Gateway (v2026.2.26).
+Feb 28 22:29:44 voltaris systemd[914]: openclaw-gateway.service: Consumed 52.239s CPU time, 1.4G memory peak, 0B memory swap peak.
+Feb 28 22:29:44 voltaris systemd[914]: Started openclaw-gateway.service - OpenClaw Gateway (v2026.2.26).
+Feb 28 22:29:50 voltaris node[672626]: 2026-02-28T22:29:50.688Z [gateway] Control UI assets missing; building (ui:build, auto-installs UI deps)…
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.256Z [canvas] host mounted at http://127.0.0.1:18789/__openclaw__/canvas/ (root /home/spryguy/.openclaw/canvas)
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.263+00:00 [gateway/lanes] providerConcurrency overrides: openai-codex=2
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.326Z [heartbeat] started
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.335Z [health-monitor] started (interval: 300s, grace: 60s)
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.339Z [gateway] agent model: openai-codex/gpt-5.3-codex
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.343Z [gateway] listening on ws://127.0.0.1:18789, ws://[::1]:18789 (PID 672626)
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.348Z [gateway] log file: /tmp/openclaw/openclaw-2026-02-28.log
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.406Z [browser/server] Browser control listening on http://127.0.0.1:18791/ (auth=token)
+Feb 28 22:29:52 voltaris node[672626]: 2026-02-28T22:29:52.419Z [whatsapp] [default] starting provider (+15197713733)
+Feb 28 22:29:53 voltaris node[672626]: 2026-02-28T22:29:53.306Z [whatsapp] Listening for personal WhatsApp inbound messages.
+Feb 28 22:33:24 voltaris node[672626]: 2026-02-28T22:33:24.669Z [agent/embedded] embedded run timeout: runId=39a5e145-f8d9-4e16-9b45-cc43b0e3f9a0 sessionId=a79c67e6-9c62-4888-88ee-2f6e85390b7f timeoutMs=120000
+Feb 28 22:33:24 voltaris node[672626]: 2026-02-28T22:33:24.728Z [agent/embedded] Profile ollama:default timed out. Trying next account...
+Feb 28 22:43:32 voltaris node[672626]: 2026-02-28T22:43:32.518Z [agent/embedded] embedded run timeout: runId=c34a8829-3ef7-45ea-adb5-d08f3f362231 sessionId=a79c67e6-9c62-4888-88ee-2f6e85390b7f timeoutMs=300000
+Feb 28 22:43:32 voltaris node[672626]: 2026-02-28T22:43:32.571Z [agent/embedded] Profile ollama:default timed out. Trying next account...
+Feb 28 22:43:32 voltaris node[672626]: 2026-02-28T22:43:32.625+00:00 This operation was aborted
+== recent logs: ollama ==
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  13:                          general.languages arr[str,1]       = ["en"]
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  14:                          qwen2.block_count u32              = 48
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  15:                       qwen2.context_length u32              = 32768
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  16:                     qwen2.embedding_length u32              = 5120
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  17:                  qwen2.feed_forward_length u32              = 13824
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  18:                 qwen2.attention.head_count u32              = 40
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  19:              qwen2.attention.head_count_kv u32              = 8
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  20:                       qwen2.rope.freq_base f32              = 1000000.000000
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  21:     qwen2.attention.layer_norm_rms_epsilon f32              = 0.000001
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  22:                          general.file_type u32              = 15
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  23:                       tokenizer.ggml.model str              = gpt2
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  24:                         tokenizer.ggml.pre str              = qwen2
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  25:                      tokenizer.ggml.tokens arr[str,152064]  = ["!", "\"", "#", "$", "%", "&", "'", ...
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  26:                  tokenizer.ggml.token_type arr[i32,152064]  = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  27:                      tokenizer.ggml.merges arr[str,151387]  = ["Ġ Ġ", "ĠĠ ĠĠ", "i n", "Ġ t",...
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  28:                tokenizer.ggml.eos_token_id u32              = 151645
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  29:            tokenizer.ggml.padding_token_id u32              = 151643
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  30:                tokenizer.ggml.bos_token_id u32              = 151643
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  31:               tokenizer.ggml.add_bos_token bool             = false
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  32:                    tokenizer.chat_template str              = {%- if tools %}\n    {{- '<|im_start|>...
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - kv  33:               general.quantization_version u32              = 2
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - type  f32:  241 tensors
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - type q4_K:  289 tensors
+Feb 28 22:38:33 voltaris ollama[663208]: llama_model_loader: - type q6_K:   49 tensors
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: file format = GGUF V3 (latest)
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: file type   = Q4_K - Medium
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: file size   = 8.37 GiB (4.87 BPW)
+Feb 28 22:38:33 voltaris ollama[663208]: load: printing all EOG tokens:
+Feb 28 22:38:33 voltaris ollama[663208]: load:   - 151643 ('<|endoftext|>')
+Feb 28 22:38:33 voltaris ollama[663208]: load:   - 151645 ('<|im_end|>')
+Feb 28 22:38:33 voltaris ollama[663208]: load:   - 151662 ('<|fim_pad|>')
+Feb 28 22:38:33 voltaris ollama[663208]: load:   - 151663 ('<|repo_name|>')
+Feb 28 22:38:33 voltaris ollama[663208]: load:   - 151664 ('<|file_sep|>')
+Feb 28 22:38:33 voltaris ollama[663208]: load: special tokens cache size = 22
+Feb 28 22:38:33 voltaris ollama[663208]: load: token to piece cache size = 0.9310 MB
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: arch             = qwen2
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: vocab_only       = 0
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: no_alloc         = 0
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_ctx_train      = 32768
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_embd           = 5120
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_embd_inp       = 5120
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_layer          = 48
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_head           = 40
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_head_kv        = 8
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_rot            = 128
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_swa            = 0
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: is_swa_any       = 0
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_embd_head_k    = 128
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_embd_head_v    = 128
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_gqa            = 5
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_embd_k_gqa     = 1024
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_embd_v_gqa     = 1024
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: f_norm_eps       = 0.0e+00
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: f_norm_rms_eps   = 1.0e-06
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: f_clamp_kqv      = 0.0e+00
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: f_max_alibi_bias = 0.0e+00
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: f_logit_scale    = 0.0e+00
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: f_attn_scale     = 0.0e+00
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_ff             = 13824
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_expert         = 0
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_expert_used    = 0
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_expert_groups  = 0
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_group_used     = 0
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: causal attn      = 1
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: pooling type     = -1
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: rope type        = 2
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: rope scaling     = linear
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: freq_base_train  = 1000000.0
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: freq_scale_train = 1
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_ctx_orig_yarn  = 32768
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: rope_yarn_log_mul= 0.0000
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: rope_finetuned   = unknown
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: model type       = 14B
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: model params     = 14.77 B
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: general.name     = Qwen2.5 Coder 14B Instruct
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: vocab type       = BPE
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_vocab          = 152064
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: n_merges         = 151387
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: BOS token        = 151643 '<|endoftext|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: EOS token        = 151645 '<|im_end|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: EOT token        = 151645 '<|im_end|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: PAD token        = 151643 '<|endoftext|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: LF token         = 198 'Ċ'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: FIM PRE token    = 151659 '<|fim_prefix|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: FIM SUF token    = 151661 '<|fim_suffix|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: FIM MID token    = 151660 '<|fim_middle|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: FIM PAD token    = 151662 '<|fim_pad|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: FIM REP token    = 151663 '<|repo_name|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: FIM SEP token    = 151664 '<|file_sep|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: EOG token        = 151643 '<|endoftext|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: EOG token        = 151645 '<|im_end|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: EOG token        = 151662 '<|fim_pad|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: EOG token        = 151663 '<|repo_name|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: EOG token        = 151664 '<|file_sep|>'
+Feb 28 22:38:33 voltaris ollama[663208]: print_info: max token length = 256
+Feb 28 22:38:33 voltaris ollama[663208]: load_tensors: loading model tensors, this can take a while... (mmap = false)
+Feb 28 22:38:33 voltaris ollama[663208]: load_tensors:          CPU model buffer size =  8566.04 MiB
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: constructing llama_context
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: n_seq_max     = 1
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: n_ctx         = 32768
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: n_ctx_seq     = 32768
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: n_batch       = 512
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: n_ubatch      = 512
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: causal_attn   = 1
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: flash_attn    = auto
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: kv_unified    = false
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: freq_base     = 1000000.0
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context: freq_scale    = 1
+Feb 28 22:38:36 voltaris ollama[663208]: llama_context:        CPU  output buffer size =     0.60 MiB
+Feb 28 22:38:36 voltaris ollama[663208]: llama_kv_cache:        CPU KV buffer size =  6144.00 MiB
+Feb 28 22:38:38 voltaris ollama[663208]: llama_kv_cache: size = 6144.00 MiB ( 32768 cells,  48 layers,  1/1 seqs), K (f16): 3072.00 MiB, V (f16): 3072.00 MiB
+Feb 28 22:38:38 voltaris ollama[663208]: llama_context: Flash Attention was auto, set to enabled
+Feb 28 22:38:38 voltaris ollama[663208]: llama_context:        CPU compute buffer size =   307.00 MiB
+Feb 28 22:38:38 voltaris ollama[663208]: llama_context: graph nodes  = 1639
+Feb 28 22:38:38 voltaris ollama[663208]: llama_context: graph splits = 1
+Feb 28 22:38:38 voltaris ollama[663208]: time=2026-02-28T22:38:38.859Z level=INFO source=server.go:1387 msg="llama runner started in 5.54 seconds"
+Feb 28 22:38:38 voltaris ollama[663208]: time=2026-02-28T22:38:38.859Z level=INFO source=sched.go:537 msg="loaded runners" count=1
+Feb 28 22:38:38 voltaris ollama[663208]: time=2026-02-28T22:38:38.859Z level=INFO source=server.go:1349 msg="waiting for llama runner to start responding"
+Feb 28 22:38:38 voltaris ollama[663208]: time=2026-02-28T22:38:38.859Z level=INFO source=server.go:1387 msg="llama runner started in 5.55 seconds"
+Feb 28 22:43:32 voltaris ollama[663208]: [GIN] 2026/02/28 - 22:43:32 | 500 |         4m59s |       127.0.0.1 | POST     "/api/chat"
+== agents ==
+qwen14-test	QWEN14_TEST	ollama/qwen2.5-coder:14b
+main	VOLTARIS	openai-codex/gpt-5.3-codex
+exec-01	Chief Executive Officer (CEO)	openai-codex/gpt-5.3-codex
+exec-02	Chief Operating Officer (COO)	openai-codex/gpt-5.3-codex
+exec-03	Chief Revenue Officer (CRO)	openai-codex/gpt-5.3-codex
+exec-04	Chief Risk & Compliance Officer (CRCO)	openai-codex/gpt-5.3-codex
+exec-05	Chief Automation Officer (CAO)	openai-codex/gpt-5.3-codex
+exec-06	Chief Information & Security Officer (CISO/CIO)	openai-codex/gpt-5.3-codex
+dir-portfolio-prioritization-01	DIR Portfolio Prioritization	openai-codex/gpt-5.2-codex
+dir-capital-resource-allocation-01	DIR Capital & Resource Allocation	openai-codex/gpt-5.2-codex
+dir-value-realization-01	DIR Value Realization Office	openai-codex/gpt-5.2-codex
+dir-strategic-planning-ops-01	DIR Strategic Planning Ops	openai-codex/gpt-5.2-codex
+dir-corpdev-partnerships-01	DIR CorpDev & Partnerships	openai-codex/gpt-5.2-codex
+dir-pmo-delivery-assurance-01	DIR PMO & Delivery Assurance	openai-codex/gpt-5.2-codex
+dir-cross-program-integration-01	DIR Cross-Program Integration	openai-codex/gpt-5.2-codex
+dir-handoff-integration-01	DIR Handoff & Integration	openai-codex/gpt-5.2-codex
+dir-flow-optimization-01	DIR Flow Optimization	openai-codex/gpt-5.2-codex
+dir-experiment-operations-01	DIR Experiment Operations	openai-codex/gpt-5.2-codex
+dir-commercialization-engine-01	DIR Commercialization Engine	openai-codex/gpt-5.2-codex
+dir-revops-01	DIR Revenue Operations	openai-codex/gpt-5.2-codex
+dir-pricing-packaging-01	DIR Pricing & Packaging	openai-codex/gpt-5.2-codex
+dir-customer-adoption-expansion-01	DIR Customer Adoption & Expansion	openai-codex/gpt-5.2-codex
+dir-partner-channel-growth-01	DIR Partner & Channel Growth	openai-codex/gpt-5.2-codex
+dir-governance-controls-01	DIR Governance & Controls	openai-codex/gpt-5.2-codex
+dir-enterprise-risk-assurance-01	DIR Enterprise Risk Assurance	openai-codex/gpt-5.2-codex
+dir-compliance-audit-readiness-01	DIR Compliance & Audit Readiness	openai-codex/gpt-5.2-codex
+dir-security-privacy-governance-01	DIR Security & Privacy Governance	openai-codex/gpt-5.2-codex
+dir-policy-change-management-01	DIR Policy & Change Management	openai-codex/gpt-5.2-codex
+dir-operating-intelligence-01	DIR Operating Intelligence	openai-codex/gpt-5.2-codex
+dir-evidence-assurance-01	DIR Evidence Assurance	openai-codex/gpt-5.2-codex
+dir-autonomous-ops-orchestration-01	DIR Autonomous Ops Orchestration	ollama/qwen2.5-coder:14b
+dir-automation-reliability-01	DIR Automation Reliability Engineering	openai-codex/gpt-5.2-codex
+dir-executive-control-tower-01	DIR Executive Control Tower	openai-codex/gpt-5.2-codex
+dir-eng-platform-01	DIR Platform Engineering	openai-codex/gpt-5.2-codex
+dir-application-eng-01	DIR Application Engineering	google/gemini-2.5-flash
+dir-devex-qa-01	DIR DevEx & QA Reliability	openai-codex/gpt-5.2-codex
+dir-architecture-01	DIR Architecture & Standards	ollama/qwen2.5-coder:32b
+dir-security-engineering-01	DIR Security Engineering	openai-codex/gpt-5.2-codex
+dir-incubator-domain-sponsor-01	DIR Incubator Domain Sponsor	openai-codex/gpt-5.2-codex
+dir-incubator-rd-research-01	DIR Incubator R&D Research	openai-codex/gpt-5.2-codex
+dir-incubator-scenario-analysis-01	DIR Incubator Scenario Analysis	openai-codex/gpt-5.2-codex
+dir-incubator-multimodal-intel-01	DIR Incubator Multimodal Intelligence	openai-codex/gpt-5.2-codex
+dir-incubator-vc-angel-01	DIR Incubator VC Angel	openai-codex/gpt-5.2-codex
