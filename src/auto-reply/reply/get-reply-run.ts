@@ -31,7 +31,7 @@ import {
   type ThinkLevel,
   type VerboseLevel,
 } from "../thinking.js";
-import { SILENT_REPLY_TOKEN } from "../tokens.js";
+import { resolveSilentReplyToken } from "../tokens.js";
 import type { GetReplyOptions, ReplyPayload } from "../types.js";
 import { runReplyAgent } from "./agent-runner.js";
 import { applySessionHints } from "./body.js";
@@ -260,7 +260,7 @@ export async function runPreparedReply(
         sessionCtx,
         sessionEntry,
         defaultActivation,
-        silentToken: SILENT_REPLY_TOKEN,
+        silentToken: resolveSilentReplyToken(),
       })
     : "";
   const groupSystemPrompt = sessionCtx.GroupSystemPrompt?.trim() ?? "";

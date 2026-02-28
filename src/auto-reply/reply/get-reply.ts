@@ -14,7 +14,7 @@ import { applyMediaUnderstanding } from "../../media-understanding/apply.js";
 import { defaultRuntime } from "../../runtime.js";
 import { resolveCommandAuthorization } from "../command-auth.js";
 import type { MsgContext } from "../templating.js";
-import { SILENT_REPLY_TOKEN } from "../tokens.js";
+import { resolveSilentReplyToken } from "../tokens.js";
 import type { GetReplyOptions, ReplyPayload } from "../types.js";
 import { emitResetCommandHooks, type ResetCommandAction } from "./commands-core.js";
 import { resolveDefaultModel } from "./directive-handling.js";
@@ -116,7 +116,7 @@ export async function getReplyFromConfig(
     onReplyStart: opts?.onReplyStart,
     onCleanup: opts?.onTypingCleanup,
     typingIntervalSeconds,
-    silentToken: SILENT_REPLY_TOKEN,
+    silentToken: resolveSilentReplyToken(),
     log: defaultRuntime.log,
   });
   opts?.onTypingController?.(typing);

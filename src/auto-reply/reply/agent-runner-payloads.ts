@@ -2,7 +2,7 @@ import type { ReplyToMode } from "../../config/types.js";
 import { logVerbose } from "../../globals.js";
 import { stripHeartbeatToken } from "../heartbeat.js";
 import type { OriginatingChannelType } from "../templating.js";
-import { SILENT_REPLY_TOKEN } from "../tokens.js";
+import { resolveSilentReplyToken } from "../tokens.js";
 import type { ReplyPayload } from "../types.js";
 import { formatBunFetchSocketError, isBunFetchSocketError } from "./agent-runner-utils.js";
 import { createBlockReplyPayloadKey, type BlockReplyPipeline } from "./block-reply-pipeline.js";
@@ -77,7 +77,7 @@ export function buildReplyPayloads(params: {
         normalizeReplyPayloadDirectives({
           payload,
           currentMessageId: params.currentMessageId,
-          silentToken: SILENT_REPLY_TOKEN,
+          silentToken: resolveSilentReplyToken(),
           parseMode: "always",
         }).payload,
     )

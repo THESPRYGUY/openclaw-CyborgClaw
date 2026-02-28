@@ -32,7 +32,7 @@ import {
   HEARTBEAT_TOKEN,
   isSilentReplyPrefixText,
   isSilentReplyText,
-  SILENT_REPLY_TOKEN,
+  resolveSilentReplyToken,
 } from "../tokens.js";
 import type { GetReplyOptions, ReplyPayload } from "../types.js";
 import {
@@ -128,6 +128,7 @@ export async function runAgentTurnWithFallback(params: {
 
   while (true) {
     try {
+      const silentToken = resolveSilentReplyToken();
       const normalizeStreamingText = (payload: ReplyPayload): { text?: string; skip: boolean } => {
         let text = payload.text;
         if (!params.isHeartbeat && text?.includes("HEARTBEAT_OK")) {
@@ -143,11 +144,11 @@ export async function runAgentTurnWithFallback(params: {
           }
           text = stripped.text;
         }
-        if (isSilentReplyText(text, SILENT_REPLY_TOKEN)) {
+        if (isSilentReplyText(text, silentToken)) {
           return { skip: true };
         }
         if (
-          isSilentReplyPrefixText(text, SILENT_REPLY_TOKEN) ||
+          isSilentReplyPrefixText(text, silentToken) ||
           isSilentReplyPrefixText(text, HEARTBEAT_TOKEN)
         ) {
           return { skip: true };
@@ -168,7 +169,7 @@ export async function runAgentTurnWithFallback(params: {
         return { text: sanitized, skip: false };
       };
       const handlePartialForTyping = async (payload: ReplyPayload): Promise<string | undefined> => {
-        if (isSilentReplyPrefixText(payload.text, SILENT_REPLY_TOKEN)) {
+        if (isSilentReplyPrefixText(payload.text, silentToken)) {
           return undefined;
         }
         const { text, skip } = normalizeStreamingText(payload);

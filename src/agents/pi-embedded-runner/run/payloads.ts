@@ -124,6 +124,8 @@ export function buildEmbeddedRunPayloads(params: {
     replyToCurrent?: boolean;
   }> = [];
 
+  const silentToken = process.env.OPENCLAW_SILENT_REPLY_TOKEN ?? SILENT_REPLY_TOKEN;
+
   const useMarkdown = params.toolResultFormat === "markdown";
   const lastAssistantErrored = params.lastAssistant?.stopReason === "error";
   const errorText = params.lastAssistant
@@ -170,7 +172,7 @@ export function buildEmbeddedRunPayloads(params: {
         replyToId,
         replyToTag,
         replyToCurrent,
-      } = parseReplyDirectives(agg);
+      } = parseReplyDirectives(agg, { silentToken });
       if (cleanedText) {
         replyItems.push({
           text: cleanedText,
@@ -260,7 +262,7 @@ export function buildEmbeddedRunPayloads(params: {
       replyToId,
       replyToTag,
       replyToCurrent,
-    } = parseReplyDirectives(text);
+    } = parseReplyDirectives(text, { silentToken });
     if (!cleanedText && (!mediaUrls || mediaUrls.length === 0) && !audioAsVoice) {
       continue;
     }
@@ -332,7 +334,7 @@ export function buildEmbeddedRunPayloads(params: {
       if (!p.text && !p.mediaUrl && (!p.mediaUrls || p.mediaUrls.length === 0)) {
         return false;
       }
-      if (p.text && isSilentReplyText(p.text, SILENT_REPLY_TOKEN)) {
+      if (p.text && isSilentReplyText(p.text, silentToken)) {
         return false;
       }
       return true;
