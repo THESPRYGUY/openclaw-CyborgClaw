@@ -9,6 +9,7 @@ set -euo pipefail
 
 TMP_PREFIX="/tmp/cc-echo"
 ERR_PATTERNS='rate limit|FailoverError|INVALID_REQUEST|No session found|cooldown'
+MAX_PARALLEL="${MAX_PARALLEL:-2}"
 
 RUN_ID="$(date +%H%M%S)-$$"
 
@@ -25,18 +26,26 @@ trap cleanup EXIT
 echo "[strike_echo] run_id=$RUN_ID"
 echo "[strike_echo] phase 1: resetting sessions..."
 
+job_pool() {
+  "$@" &
+  while (( $(jobs -pr | wc -l) >= MAX_PARALLEL )); do
+    wait -n
+  done
+}
+
+
 for s in "${SESSIONS[@]}"; do
-  (openclaw agent --agent main --session-id "$s" --message "/reset" \
-    < /dev/null > "${TMP_PREFIX}-${s}-reset.out" 2>&1) &
+  job_pool openclaw agent --agent main --session-id "$s" --message "/reset" \
+    < /dev/null > "${TMP_PREFIX}-${s}-reset.out" 2>&1
 done
 wait
 
 echo "[strike_echo] phase 2: starting burst..."
 
 for s in "${SESSIONS[@]}"; do
-  (openclaw agent --agent main --session-id "$s" \
-      --message "Reply with EXACTLY this text and nothing else: ECHO-$s" \
-      --json < /dev/null > "${TMP_PREFIX}-${s}.json" 2>&1) &
+  job_pool openclaw agent --agent main --session-id "$s" \
+    --message "Reply with EXACTLY this text and nothing else: ECHO-$s" \
+    --json < /dev/null > "${TMP_PREFIX}-${s}.json" 2>&1
 done
 wait
 
