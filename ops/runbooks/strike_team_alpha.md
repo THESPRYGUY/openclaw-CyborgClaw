@@ -37,3 +37,10 @@ KEEP_TMP=1 ops/scripts/alpha_smoke.sh
 ## Rollback
 
 - Revert repo files via git; config rollback via latest `/home/spryguy/.openclaw/openclaw.json.bak.*` then restart gateway.
+
+## One-command GO/NO-GO
+
+```bash
+cd ~/openclaw-workspace/repos/openclaw
+KEEP_TMP=1 bash ops/scripts/gate.sh
+```
