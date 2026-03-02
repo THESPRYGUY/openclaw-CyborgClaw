@@ -1,0 +1,2204 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.26",
+    "lastTouchedAt": "2026-03-02T18:47:35.547Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-03-02T18:47:35.517Z",
+    "lastRunVersion": "2026.2.26",
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
+  },
+  "browser": {
+    "enabled": true,
+    "remoteCdpTimeoutMs": 20000,
+    "remoteCdpHandshakeTimeoutMs": 10000,
+    "executablePath": "/usr/bin/google-chrome-stable",
+    "headless": true,
+    "noSandbox": true,
+    "attachOnly": false,
+    "defaultProfile": "openclaw",
+    "profiles": {
+      "chrome": {
+        "cdpPort": 18801,
+        "driver": "extension",
+        "color": "#1E90FF"
+      },
+      "openclaw": {
+        "cdpPort": 18800,
+        "color": "#FF4500"
+      }
+    }
+  },
+  "auth": {
+    "profiles": {
+      "google-generative-ai:default": {
+        "provider": "google-generative-ai",
+        "mode": "token"
+      },
+      "ollama:default": {
+        "provider": "ollama",
+        "mode": "token"
+      },
+      "openai-codex:default": {
+        "provider": "openai-codex",
+        "mode": "oauth"
+      },
+      "anthropic:default": {
+        "provider": "anthropic",
+        "mode": "api_key"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "openai-codex/gpt-5.3-codex",
+        "fallbacks": [
+          "google/gemini-2.5-flash",
+          "google/gemini-2.5-pro",
+          "ollama/qwen2.5-coder:14b",
+          "ollama/qwen2.5-coder:32b",
+          "openai-codex/gpt-5.2-codex",
+          "openai-codex/gpt-5.3-codex",
+          "anthropic/claude-3-7-sonnet-latest",
+          "anthropic/claude-3-7-sonnet-20250219",
+          "anthropic/claude-3-5-haiku-latest",
+          "anthropic/claude-3-5-haiku-20241022"
+        ]
+      },
+      "models": {
+        "google/gemini-2.5-flash": {
+          "alias": "g25f"
+        },
+        "google/gemini-2.5-pro": {
+          "alias": "g25p"
+        },
+        "ollama/qwen2.5-coder:14b": {
+          "alias": "local14",
+          "streaming": false
+        },
+        "ollama/qwen2.5-coder:32b": {
+          "alias": "local32",
+          "streaming": false
+        },
+        "openai-codex/gpt-5.2-codex": {
+          "alias": "codex52c"
+        },
+        "openai-codex/gpt-5.3-codex": {
+          "alias": "codex53"
+        },
+        "anthropic/claude-sonnet-4-6": {},
+        "anthropic/claude-3-7-sonnet-latest": {},
+        "anthropic/claude-3-7-sonnet-20250219": {},
+        "anthropic/claude-3-5-haiku-latest": {},
+        "anthropic/claude-3-5-haiku-20241022": {}
+      },
+      "workspace": "/home/spryguy/openclaw-workspace",
+      "memorySearch": {
+        "provider": "local",
+        "fallback": "none",
+        "local": {
+          "modelPath": "hf:Jarbas/all-MiniLM-L6-v2-Q4_K_M-GGUF/all-minilm-l6-v2-q4_k_m.gguf"
+        },
+        "sync": {
+          "watch": true
+        }
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "timeoutSeconds": 120,
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      },
+      "sandbox": {
+        "mode": "all"
+      }
+    },
+    "list": [
+      {
+        "id": "qwen14-test",
+        "workspace": "/home/spryguy/.openclaw/workspace-qwen14-test",
+        "model": {
+          "primary": "ollama/qwen2.5-coder:14b",
+          "fallbacks": []
+        },
+        "identity": {
+          "name": "QWEN14_TEST",
+          "emoji": "🧪"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [],
+          "deny": [
+            "*"
+          ]
+        }
+      },
+      {
+        "id": "main",
+        "model": "openai-codex/gpt-5.3-codex",
+        "identity": {
+          "name": "VOLTARIS",
+          "emoji": "🤖"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:openclaw"
+          ],
+          "deny": [],
+          "exec": {
+            "node": "eb5dc35848953cad45eb7a47b18e3ede90b266f9d22b45111d515b938913e730"
+          }
+        }
+      },
+      {
+        "id": "exec-01",
+        "name": "Chief Executive Officer (CEO)",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/exec-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/exec-01/agent",
+        "model": "openai-codex/gpt-5.3-codex",
+        "identity": {
+          "name": "Chief Executive Officer (CEO)",
+          "theme": "Enterprise Leadership & Strategic Integration",
+          "emoji": "🧭"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:runtime",
+            "group:fs",
+            "group:sessions",
+            "group:memory",
+            "group:web",
+            "group:automation",
+            "message",
+            "browser"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "exec-02",
+        "name": "Chief Operating Officer (COO)",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/exec-02",
+        "agentDir": "/home/spryguy/.openclaw/agents/exec-02/agent",
+        "model": "openai-codex/gpt-5.3-codex",
+        "identity": {
+          "name": "Chief Operating Officer (COO)",
+          "theme": "Delivery Command & Operational Excellence",
+          "emoji": "⚙️"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "profile": "messaging",
+          "allow": [
+            "group:runtime",
+            "group:fs",
+            "group:sessions",
+            "group:memory",
+            "group:web",
+            "group:automation",
+            "message",
+            "browser"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "exec-03",
+        "name": "Chief Revenue Officer (CRO)",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/exec-03",
+        "agentDir": "/home/spryguy/.openclaw/agents/exec-03/agent",
+        "model": "openai-codex/gpt-5.3-codex",
+        "identity": {
+          "name": "Chief Revenue Officer (CRO)",
+          "theme": "Commercialization & Revenue System",
+          "emoji": "📈"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:runtime",
+            "group:fs",
+            "group:sessions",
+            "group:memory",
+            "group:web",
+            "group:automation",
+            "message",
+            "browser"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "exec-04",
+        "name": "Chief Risk & Compliance Officer (CRCO)",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/exec-04",
+        "agentDir": "/home/spryguy/.openclaw/agents/exec-04/agent",
+        "model": "openai-codex/gpt-5.3-codex",
+        "identity": {
+          "name": "Chief Risk & Compliance Officer (CRCO)",
+          "theme": "Governance, Risk & Controls",
+          "emoji": "🛡️"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:runtime",
+            "group:fs",
+            "group:sessions",
+            "group:memory",
+            "group:web",
+            "group:automation",
+            "message",
+            "browser"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "exec-05",
+        "name": "Chief Automation Officer (CAO)",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/exec-05",
+        "agentDir": "/home/spryguy/.openclaw/agents/exec-05/agent",
+        "model": "openai-codex/gpt-5.3-codex",
+        "identity": {
+          "name": "Chief Automation Officer (CAO)",
+          "theme": "Autonomous Systems & Operating Intelligence",
+          "emoji": "🤖"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:runtime",
+            "group:fs",
+            "group:sessions",
+            "group:memory",
+            "group:web",
+            "group:automation",
+            "message",
+            "browser"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "exec-06",
+        "name": "Chief Information & Security Officer (CISO/CIO)",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/exec-06",
+        "agentDir": "/home/spryguy/.openclaw/agents/exec-06/agent",
+        "model": "openai-codex/gpt-5.3-codex",
+        "identity": {
+          "name": "Chief Information & Security Officer (CISO/CIO)",
+          "theme": "Technology, Security & Dev System",
+          "emoji": "🧠"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:runtime",
+            "group:fs",
+            "group:sessions",
+            "group:memory",
+            "group:web",
+            "group:automation",
+            "message",
+            "browser"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "dir-portfolio-prioritization-01",
+        "name": "dir-portfolio-prioritization-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-portfolio-prioritization-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-portfolio-prioritization-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Portfolio Prioritization",
+          "theme": "Portfolio Prioritization",
+          "emoji": "📊"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-capital-resource-allocation-01",
+        "name": "dir-capital-resource-allocation-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-capital-resource-allocation-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-capital-resource-allocation-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Capital & Resource Allocation",
+          "theme": "Capital & Resource Allocation",
+          "emoji": "💼"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-value-realization-01",
+        "name": "dir-value-realization-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-value-realization-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-value-realization-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Value Realization Office",
+          "theme": "Value Realization",
+          "emoji": "🎯"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-strategic-planning-ops-01",
+        "name": "dir-strategic-planning-ops-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-strategic-planning-ops-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-strategic-planning-ops-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Strategic Planning Ops",
+          "theme": "Strategic Planning Operations",
+          "emoji": "🧭"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-corpdev-partnerships-01",
+        "name": "dir-corpdev-partnerships-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-corpdev-partnerships-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-corpdev-partnerships-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR CorpDev & Partnerships",
+          "theme": "Corporate Development & Partnerships",
+          "emoji": "🤝"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-pmo-delivery-assurance-01",
+        "name": "dir-pmo-delivery-assurance-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-pmo-delivery-assurance-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-pmo-delivery-assurance-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR PMO & Delivery Assurance",
+          "theme": "PMO & Delivery Assurance",
+          "emoji": "🗂️"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-cross-program-integration-01",
+        "name": "dir-cross-program-integration-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-cross-program-integration-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-cross-program-integration-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Cross-Program Integration",
+          "theme": "Cross-Program Integration",
+          "emoji": "🔗"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-handoff-integration-01",
+        "name": "dir-handoff-integration-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-handoff-integration-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-handoff-integration-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Handoff & Integration",
+          "theme": "Handoff & Integration",
+          "emoji": "🔁"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-flow-optimization-01",
+        "name": "dir-flow-optimization-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-flow-optimization-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-flow-optimization-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Flow Optimization",
+          "theme": "Flow Optimization",
+          "emoji": "⚙️"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-experiment-operations-01",
+        "name": "dir-experiment-operations-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-experiment-operations-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-experiment-operations-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Experiment Operations",
+          "theme": "Experimentation Operations",
+          "emoji": "🧪"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-commercialization-engine-01",
+        "name": "dir-commercialization-engine-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-commercialization-engine-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-commercialization-engine-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Commercialization Engine",
+          "theme": "Commercialization Engine",
+          "emoji": "🚀"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-revops-01",
+        "name": "dir-revops-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-revops-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-revops-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Revenue Operations",
+          "theme": "Revenue Operations",
+          "emoji": "📈"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-pricing-packaging-01",
+        "name": "dir-pricing-packaging-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-pricing-packaging-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-pricing-packaging-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Pricing & Packaging",
+          "theme": "Pricing & Packaging",
+          "emoji": "💰"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-customer-adoption-expansion-01",
+        "name": "dir-customer-adoption-expansion-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-customer-adoption-expansion-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-customer-adoption-expansion-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Customer Adoption & Expansion",
+          "theme": "Customer Adoption & Expansion",
+          "emoji": "📣"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-partner-channel-growth-01",
+        "name": "dir-partner-channel-growth-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-partner-channel-growth-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-partner-channel-growth-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Partner & Channel Growth",
+          "theme": "Partner & Channel Growth",
+          "emoji": "🌐"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-governance-controls-01",
+        "name": "dir-governance-controls-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-governance-controls-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-governance-controls-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Governance & Controls",
+          "theme": "Governance & Controls",
+          "emoji": "🛡️"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-enterprise-risk-assurance-01",
+        "name": "dir-enterprise-risk-assurance-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-enterprise-risk-assurance-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-enterprise-risk-assurance-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Enterprise Risk Assurance",
+          "theme": "Enterprise Risk Assurance",
+          "emoji": "⚠️"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-compliance-audit-readiness-01",
+        "name": "dir-compliance-audit-readiness-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-compliance-audit-readiness-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-compliance-audit-readiness-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Compliance & Audit Readiness",
+          "theme": "Compliance & Audit Readiness",
+          "emoji": "✅"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-security-privacy-governance-01",
+        "name": "dir-security-privacy-governance-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-security-privacy-governance-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-security-privacy-governance-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Security & Privacy Governance",
+          "theme": "Security & Privacy Governance",
+          "emoji": "🔐"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-policy-change-management-01",
+        "name": "dir-policy-change-management-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-policy-change-management-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-policy-change-management-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Policy & Change Management",
+          "theme": "Policy & Change Management",
+          "emoji": "📜"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-operating-intelligence-01",
+        "name": "dir-operating-intelligence-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-operating-intelligence-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-operating-intelligence-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Operating Intelligence",
+          "theme": "Operating Intelligence",
+          "emoji": "🧠"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-evidence-assurance-01",
+        "name": "dir-evidence-assurance-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-evidence-assurance-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-evidence-assurance-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Evidence Assurance",
+          "theme": "Evidence Assurance",
+          "emoji": "🧾"
+        },
+        "sandbox": {
+          "mode": "off",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-autonomous-ops-orchestration-01",
+        "name": "dir-autonomous-ops-orchestration-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-autonomous-ops-orchestration-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-autonomous-ops-orchestration-01/agent",
+        "model": {
+          "primary": "ollama/qwen2.5-coder:14b",
+          "fallbacks": []
+        },
+        "identity": {
+          "name": "DIR Autonomous Ops Orchestration",
+          "theme": "Autonomous Ops Orchestration",
+          "emoji": "🤖"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-automation-reliability-01",
+        "name": "dir-automation-reliability-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-automation-reliability-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-automation-reliability-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Automation Reliability Engineering",
+          "theme": "Automation Reliability Engineering",
+          "emoji": "🧱"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-executive-control-tower-01",
+        "name": "dir-executive-control-tower-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-executive-control-tower-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-executive-control-tower-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Executive Control Tower",
+          "theme": "Executive Control Tower",
+          "emoji": "🗼"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-eng-platform-01",
+        "name": "dir-eng-platform-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-eng-platform-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-eng-platform-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Platform Engineering",
+          "theme": "Platform Engineering",
+          "emoji": "🏗️"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-application-eng-01",
+        "name": "dir-application-eng-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-application-eng-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-application-eng-01/agent",
+        "model": "google/gemini-2.5-flash",
+        "identity": {
+          "name": "DIR Application Engineering",
+          "theme": "Application Engineering",
+          "emoji": "💻"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "exec",
+            "process",
+            "sessions_send",
+            "sessions_history",
+            "session_status"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-devex-qa-01",
+        "name": "dir-devex-qa-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-devex-qa-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-devex-qa-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR DevEx & QA Reliability",
+          "theme": "DevEx & QA Reliability",
+          "emoji": "🧪"
+        },
+        "sandbox": {
+          "mode": "off",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-architecture-01",
+        "name": "dir-architecture-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-architecture-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-architecture-01/agent",
+        "model": {
+          "primary": "ollama/qwen2.5-coder:32b",
+          "fallbacks": []
+        },
+        "identity": {
+          "name": "DIR Architecture & Standards",
+          "theme": "Architecture & Standards",
+          "emoji": "🏛️"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-security-engineering-01",
+        "name": "dir-security-engineering-01",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-security-engineering-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-security-engineering-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Security Engineering",
+          "theme": "Security Engineering",
+          "emoji": "🔒"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-incubator-domain-sponsor-01",
+        "name": "DIR Incubator Domain Sponsor",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-incubator-domain-sponsor-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-incubator-domain-sponsor-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Incubator Domain Sponsor",
+          "theme": "Ideas Incubator Strike Team",
+          "emoji": "🎯"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-incubator-rd-research-01",
+        "name": "DIR Incubator R&D Research",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-incubator-rd-research-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-incubator-rd-research-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Incubator R&D Research",
+          "theme": "Ideas Incubator Strike Team",
+          "emoji": "🔬"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-incubator-scenario-analysis-01",
+        "name": "DIR Incubator Scenario Analysis",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-incubator-scenario-analysis-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-incubator-scenario-analysis-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Incubator Scenario Analysis",
+          "theme": "Ideas Incubator Strike Team",
+          "emoji": "🧪"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-incubator-multimodal-intel-01",
+        "name": "DIR Incubator Multimodal Intelligence",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-incubator-multimodal-intel-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-incubator-multimodal-intel-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Incubator Multimodal Intelligence",
+          "theme": "Ideas Incubator Strike Team",
+          "emoji": "🧠"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "dir-incubator-vc-angel-01",
+        "name": "DIR Incubator VC Angel",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/dir-incubator-vc-angel-01",
+        "agentDir": "/home/spryguy/.openclaw/agents/dir-incubator-vc-angel-01/agent",
+        "model": "openai-codex/gpt-5.2-codex",
+        "identity": {
+          "name": "DIR Incubator VC Angel",
+          "theme": "Ideas Incubator Strike Team",
+          "emoji": "💸"
+        },
+        "sandbox": {
+          "mode": "all",
+          "scope": "agent"
+        },
+        "tools": {
+          "allow": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "session_status",
+            "memory_search",
+            "memory_get",
+            "message"
+          ],
+          "deny": [
+            "browser",
+            "canvas",
+            "cron",
+            "gateway",
+            "group:web",
+            "nodes"
+          ]
+        }
+      },
+      {
+        "id": "president-a",
+        "name": "Strike Team A President",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/president-a",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6",
+          "fallbacks": [
+            "anthropic/claude-3-7-sonnet-20250219",
+            "anthropic/claude-3-5-haiku-20241022"
+          ]
+        },
+        "identity": {
+          "name": "PRESIDENT_A",
+          "emoji": "🅰️"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:openclaw"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "president-b",
+        "name": "Strike Team B President",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/president-b",
+        "model": {
+          "primary": "openai-codex/gpt-5.2-codex",
+          "fallbacks": []
+        },
+        "identity": {
+          "name": "PRESIDENT_B",
+          "emoji": "🅱️"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:openclaw"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "president-b1",
+        "name": "Strike Team B President 1",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/president-b1",
+        "model": {
+          "primary": "openai-codex/gpt-5.2-codex",
+          "fallbacks": []
+        },
+        "identity": {
+          "name": "PRESIDENT_B1",
+          "emoji": "🅱️1"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:openclaw"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "president-b2",
+        "name": "Strike Team B President 2",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/president-b2",
+        "model": {
+          "primary": "openai-codex/gpt-5.2-codex",
+          "fallbacks": []
+        },
+        "identity": {
+          "name": "PRESIDENT_B2",
+          "emoji": "🅱️2"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:openclaw"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "president-b3",
+        "name": "Strike Team B President 3",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/president-b3",
+        "model": {
+          "primary": "openai-codex/gpt-5.2-codex",
+          "fallbacks": []
+        },
+        "identity": {
+          "name": "PRESIDENT_B3",
+          "emoji": "🅱️3"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:openclaw"
+          ],
+          "deny": []
+        }
+      },
+      {
+        "id": "president-b4",
+        "name": "Strike Team B President 4",
+        "workspace": "/home/spryguy/openclaw-workspace/agents/president-b4",
+        "model": {
+          "primary": "openai-codex/gpt-5.2-codex",
+          "fallbacks": []
+        },
+        "identity": {
+          "name": "PRESIDENT_B4",
+          "emoji": "🅱️4"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "allow": [
+            "group:openclaw"
+          ],
+          "deny": []
+        }
+      }
+    ]
+  },
+  "tools": {
+    "deny": [],
+    "byProvider": {
+      "ollama": {
+        "deny": []
+      }
+    },
+    "web": {
+      "search": {
+        "enabled": true,
+        "apiKey": "BSABaymmicxZHJwWwrqxpmjyVbHIx88"
+      },
+      "fetch": {
+        "enabled": true
+      }
+    },
+    "media": {
+      "audio": {
+        "enabled": true,
+        "scope": {
+          "default": "deny",
+          "rules": [
+            {
+              "action": "allow",
+              "match": {
+                "chatType": "direct"
+              }
+            }
+          ]
+        },
+        "maxBytes": 20971520,
+        "models": [
+          {
+            "type": "cli",
+            "command": "/home/spryguy/openclaw-workspace/scripts/whisper_transcribe.sh",
+            "args": [
+              "{{MediaPath}}"
+            ],
+            "timeoutSeconds": 120
+          }
+        ]
+      }
+    },
+    "sessions": {
+      "visibility": "all"
+    },
+    "agentToAgent": {
+      "enabled": true,
+      "allow": [
+        "main",
+        "exec-01",
+        "exec-02",
+        "exec-03",
+        "exec-04",
+        "exec-05",
+        "exec-06",
+        "dir-portfolio-prioritization-01",
+        "dir-capital-resource-allocation-01",
+        "dir-value-realization-01",
+        "dir-strategic-planning-ops-01",
+        "dir-corpdev-partnerships-01",
+        "dir-pmo-delivery-assurance-01",
+        "dir-cross-program-integration-01",
+        "dir-handoff-integration-01",
+        "dir-flow-optimization-01",
+        "dir-experiment-operations-01",
+        "dir-commercialization-engine-01",
+        "dir-revops-01",
+        "dir-pricing-packaging-01",
+        "dir-customer-adoption-expansion-01",
+        "dir-partner-channel-growth-01",
+        "dir-governance-controls-01",
+        "dir-enterprise-risk-assurance-01",
+        "dir-compliance-audit-readiness-01",
+        "dir-security-privacy-governance-01",
+        "dir-policy-change-management-01",
+        "dir-operating-intelligence-01",
+        "dir-evidence-assurance-01",
+        "dir-autonomous-ops-orchestration-01",
+        "dir-automation-reliability-01",
+        "dir-executive-control-tower-01",
+        "dir-eng-platform-01",
+        "dir-application-eng-01",
+        "dir-devex-qa-01",
+        "dir-architecture-01",
+        "dir-security-engineering-01",
+        "dir-incubator-domain-sponsor-01",
+        "dir-incubator-rd-research-01",
+        "dir-incubator-scenario-analysis-01",
+        "dir-incubator-multimodal-intel-01",
+        "dir-incubator-vc-angel-01"
+      ]
+    },
+    "elevated": {
+      "enabled": true
+    }
+  },
+  "bindings": [
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "whatsapp",
+        "accountId": "*",
+        "peer": {
+          "kind": "direct",
+          "id": "+15197713733"
+        }
+      }
+    }
+  ],
+  "messages": {
+    "groupChat": {
+      "mentionPatterns": [
+        "@?openclaw",
+        "@?voltaris",
+        "\\+?15197713733"
+      ]
+    },
+    "ackReactionScope": "group-mentions",
+    "tts": {
+      "auto": "inbound",
+      "mode": "final",
+      "provider": "elevenlabs",
+      "elevenlabs": {
+        "apiKey": "sk_922f21de60434589476e5a88d0d3d2fa4ff4bbb7526c5b85",
+        "baseUrl": "https://api.elevenlabs.io",
+        "voiceId": "cPoqAvGWCPfCfyPMwe4z",
+        "modelId": "eleven_multilingual_v2",
+        "applyTextNormalization": "auto",
+        "languageCode": "en",
+        "voiceSettings": {
+          "stability": 0.5,
+          "similarityBoost": 0.75,
+          "style": 0,
+          "useSpeakerBoost": true,
+          "speed": 1
+        }
+      },
+      "maxTextLength": 2000,
+      "timeoutMs": 30000
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "channels": {
+    "whatsapp": {
+      "enabled": true,
+      "configWrites": false,
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "+15197713733"
+      ],
+      "groupPolicy": "allowlist",
+      "groups": {
+        "120363424429281738@g.us": {
+          "requireMention": true
+        }
+      },
+      "debounceMs": 0,
+      "mediaMaxMb": 50
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "gPUA220L-LzPamtSkW0_y1ci9tS1ycrMtMxKTKJxRyk"
+    },
+    "trustedProxies": [
+      "127.0.0.1",
+      "192.168.2.107"
+    ],
+    "providerConcurrency": {
+      "openai-codex": 10
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  },
+  "memory": {
+    "backend": "builtin",
+    "citations": "auto"
+  },
+  "skills": {
+    "allowBundled": [],
+    "load": {
+      "watch": true,
+      "watchDebounceMs": 250
+    },
+    "entries": {
+      "clawhub": {
+        "enabled": false
+      },
+      "coding-agent": {
+        "enabled": true
+      },
+      "github": {
+        "enabled": true
+      },
+      "healthcheck": {
+        "enabled": true
+      },
+      "session-logs": {
+        "enabled": true
+      },
+      "skill-creator": {
+        "enabled": true
+      },
+      "tmux": {
+        "enabled": true
+      },
+      "video-frames": {
+        "enabled": true
+      },
+      "weather": {
+        "enabled": true
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "whatsapp": {
+        "enabled": true
+      }
+    }
+  }
+}
