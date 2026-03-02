@@ -1,0 +1,78 @@
+{
+  "team": "Strike Team Alpha",
+  "version": "v1",
+  "objective": "Stand up a 5-agent strike team with deterministic smoke proving role fidelity and fail-loudly drift handling.",
+  "policies": {
+    "code_changes_provider_allowlist": ["openai-codex"],
+    "no_cross_provider_fallback_during_smoke": true,
+    "fail_loudly_on_provider_model_mismatch": true,
+    "require_receipts": true
+  },
+  "roles": [
+    {
+      "id": "captain",
+      "name": "CAPTAIN / COORDINATOR",
+      "provider": "openai-codex",
+      "model": "gpt-5.3-codex",
+      "can_write_code": false,
+      "responsibilities": [
+        "Plan and assign tasks",
+        "Enforce gates and stop conditions",
+        "Merge outputs and keep artifacts coherent"
+      ],
+      "expected_smoke_token": "ALPHA_CAPTAIN_OK_v1"
+    },
+    {
+      "id": "implementer",
+      "name": "IMPLEMENTER",
+      "provider": "openai-codex",
+      "model": "gpt-5.3-codex",
+      "can_write_code": true,
+      "responsibilities": [
+        "Write code/scripts in small diffs",
+        "Run checks/tests",
+        "Keep changes minimal and auditable"
+      ],
+      "expected_smoke_token": "ALPHA_IMPLEMENTER_OK_v1"
+    },
+    {
+      "id": "reviewer",
+      "name": "REVIEWER / AUDITOR",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "can_write_code": false,
+      "responsibilities": [
+        "Review diffs for correctness and risk",
+        "Check for secrets/PII and policy violations",
+        "Verify spec adherence"
+      ],
+      "expected_smoke_token": "ALPHA_REVIEWER_OK_v1"
+    },
+    {
+      "id": "sre",
+      "name": "SRE / OPS",
+      "provider": "openai-codex",
+      "model": "gpt-5.3-codex",
+      "can_write_code": false,
+      "responsibilities": [
+        "Keep gateway/lane health GREEN",
+        "Capture receipts and rollback steps",
+        "Enforce stop conditions"
+      ],
+      "expected_smoke_token": "ALPHA_SRE_OK_v1"
+    },
+    {
+      "id": "docs",
+      "name": "DOCS / GLUE",
+      "provider": "google",
+      "model": "gemini-2.5-pro",
+      "can_write_code": false,
+      "responsibilities": [
+        "Write runbooks and operator instructions",
+        "Summarize logs and outcomes",
+        "Create checklists and copy/paste commands"
+      ],
+      "expected_smoke_token": "ALPHA_DOCS_OK_v1"
+    }
+  ]
+}
