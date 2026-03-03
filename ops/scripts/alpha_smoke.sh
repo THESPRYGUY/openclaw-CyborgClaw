@@ -46,7 +46,7 @@ run_role captain main                ALPHA_CAPTAIN_OK_v1     openai-codex gpt-5.
 # implementer (Codex)
 run_role implementer exec-02         ALPHA_IMPLEMENTER_OK_v1 openai-codex gpt-5.3-codex
 # reviewer (Anthropic)
-run_role reviewer "$REVIEWER_AGENT" ALPHA_CAPTAIN_OK_v1    anthropic    claude-sonnet-4-6
+run_role reviewer "$REVIEWER_AGENT" ALPHA_REVIEWER_OK_v1     "${ALPHA_REVIEWER_PROVIDER:-anthropic}" "${ALPHA_REVIEWER_MODEL:-claude-sonnet-4-6}"
 # sre (Codex)
 run_role sre exec-04                 ALPHA_SRE_OK_v1         openai-codex gpt-5.3-codex
 # docs (Google)
