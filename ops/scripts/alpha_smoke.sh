@@ -2,7 +2,7 @@
 set -euo pipefail
 # Strike Team Alpha — deterministic smoke (5 roles) + FAIL LOUDLY on drift (compact)
 
-ERR_PATTERNS="rate limit|FailoverError|INVALID_REQUEST|No session found|cooldown|refresh token|401"
+ERR_PATTERNS="rate limit|FailoverError|INVALID_REQUEST|No session found|cooldown|refresh token|HTTP 401|401 Unauthorized"
 RUN_ID="$(date +%H%M%S)-$$"
 TMP="/tmp/cc-alpha-${RUN_ID}"
 REVIEWER_AGENT="${ALPHA_REVIEWER_AGENT:-president-a}"
