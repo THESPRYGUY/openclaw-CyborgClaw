@@ -14,10 +14,23 @@ run_role () {
   role="$1"; agent="$2"; tok="$3"; expP="$4"; expM="$5"
   sid="A${RUN_ID}${role}"
 
-  openclaw agent --agent "$agent" --session-id "$sid" --message "/reset" < /dev/null > "${TMP}-${role}-reset.out" 2>&1
+  openclaw agent --agent "$agent" --session-id "$sid" --message "/reset" < /dev/null > "${TMP}-${role}-reset.out" 2>&1 || true
 
   prompt="ALPHA deterministic smoke check (NOT a heartbeat poll). Reply with EXACTLY this text and nothing else: $tok"
-  openclaw agent --agent "$agent" --session-id "$sid" --message "$prompt" --json < /dev/null > "${TMP}-${role}.json" 2>&1
+  # IMPORTANT: openclaw agent can fail before emitting JSON (e.g., provider cooldown / model_not_found).
+  # In that case, it writes plain text to stdout/stderr and jq will break. We must always emit a JSON wrapper.
+  if ! timeout 60 openclaw agent --agent "$agent" --session-id "$sid" --message "$prompt" --json < /dev/null > "${TMP}-${role}.json" 2>&1; then
+    rc=$?
+    # Capture error text from the json file if it exists, otherwise fall back to the reset output.
+    if [[ -s "${TMP}-${role}.json" ]]; then
+      err="$(sed -n '1,200p' "${TMP}-${role}.json" | python3 -c 'import json,sys; s=sys.stdin.read(); print(json.dumps(s))')"
+    else
+      err="$(sed -n '1,200p' "${TMP}-${role}-reset.out" 2>/dev/null | python3 -c 'import json,sys; s=sys.stdin.read(); print(json.dumps(s))')"
+    fi
+    cat > "${TMP}-${role}.json" <<EOF
+{"status":"error","summary":"agent_failed","result":{"payloads":[]},"meta":{"aborted":false},"error":{"role":"$role","agent":"$agent","sessionId":"$sid","exitCode":$rc,"message":$err}}
+EOF
+  fi
 
   status="$(jq -r ".status // empty" "${TMP}-${role}.json" 2>/dev/null || true)"
   text="$(jq -r ".result.payloads[0].text // empty" "${TMP}-${role}.json" 2>/dev/null || true)"
