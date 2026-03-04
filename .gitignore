@@ -128,3 +128,4 @@ dist/protocol.schema.json
 ops/ledger/gate_*.json
 ops/ledger/gate_*.md
 patch.diff
+patch.diff
