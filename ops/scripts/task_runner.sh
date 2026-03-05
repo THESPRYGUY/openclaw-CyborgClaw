@@ -103,6 +103,7 @@ fi
     log "apply_patch_commit exit=$?"
 
     rm -f patch.diff
+    rm -f reviewer_feedback.txt
 
     log "running gate pipeline..."
     CURRENT_STEP="run_gates"

@@ -25,11 +25,16 @@ for f in ops/scripts/task_runner.sh ops/scripts/generate_patch.sh ops/scripts/re
     FILE_SAMPLE="$FILE_SAMPLE
 
 ===== FILE: $f =====
-$(sed -n '1,200p' "$f")"
+$(sed -n '1,300p' "$f")"
   fi
 done
 
-FUNCTION_INDEX=$(grep -nE '^[a-zA-Z0-9_]+\(\)\s*\{' ops/scripts/*.sh 2>/dev/null || true)
+# Broader Bash function matcher:
+# - matches: name() {   and   function name() {
+FUNCTION_INDEX=$(grep -RInE --include='*.sh' '^[[:space:]]*(function[[:space:]]+)?[a-zA-Z0-9_]+[[:space:]]*\(\)[[:space:]]*\{' ops/scripts 2>/dev/null || true)
+
+# Keep a separate "locations" variable (same content for now; used by the prompt)
+FUNCTION_CONTEXT="$FUNCTION_INDEX"
 
 echo "[generate_patch] goal: $goal"
 
@@ -48,6 +53,16 @@ Focus on scripts in ops/scripts if the task relates to the task runner or automa
 
 Relevant code references:
 $FILE_SAMPLE
+
+Function index (with line numbers for locating the correct section):
+$FUNCTION_INDEX
+
+Use the function index above to determine the exact function that must be modified.
+Identify the correct file and function before generating the patch.
+Only modify the smallest possible section necessary to accomplish the task.
+
+Function locations in the repository (use these line numbers when generating patches):
+$FUNCTION_CONTEXT
 
 Task goal:
 $goal
