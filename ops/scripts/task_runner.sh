@@ -52,8 +52,11 @@ for task in ${TASK_DIR}/task-*.json; do
     CURRENT_STEP=""
     log "marked running $task"
 
+    # Clean slate for a new task (keep intra-task feedback intact)
+    rm -f reviewer_feedback.txt patch.diff
+
     MAX_ATTEMPTS=3
-attempt=1
+    attempt=1
 
 while (( attempt <= MAX_ATTEMPTS )); do
   log "patch attempt $attempt..."
