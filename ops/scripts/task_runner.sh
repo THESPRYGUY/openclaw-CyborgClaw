@@ -110,9 +110,28 @@ fi
 
     log "running gate pipeline..."
     CURRENT_STEP="run_gates"
+    set +e
     KEEP_TMP=1 bash ops/scripts/gate_archive.sh
+    gate_rc=$?
+    set -e
     CURRENT_STEP=""
-    log "gate_archive exit=$?"
+    log "gate_archive rc=$gate_rc"
+
+    if [[ "$gate_rc" -ne 0 ]]; then
+      log "gate failed; rolling back last commit"
+      CURRENT_STEP="rollback_commit"
+      git reset --hard HEAD~1
+      CURRENT_STEP=""
+      log "rollback complete; marking task failed"
+
+      CURRENT_STEP="mark_failed"
+      tmp=$(mktemp)
+      jq '.status="failed"' "$task" > "$tmp" && mv "$tmp" "$task"
+      CURRENT_STEP=""
+      log "marked failed $task"
+
+      continue
+    fi
 
     # mark task complete
     CURRENT_STEP="mark_complete"
