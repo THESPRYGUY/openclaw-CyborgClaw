@@ -12,7 +12,7 @@ LAST_ID=$(ls $TASK_DIR/task-*.json 2>/dev/null | sed 's/.*task-\([0-9]*\).json/\
 if [[ -z "$LAST_ID" ]]; then
   NEXT_ID=1
 else
-  NEXT_ID=$((LAST_ID + 1))
+  NEXT_ID=$((10#$LAST_ID + 1))
 fi
 
 TASK_FILE=$(printf "%s/task-%03d.json" "$TASK_DIR" "$NEXT_ID")
