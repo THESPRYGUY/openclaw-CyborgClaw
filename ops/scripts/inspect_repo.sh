@@ -17,14 +17,19 @@ fi
 
 log "scanning repository for improvement opportunities..."
 
-# Detect TODO comments
+# Detect TODO comments (broad sweep tasks are operator-gated)
 TODO_COUNT=$(grep -R "TODO" . --exclude-dir=.git | wc -l || true)
+INSPECT_REPO_TODO_AUTOTASK=${INSPECT_REPO_TODO_AUTOTASK:-0}
 
 if (( TODO_COUNT > 0 )); then
-  log "found TODO comments — creating task"
-  ops/scripts/create_task.sh \
-    "Resolve TODO comments" \
-    "Scan repository and resolve TODO comments found in the codebase."
+  if [[ "$INSPECT_REPO_TODO_AUTOTASK" == "1" ]]; then
+    log "found TODO comments — creating task"
+    ops/scripts/create_task.sh \
+      "Resolve TODO comments" \
+      "Scan repository and resolve TODO comments found in the codebase."
+  else
+    log "found TODO comments — skipping task creation (INSPECT_REPO_TODO_AUTOTASK=$INSPECT_REPO_TODO_AUTOTASK)"
+  fi
 fi
 
 # Detect scripts missing strict bash mode
