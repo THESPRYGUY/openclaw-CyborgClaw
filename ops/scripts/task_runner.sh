@@ -15,6 +15,29 @@ trap 'log "ERROR exit=$? step=${CURRENT_STEP:-unknown} task=${CURRENT_TASK:-none
 
 log "runner start pid=$$"
 
+EXPECTED_REPO="/home/spryguy/openclaw-workspace/repos/openclaw"
+CURRENT_REPO="$(pwd -P)"
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+PORCELAIN="$(git status --porcelain=v1)"
+
+if [[ "$CURRENT_REPO" != "$EXPECTED_REPO" ]]; then
+  log "PRECHECK FAIL wrong_repo current=$CURRENT_REPO expected=$EXPECTED_REPO"
+  exit 10
+fi
+
+if [[ -n "$PORCELAIN" ]]; then
+  log "PRECHECK FAIL dirty_tree"
+  printf '%s\n' "$PORCELAIN"
+  exit 11
+fi
+
+if [[ "$CURRENT_BRANCH" == "main" ]]; then
+  log "PRECHECK FAIL branch_forbidden current_branch=$CURRENT_BRANCH"
+  exit 12
+fi
+
+log "PRECHECK OK repo=$CURRENT_REPO branch=$CURRENT_BRANCH clean_tree=yes"
+
 TASK_DIR="ops/tasks"
 
 TEAM_FILE="ops/strike_teams/alpha.json"
