@@ -126,7 +126,7 @@ import sys
 from pathlib import Path
 obj = json.loads(Path(sys.argv[1]).read_text())
 text = obj.get("result", {}).get("payloads", [{}])[0].get("text", "")
-print(text, end="")
+print(text)
 PY2
 
 sed -n '/^diff --git/,$p' "$RAW_RESPONSE_FILE" | tr -d '\r' > "$PATCH_FILE"
