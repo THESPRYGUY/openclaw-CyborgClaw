@@ -119,7 +119,8 @@ Rules:
 - The patch MUST apply cleanly using: git apply
 " \
 --json \
-| jq -r '.result.payloads[0].text' \
+| tee "${RAW_RESPONSE_FILE}.json" \
+| jq -r '.result.payloads[0].text // ""' \
 | tee "$RAW_RESPONSE_FILE" \
 | sed -n '/^diff --git/,$p' \
 | tr -d '\r' > "$PATCH_FILE"
