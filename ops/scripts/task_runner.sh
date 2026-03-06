@@ -19,15 +19,16 @@ EXPECTED_REPO="/home/spryguy/openclaw-workspace/repos/openclaw"
 CURRENT_REPO="$(pwd -P)"
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 PORCELAIN="$(git status --porcelain=v1)"
+NON_RUNTIME_DIRTY="$(printf '%s\n' "$PORCELAIN" | rg -v '^(.. )?(ops/tasks/task-[0-9]+\.json|ops/ledger/)' || true)"
 
 if [[ "$CURRENT_REPO" != "$EXPECTED_REPO" ]]; then
   log "PRECHECK FAIL wrong_repo current=$CURRENT_REPO expected=$EXPECTED_REPO"
   exit 10
 fi
 
-if [[ -n "$PORCELAIN" ]]; then
+if [[ -n "$NON_RUNTIME_DIRTY" ]]; then
   log "PRECHECK FAIL dirty_tree"
-  printf '%s\n' "$PORCELAIN"
+  printf '%s\n' "$NON_RUNTIME_DIRTY"
   exit 11
 fi
 
@@ -36,7 +37,7 @@ if [[ "$CURRENT_BRANCH" == "main" ]]; then
   exit 12
 fi
 
-log "PRECHECK OK repo=$CURRENT_REPO branch=$CURRENT_BRANCH clean_tree=yes"
+log "PRECHECK OK repo=$CURRENT_REPO branch=$CURRENT_BRANCH clean_tree=yes runtime_state_ignored=ops/tasks,ops/ledger"
 
 SCRATCH_DIR="/tmp/cyborgclaw-runner"
 PATCH_FILE="${SCRATCH_DIR}/patch.diff"
