@@ -1,0 +1,9 @@
+{
+  "task_id": "task-010",
+  "mission": "mission-auto",
+  "title": "Add preflight pass marker",
+  "owner": "strike-team-alpha",
+  "goal": "Update ops/scripts/task_runner.sh so the PRECHECK OK log line also includes preflight=pass.",
+  "acceptance_criteria": ["task executed successfully", "gate_archive PASS"],
+  "status": "pending"
+}
