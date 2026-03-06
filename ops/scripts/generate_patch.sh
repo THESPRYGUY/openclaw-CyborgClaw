@@ -118,12 +118,17 @@ Rules:
 - Output must be directly usable with: git apply
 - The patch MUST apply cleanly using: git apply
 " \
---json \
-| tee "${RAW_RESPONSE_FILE}.json" \
-| jq -r '.result.payloads[0].text // ""' \
-| tee "$RAW_RESPONSE_FILE" \
-| sed -n '/^diff --git/,$p' \
-| tr -d '\r' > "$PATCH_FILE"
+--json > "${RAW_RESPONSE_FILE}.json"
+
+python3 - <<'PY2' > "$RAW_RESPONSE_FILE"
+import json
+from pathlib import Path
+obj = json.loads(Path("${RAW_RESPONSE_FILE}.json").read_text())
+text = obj.get("result", {}).get("payloads", [{}])[0].get("text", "")
+print(text, end="")
+PY2
+
+sed -n '/^diff --git/,$p' "$RAW_RESPONSE_FILE" | tr -d '\r' > "$PATCH_FILE"
 
 if [[ ! -s "$PATCH_FILE" ]]; then
   echo "[generate_patch] EMPTY PATCH after filtering"
