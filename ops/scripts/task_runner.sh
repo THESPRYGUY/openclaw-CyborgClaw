@@ -37,7 +37,7 @@ if [[ "$CURRENT_BRANCH" == "main" ]]; then
   exit 12
 fi
 
-log "PRECHECK OK repo=$CURRENT_REPO branch=$CURRENT_BRANCH clean_tree=yes runtime_state_ignored=ops/tasks,ops/ledger"
+log "PRECHECK OK repo=$CURRENT_REPO branch=$CURRENT_BRANCH clean_tree=yes runtime_state_ignored=ops/tasks,ops/ledger preflight=pass"
 
 SCRATCH_DIR="/tmp/cyborgclaw-runner"
 PATCH_FILE="${SCRATCH_DIR}/patch.diff"
