@@ -5,5 +5,5 @@
   "owner": "strike-team-alpha",
   "goal": "Update ops/scripts/task_runner.sh so the PRECHECK OK log also includes task_dir=ops/tasks for clearer operator tracing.",
   "acceptance_criteria": ["task executed successfully", "gate_archive PASS"],
-  "status": "failed"
+  "status": "complete"
 }
