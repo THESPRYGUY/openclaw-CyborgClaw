@@ -8,6 +8,8 @@ REVIEWER_FEEDBACK_FILE="${REVIEWER_FEEDBACK_FILE:-reviewer_feedback.txt}"
 echo "[generate_patch] task: $TASK_FILE"
 
 goal=$(jq -r '.goal' "$TASK_FILE")
+TASK_ID=$(jq -r '.task_id' "$TASK_FILE")
+SESSION_ID="generate-patch-${TASK_ID}-$(date +%s)"
 
 # Load reviewer feedback if it exists
 REVIEWER_FEEDBACK=""
@@ -34,16 +36,15 @@ if [[ -n "${SEARCH_QUERY:-}" ]]; then
     "${SEARCH_QUERY}" . 2>/dev/null | head -n 60 || true)
 fi
 
+TARGET_FILE=$(jq -r '.target_file // "ops/scripts/task_runner.sh"' "$TASK_FILE")
 FILE_SAMPLE=""
 
-for f in ops/scripts/task_runner.sh ops/scripts/generate_patch.sh ops/scripts/review_patch.sh; do
-  if [[ -f "$f" ]]; then
-    FILE_SAMPLE="$FILE_SAMPLE
+if [[ -f "$TARGET_FILE" ]]; then
+  FILE_SAMPLE="$FILE_SAMPLE
 
-===== FILE: $f =====
-$(sed -n '1,300p' "$f")"
-  fi
-done
+===== FILE: $TARGET_FILE =====
+$(sed -n '1,300p' "$TARGET_FILE")"
+fi
 
 # Broader Bash function matcher:
 # - matches: name() {   and   function name() {
@@ -58,6 +59,7 @@ RAW_RESPONSE_FILE="${SCRATCH_DIR:-/tmp/cyborgclaw-runner}/generate_patch_raw.txt
 
 openclaw-safe agent \
   --agent dir-eng-platform-01 \
+  --session-id "$SESSION_ID" \
   --timeout 120 \
   --thinking off \
   --message "You are an autonomous software engineer working inside this repository.
@@ -89,6 +91,9 @@ $FUNCTION_CONTEXT
 
 Task goal:
 $goal
+
+Target file that should be modified for this task:
+$TARGET_FILE
 
 Previous reviewer feedback (if any):
 $REVIEWER_FEEDBACK
