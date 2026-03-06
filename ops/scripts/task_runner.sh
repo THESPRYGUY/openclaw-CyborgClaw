@@ -42,9 +42,11 @@ log "PRECHECK OK repo=$CURRENT_REPO branch=$CURRENT_BRANCH clean_tree=yes runtim
 SCRATCH_DIR="/tmp/cyborgclaw-runner"
 PATCH_FILE="${SCRATCH_DIR}/patch.diff"
 REVIEWER_FEEDBACK_FILE="${SCRATCH_DIR}/reviewer_feedback.txt"
+export PATCH_FILE
+export REVIEWER_FEEDBACK_FILE
 
 mkdir -p "$SCRATCH_DIR"
-log "SCRATCH OK dir=$SCRATCH_DIR"
+log "SCRATCH OK dir=$SCRATCH_DIR patch_file=$PATCH_FILE reviewer_feedback_file=$REVIEWER_FEEDBACK_FILE"
 
 TASK_DIR="ops/tasks"
 
