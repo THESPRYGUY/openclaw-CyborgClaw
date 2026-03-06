@@ -54,6 +54,8 @@ FUNCTION_CONTEXT="$FUNCTION_INDEX"
 
 echo "[generate_patch] goal: $goal"
 
+RAW_RESPONSE_FILE="${SCRATCH_DIR:-/tmp/cyborgclaw-runner}/generate_patch_raw.txt"
+
 openclaw-safe agent \
   --agent dir-eng-platform-01 \
   --timeout 120 \
@@ -118,7 +120,14 @@ Rules:
 " \
 --json \
 | jq -r '.result.payloads[0].text' \
+| tee "$RAW_RESPONSE_FILE" \
 | sed -n '/^diff --git/,$p' \
 | tr -d '\r' > "$PATCH_FILE"
+
+if [[ ! -s "$PATCH_FILE" ]]; then
+  echo "[generate_patch] EMPTY PATCH after filtering"
+  echo "[generate_patch] raw_response_file=$RAW_RESPONSE_FILE"
+  exit 21
+fi
 
 echo "[generate_patch] patch written to $PATCH_FILE"
