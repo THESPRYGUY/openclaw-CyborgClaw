@@ -120,10 +120,11 @@ Rules:
 " \
 --json > "${RAW_RESPONSE_FILE}.json"
 
-python3 - <<'PY2' > "$RAW_RESPONSE_FILE"
+python3 - "$RAW_RESPONSE_FILE.json" > "$RAW_RESPONSE_FILE" <<'PY2'
 import json
+import sys
 from pathlib import Path
-obj = json.loads(Path("${RAW_RESPONSE_FILE}.json").read_text())
+obj = json.loads(Path(sys.argv[1]).read_text())
 text = obj.get("result", {}).get("payloads", [{}])[0].get("text", "")
 print(text, end="")
 PY2
