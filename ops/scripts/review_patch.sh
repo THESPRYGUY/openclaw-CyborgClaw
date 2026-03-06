@@ -2,6 +2,7 @@
 set -euo pipefail
 
 PATCH_FILE="$1"
+REVIEWER_FEEDBACK_FILE="${REVIEWER_FEEDBACK_FILE:-reviewer_feedback.txt}"
 
 echo "[review_patch] reviewing patch: $PATCH_FILE"
 
@@ -53,6 +54,6 @@ fi
 
 echo "[review_patch] reviewer rejected patch"
 
-echo "$REVIEW" > reviewer_feedback.txt
+echo "$REVIEW" > "$REVIEWER_FEEDBACK_FILE"
 
 exit 1

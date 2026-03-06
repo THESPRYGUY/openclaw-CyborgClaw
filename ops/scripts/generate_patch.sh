@@ -2,6 +2,8 @@
 set -euo pipefail
 
 TASK_FILE="$1"
+PATCH_FILE="${PATCH_FILE:-patch.diff}"
+REVIEWER_FEEDBACK_FILE="${REVIEWER_FEEDBACK_FILE:-reviewer_feedback.txt}"
 
 echo "[generate_patch] task: $TASK_FILE"
 
@@ -9,8 +11,8 @@ goal=$(jq -r '.goal' "$TASK_FILE")
 
 # Load reviewer feedback if it exists
 REVIEWER_FEEDBACK=""
-if [[ -f reviewer_feedback.txt ]]; then
-  REVIEWER_FEEDBACK=$(cat reviewer_feedback.txt)
+if [[ -f "$REVIEWER_FEEDBACK_FILE" ]]; then
+  REVIEWER_FEEDBACK=$(cat "$REVIEWER_FEEDBACK_FILE")
   echo "[generate_patch] using reviewer feedback: $REVIEWER_FEEDBACK"
 fi
 
@@ -117,6 +119,6 @@ Rules:
 --json \
 | jq -r '.result.payloads[0].text' \
 | sed -n '/^diff --git/,$p' \
-| tr -d '\r' > patch.diff
+| tr -d '\r' > "$PATCH_FILE"
 
-echo "[generate_patch] patch written to patch.diff"
+echo "[generate_patch] patch written to $PATCH_FILE"

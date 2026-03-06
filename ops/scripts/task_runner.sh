@@ -38,6 +38,13 @@ fi
 
 log "PRECHECK OK repo=$CURRENT_REPO branch=$CURRENT_BRANCH clean_tree=yes"
 
+SCRATCH_DIR="/tmp/cyborgclaw-runner"
+PATCH_FILE="${SCRATCH_DIR}/patch.diff"
+REVIEWER_FEEDBACK_FILE="${SCRATCH_DIR}/reviewer_feedback.txt"
+
+mkdir -p "$SCRATCH_DIR"
+log "SCRATCH OK dir=$SCRATCH_DIR"
+
 TASK_DIR="ops/tasks"
 
 TEAM_FILE="ops/strike_teams/alpha.json"
@@ -76,7 +83,7 @@ for task in ${TASK_DIR}/task-*.json; do
     log "marked running $task"
 
     # Clean slate for a new task (keep intra-task feedback intact)
-    rm -f reviewer_feedback.txt patch.diff
+    rm -f "$REVIEWER_FEEDBACK_FILE" "$PATCH_FILE"
 
     MAX_ATTEMPTS=3
     attempt=1
@@ -89,7 +96,7 @@ while (( attempt <= MAX_ATTEMPTS )); do
   CURRENT_STEP=""
   log "generate_patch exit=$?"
 
-if [[ ! -f patch.diff ]]; then
+if [[ ! -f "$PATCH_FILE" ]]; then
   log "patch generation failed"
   ((attempt++))
   continue
@@ -98,7 +105,7 @@ fi
   log "reviewing patch..."
 
   CURRENT_STEP="review_patch"
-  if bash ops/scripts/review_patch.sh patch.diff; then
+  if bash ops/scripts/review_patch.sh "$PATCH_FILE"; then
     log "patch approved"
     CURRENT_STEP=""
     break
@@ -106,7 +113,7 @@ fi
   CURRENT_STEP=""
 
   log "patch rejected (attempt $attempt)"
-  rm -f patch.diff
+  rm -f "$PATCH_FILE"
 
   ((attempt++))
 done
@@ -124,12 +131,12 @@ if (( attempt > MAX_ATTEMPTS )); then
 fi
     log "applying patch..."
     CURRENT_STEP="apply_patch"
-    bash ops/scripts/apply_patch_commit.sh patch.diff
+    bash ops/scripts/apply_patch_commit.sh "$PATCH_FILE"
     CURRENT_STEP=""
     log "apply_patch_commit exit=$?"
 
-    rm -f patch.diff
-    rm -f reviewer_feedback.txt
+    rm -f "$PATCH_FILE"
+    rm -f "$REVIEWER_FEEDBACK_FILE"
 
     log "running gate pipeline..."
     CURRENT_STEP="run_gates"
