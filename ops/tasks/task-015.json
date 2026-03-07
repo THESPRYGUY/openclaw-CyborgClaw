@@ -1,0 +1,14 @@
+{
+  "task_id": "task-015",
+  "mission": "mission-auto",
+  "title": "Add patch file to review log",
+  "owner": "strike-team-alpha",
+  "goal": "Update ops/scripts/task_runner.sh so the review-phase log line includes patch_file=$PATCH_FILE, using the existing PATCH_FILE variable.",
+  "acceptance_criteria": [
+    "task executed successfully",
+    "gate_archive PASS",
+    "change uses $PATCH_FILE"
+  ],
+  "status": "running",
+  "target_file": "ops/scripts/task_runner.sh"
+}

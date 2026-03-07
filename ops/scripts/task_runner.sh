@@ -105,7 +105,7 @@ if [[ ! -f "$PATCH_FILE" ]]; then
   continue
 fi
 
-  log "reviewing patch..."
+  log "reviewing patch... patch_file=$PATCH_FILE"
 
   CURRENT_STEP="review_patch"
   if bash ops/scripts/review_patch.sh "$PATCH_FILE"; then
