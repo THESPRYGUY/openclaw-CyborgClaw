@@ -58,7 +58,7 @@ TASK_COUNT=0
 
 log "implementer model: $IMPLEMENTER_MODEL"
 log "reviewer model: $REVIEWER_MODEL"
-log "scanning for tasks..."
+log "scanning for tasks... task_dir=$TASK_DIR"
 
 for task in ${TASK_DIR}/task-*.json; do
   CURRENT_TASK="$task"
