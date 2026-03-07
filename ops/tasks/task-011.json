@@ -5,6 +5,6 @@
   "owner": "strike-team-alpha",
   "goal": "Update ops/scripts/task_runner.sh so the scanning-for-tasks log line also includes task_dir=ops/tasks.",
   "acceptance_criteria": ["task executed successfully", "gate_archive PASS"],
-  "status": "running",
+  "status": "complete",
   "target_file": "ops/scripts/task_runner.sh"
 }
