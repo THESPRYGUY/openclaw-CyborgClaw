@@ -57,12 +57,8 @@ echo "[generate_patch] goal: $goal"
 
 RAW_RESPONSE_FILE="${SCRATCH_DIR:-/tmp/cyborgclaw-runner}/generate_patch_raw.txt"
 
-openclaw-safe agent \
-  --agent president-b1 \
-  --session-id "$SESSION_ID" \
-  --timeout 120 \
-  --thinking off \
-  --message "You are an autonomous software engineer working inside this repository.
+PATCH_PROMPT=$(cat <<EOF
+You are an autonomous software engineer working inside this repository.
 
 Repository files (partial list):
 $REPO_CONTEXT
@@ -122,8 +118,44 @@ Rules:
 - Do NOT include code fences.
 - Output must be directly usable with: git apply
 - The patch MUST apply cleanly using: git apply
-" \
---json > "${RAW_RESPONSE_FILE}.json"
+EOF
+)
+
+SPAWN_JSON_FILE="${SCRATCH_DIR:-/tmp/cyborgclaw-runner}/generate_patch_spawn.json"
+
+openclaw-safe agent \
+  --agent main \
+  --timeout 120 \
+  --thinking off \
+  --json \
+  --message "Use agents_list first. Then use sessions_spawn with agentId president-b1 and the following task exactly as written. Return only a JSON object with keys accepted and childSessionKey.
+
+$PATCH_PROMPT" > "$SPAWN_JSON_FILE"
+
+echo "[generate_patch] spawn receipt saved to $SPAWN_JSON_FILE"
+
+CHILD_SESSION_KEY=$(python3 - "$SPAWN_JSON_FILE" <<'SPAWN_PY'
+import json,sys;from pathlib import Path;obj=json.loads(Path(sys.argv[1]).read_text());text=obj.get("result",{}).get("payloads",[{}])[0].get("text","");print(json.loads(text).get("childSessionKey",""))
+SPAWN_PY
+)
+
+if [[ -z "$CHILD_SESSION_KEY" ]]; then
+  echo "[generate_patch] NO childSessionKey in spawn receipt"
+  cat "$SPAWN_JSON_FILE"
+  exit 22
+fi
+
+echo "[generate_patch] implementer_agent=president-b1"
+echo "[generate_patch] implementer_child_session=$CHILD_SESSION_KEY"
+
+sleep 3
+
+openclaw-safe agent \
+  --agent main \
+  --timeout 120 \
+  --thinking off \
+  --json \
+  --message "Use sessions_history for sessionKey $CHILD_SESSION_KEY. Return only the latest assistant text from that child session." > "${RAW_RESPONSE_FILE}.json"
 
 python3 - "$RAW_RESPONSE_FILE.json" > "$RAW_RESPONSE_FILE" <<'PY2'
 import json
