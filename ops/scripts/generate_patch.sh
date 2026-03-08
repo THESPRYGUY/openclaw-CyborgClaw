@@ -2,15 +2,19 @@
 set -euo pipefail
 
 TASK_FILE="$1"
+PATCH_FILE="${PATCH_FILE:-patch.diff}"
+REVIEWER_FEEDBACK_FILE="${REVIEWER_FEEDBACK_FILE:-reviewer_feedback.txt}"
 
 echo "[generate_patch] task: $TASK_FILE"
 
 goal=$(jq -r '.goal' "$TASK_FILE")
+TASK_ID=$(jq -r '.task_id' "$TASK_FILE")
+SESSION_ID="generate-patch-${TASK_ID}-$(date +%s)"
 
 # Load reviewer feedback if it exists
 REVIEWER_FEEDBACK=""
-if [[ -f reviewer_feedback.txt ]]; then
-  REVIEWER_FEEDBACK=$(cat reviewer_feedback.txt)
+if [[ -f "$REVIEWER_FEEDBACK_FILE" ]]; then
+  REVIEWER_FEEDBACK=$(cat "$REVIEWER_FEEDBACK_FILE")
   echo "[generate_patch] using reviewer feedback: $REVIEWER_FEEDBACK"
 fi
 
@@ -32,16 +36,15 @@ if [[ -n "${SEARCH_QUERY:-}" ]]; then
     "${SEARCH_QUERY}" . 2>/dev/null | head -n 60 || true)
 fi
 
+TARGET_FILE=$(jq -r '.target_file // "ops/scripts/task_runner.sh"' "$TASK_FILE")
 FILE_SAMPLE=""
 
-for f in ops/scripts/task_runner.sh ops/scripts/generate_patch.sh ops/scripts/review_patch.sh; do
-  if [[ -f "$f" ]]; then
-    FILE_SAMPLE="$FILE_SAMPLE
+if [[ -f "$TARGET_FILE" ]]; then
+  FILE_SAMPLE="$FILE_SAMPLE
 
-===== FILE: $f =====
-$(sed -n '1,300p' "$f")"
-  fi
-done
+===== FILE: $TARGET_FILE =====
+$(sed -n '1,300p' "$TARGET_FILE")"
+fi
 
 # Broader Bash function matcher:
 # - matches: name() {   and   function name() {
@@ -52,11 +55,10 @@ FUNCTION_CONTEXT="$FUNCTION_INDEX"
 
 echo "[generate_patch] goal: $goal"
 
-openclaw-safe agent \
-  --agent dir-eng-platform-01 \
-  --timeout 120 \
-  --thinking off \
-  --message "You are an autonomous software engineer working inside this repository.
+RAW_RESPONSE_FILE="${SCRATCH_DIR:-/tmp/cyborgclaw-runner}/generate_patch_raw.txt"
+
+PATCH_PROMPT=$(cat <<EOF
+You are an autonomous software engineer working inside this repository.
 
 Repository files (partial list):
 $REPO_CONTEXT
@@ -86,6 +88,9 @@ $FUNCTION_CONTEXT
 Task goal:
 $goal
 
+Target file that should be modified for this task:
+$TARGET_FILE
+
 Previous reviewer feedback (if any):
 $REVIEWER_FEEDBACK
 
@@ -113,10 +118,60 @@ Rules:
 - Do NOT include code fences.
 - Output must be directly usable with: git apply
 - The patch MUST apply cleanly using: git apply
-" \
---json \
-| jq -r '.result.payloads[0].text' \
-| sed -n '/^diff --git/,$p' \
-| tr -d '\r' > patch.diff
+EOF
+)
 
-echo "[generate_patch] patch written to patch.diff"
+SPAWN_JSON_FILE="${SCRATCH_DIR:-/tmp/cyborgclaw-runner}/generate_patch_spawn.json"
+
+openclaw-safe agent \
+  --agent main \
+  --timeout 120 \
+  --thinking off \
+  --json \
+  --message "Use agents_list first. Then use sessions_spawn with agentId president-b1 and the following task exactly as written. Return only a JSON object with keys accepted and childSessionKey.
+
+$PATCH_PROMPT" > "$SPAWN_JSON_FILE"
+
+echo "[generate_patch] spawn receipt saved to $SPAWN_JSON_FILE"
+
+CHILD_SESSION_KEY=$(python3 - "$SPAWN_JSON_FILE" <<'SPAWN_PY'
+import json,sys;from pathlib import Path;obj=json.loads(Path(sys.argv[1]).read_text());text=obj.get("result",{}).get("payloads",[{}])[0].get("text","");print(json.loads(text).get("childSessionKey",""))
+SPAWN_PY
+)
+
+if [[ -z "$CHILD_SESSION_KEY" ]]; then
+  echo "[generate_patch] NO childSessionKey in spawn receipt"
+  cat "$SPAWN_JSON_FILE"
+  exit 22
+fi
+
+echo "[generate_patch] implementer_agent=president-b1"
+echo "[generate_patch] implementer_child_session=$CHILD_SESSION_KEY"
+
+sleep 3
+
+openclaw-safe agent \
+  --agent main \
+  --timeout 120 \
+  --thinking off \
+  --json \
+  --message "Use sessions_history for sessionKey $CHILD_SESSION_KEY. Return only the latest assistant text from that child session." > "${RAW_RESPONSE_FILE}.json"
+
+python3 - "$RAW_RESPONSE_FILE.json" > "$RAW_RESPONSE_FILE" <<'PY2'
+import json
+import sys
+from pathlib import Path
+obj = json.loads(Path(sys.argv[1]).read_text())
+text = obj.get("result", {}).get("payloads", [{}])[0].get("text", "")
+print(text)
+PY2
+
+sed -n '/^diff --git/,$p' "$RAW_RESPONSE_FILE" | tr -d '\r' > "$PATCH_FILE"
+
+if [[ ! -s "$PATCH_FILE" ]]; then
+  echo "[generate_patch] EMPTY PATCH after filtering"
+  echo "[generate_patch] raw_response_file=$RAW_RESPONSE_FILE"
+  exit 21
+fi
+
+echo "[generate_patch] patch written to $PATCH_FILE"

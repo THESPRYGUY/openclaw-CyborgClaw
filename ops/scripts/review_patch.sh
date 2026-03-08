@@ -2,14 +2,21 @@
 set -euo pipefail
 
 PATCH_FILE="$1"
+REVIEWER_FEEDBACK_FILE="${REVIEWER_FEEDBACK_FILE:-reviewer_feedback.txt}"
 
 echo "[review_patch] reviewing patch: $PATCH_FILE"
 
 # Validate patch format and attempt to repair hunk counts
-if ! git apply --recount --check "$PATCH_FILE" 2>/dev/null; then
+APPLY_CHECK_ERR="$(mktemp /tmp/review_patch_apply_check.XXXXXX.err)"
+if ! git apply --recount --check "$PATCH_FILE" 2>"$APPLY_CHECK_ERR"; then
   echo "[review_patch] INVALID PATCH"
+  echo "[review_patch] apply_check_stderr_begin"
+  sed -n '1,40p' "$APPLY_CHECK_ERR"
+  echo "[review_patch] apply_check_stderr_end"
+  rm -f "$APPLY_CHECK_ERR"
   exit 1
 fi
+rm -f "$APPLY_CHECK_ERR"
 
 echo "[review_patch] patch format OK"
 
@@ -53,6 +60,6 @@ fi
 
 echo "[review_patch] reviewer rejected patch"
 
-echo "$REVIEW" > reviewer_feedback.txt
+echo "$REVIEW" > "$REVIEWER_FEEDBACK_FILE"
 
 exit 1
