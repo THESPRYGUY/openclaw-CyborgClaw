@@ -58,7 +58,7 @@ echo "[generate_patch] goal: $goal"
 RAW_RESPONSE_FILE="${SCRATCH_DIR:-/tmp/cyborgclaw-runner}/generate_patch_raw.txt"
 
 openclaw-safe agent \
-  --agent dir-eng-platform-01 \
+  --agent president-b1 \
   --session-id "$SESSION_ID" \
   --timeout 120 \
   --thinking off \
