@@ -141,14 +141,14 @@ fi
     rm -f "$PATCH_FILE"
     rm -f "$REVIEWER_FEEDBACK_FILE"
 
-    log "running gate pipeline..."
+    log "running gate pipeline... contract_artifact=ops/ledger/gate_<UTC_TS>_<run_id>.json artifact_kind=preflight_contract"
     CURRENT_STEP="run_gates"
     set +e
     KEEP_TMP=1 bash ops/scripts/gate_archive.sh
     gate_rc=$?
     set -e
     CURRENT_STEP=""
-    log "gate_archive rc=$gate_rc"
+    log "gate_archive rc=$gate_rc contract_artifact_kind=preflight_contract"
 
     if [[ "$gate_rc" -ne 0 ]]; then
       log "gate failed; rolling back last commit"
