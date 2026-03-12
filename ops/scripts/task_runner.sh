@@ -88,8 +88,14 @@ for task in ${TASK_DIR}/task-*.json; do
     # Clean slate for a new task (keep intra-task feedback intact)
     rm -f "$REVIEWER_FEEDBACK_FILE" "$PATCH_FILE"
 
-    MAX_ATTEMPTS=3
+    RETRY_BUDGET=2
+    MAX_ATTEMPTS=$((RETRY_BUDGET + 1))
     attempt=1
+    LAST_FAILURE_CLASS=""
+    LAST_FAILURE_HINT=""
+    LAST_FAILURE_EVIDENCE_REF=""
+    LAST_FAILURE_RETRYABLE=""
+    LAST_FAILURE_ESCALATION=""
 
 while (( attempt <= MAX_ATTEMPTS )); do
   log "patch attempt $attempt..."
@@ -108,12 +114,27 @@ fi
   log "reviewing patch... patch_file=$PATCH_FILE attempt=$attempt"
 
   CURRENT_STEP="review_patch"
-  if bash ops/scripts/review_patch.sh "$PATCH_FILE"; then
+  set +e
+  review_output="$(bash ops/scripts/review_patch.sh "$PATCH_FILE" 2>&1)"
+  review_rc=$?
+  set -e
+  printf '%s\n' "$review_output"
+  if [[ "$review_rc" -eq 0 ]]; then
     log "patch approved"
     CURRENT_STEP=""
     break
   fi
   CURRENT_STEP=""
+
+  review_structured_line="$(printf '%s\n' "$review_output" | rg '^\[review_patch\]\[structured\]' | tail -n1 || true)"
+  if [[ -n "$review_structured_line" ]]; then
+    LAST_FAILURE_CLASS="$(printf '%s\n' "$review_structured_line" | sed -n 's/.*class=\([^|]*\).*/\1/p')"
+    LAST_FAILURE_HINT="$(printf '%s\n' "$review_structured_line" | sed -n 's/.*hint=\([^|]*\).*/\1/p')"
+    LAST_FAILURE_EVIDENCE_REF="$(printf '%s\n' "$review_structured_line" | sed -n 's/.*evidence_ref=\([^|]*\).*/\1/p')"
+    LAST_FAILURE_RETRYABLE="$(printf '%s\n' "$review_structured_line" | sed -n 's/.*retryable=\([^|]*\).*/\1/p')"
+    LAST_FAILURE_ESCALATION="$(printf '%s\n' "$review_structured_line" | sed -n 's/.*escalation=\([^|]*\).*/\1/p')"
+    log "structured class=$LAST_FAILURE_CLASS hint=$LAST_FAILURE_HINT evidence_ref=$LAST_FAILURE_EVIDENCE_REF retryable=$LAST_FAILURE_RETRYABLE attempt=$attempt max_retries=$RETRY_BUDGET escalation=$LAST_FAILURE_ESCALATION"
+  fi
 
   log "patch rejected (attempt $attempt)"
   rm -f "$PATCH_FILE"
@@ -123,12 +144,13 @@ done
 
 if (( attempt > MAX_ATTEMPTS )); then
   log "patch failed after $MAX_ATTEMPTS attempts"
+  log "structured class=NEEDS_HUMAN hint=automation lane stops after retry budget exhausted; attach last failure class plus concise evidence excerpt evidence_ref=${LAST_FAILURE_EVIDENCE_REF:-patch_attempt_loop} retryable=no attempt=$MAX_ATTEMPTS max_retries=$RETRY_BUDGET escalation=human_operator last_failure_class=${LAST_FAILURE_CLASS:-UNKNOWN}"
 
-  CURRENT_STEP="mark_failed"
+  CURRENT_STEP="mark_needs_human"
   tmp=$(mktemp)
-  jq '.status="failed"' "$task" > "$tmp" && mv "$tmp" "$task"
+  jq '.status="needs_human"' "$task" > "$tmp" && mv "$tmp" "$task"
   CURRENT_STEP=""
-  log "marked failed $task"
+  log "marked needs_human $task"
 
   continue
 fi

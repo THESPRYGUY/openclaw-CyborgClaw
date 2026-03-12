@@ -10,6 +10,7 @@ echo "[review_patch] reviewing patch: $PATCH_FILE"
 APPLY_CHECK_ERR="$(mktemp /tmp/review_patch_apply_check.XXXXXX.err)"
 if ! git apply --recount --check "$PATCH_FILE" 2>"$APPLY_CHECK_ERR"; then
   echo "[review_patch] INVALID PATCH"
+  echo "[review_patch][structured] class=INVALID_PATCH_APPLY_CHECK|hint=regenerate patch against current HEAD and fix hunk/file-path mismatch using apply-check stderr|evidence_ref=apply_check_stderr|retryable=yes|escalation=needs_human"
   echo "[review_patch] apply_check_stderr_begin"
   sed -n '1,40p' "$APPLY_CHECK_ERR"
   echo "[review_patch] apply_check_stderr_end"
