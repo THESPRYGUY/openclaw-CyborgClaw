@@ -1,0 +1,29 @@
+10:2026-03-12T17:24:32Z [task_runner] patch attempt 1...
+22:[review_patch] INVALID PATCH
+23:[review_patch][structured] class=INVALID_PATCH_APPLY_CHECK|hint=regenerate patch against current HEAD and fix hunk/file-path mismatch using apply-check stderr|evidence_ref=apply_check_stderr|retryable=yes|escalation=needs_human
+29:2026-03-12T17:24:35Z [task_runner] patch attempt 2...
+41:[review_patch] INVALID PATCH
+42:[review_patch][structured] class=INVALID_PATCH_APPLY_CHECK|hint=regenerate patch against current HEAD and fix hunk/file-path mismatch using apply-check stderr|evidence_ref=apply_check_stderr|retryable=yes|escalation=needs_human
+48:2026-03-12T17:24:38Z [task_runner] patch attempt 3...
+60:[review_patch] INVALID PATCH
+61:[review_patch][structured] class=INVALID_PATCH_APPLY_CHECK|hint=regenerate patch against current HEAD and fix hunk/file-path mismatch using apply-check stderr|evidence_ref=apply_check_stderr|retryable=yes|escalation=needs_human
+68:2026-03-12T17:24:41Z [task_runner] structured class=NEEDS_HUMAN hint=automation lane stops after retry budget exhausted; attach last failure class plus concise evidence excerpt evidence_ref=apply_check_stderr retryable=no attempt=3 max_retries=2 escalation=human_operator last_failure_class=INVALID_PATCH_APPLY_CHECK
+70:2026-03-12T17:24:41Z [task_runner] executing ops/tasks/task-777.json status=pending
+71:2026-03-12T17:24:41Z [task_runner] marked running ops/tasks/task-777.json
+72:2026-03-12T17:24:41Z [task_runner] patch attempt 1...
+73:[generate_patch] task: ops/tasks/task-777.json
+82:2026-03-12T17:24:44Z [task_runner] ERROR exit=1 step=review_patch task=ops/tasks/task-777.json
+84:[review_patch] INVALID PATCH
+85:[review_patch][structured] class=INVALID_PATCH_APPLY_CHECK|hint=regenerate patch against current HEAD and fix hunk/file-path mismatch using apply-check stderr|evidence_ref=apply_check_stderr|retryable=yes|escalation=needs_human
+91:2026-03-12T17:24:44Z [task_runner] patch attempt 2...
+92:[generate_patch] task: ops/tasks/task-777.json
+101:2026-03-12T17:24:47Z [task_runner] ERROR exit=1 step=review_patch task=ops/tasks/task-777.json
+103:[review_patch] INVALID PATCH
+104:[review_patch][structured] class=INVALID_PATCH_APPLY_CHECK|hint=regenerate patch against current HEAD and fix hunk/file-path mismatch using apply-check stderr|evidence_ref=apply_check_stderr|retryable=yes|escalation=needs_human
+110:2026-03-12T17:24:47Z [task_runner] patch attempt 3...
+111:[generate_patch] task: ops/tasks/task-777.json
+120:2026-03-12T17:24:50Z [task_runner] ERROR exit=1 step=review_patch task=ops/tasks/task-777.json
+122:[review_patch] INVALID PATCH
+123:[review_patch][structured] class=INVALID_PATCH_APPLY_CHECK|hint=regenerate patch against current HEAD and fix hunk/file-path mismatch using apply-check stderr|evidence_ref=apply_check_stderr|retryable=yes|escalation=needs_human
+130:2026-03-12T17:24:51Z [task_runner] structured class=NEEDS_HUMAN hint=automation lane stops after retry budget exhausted; attach last failure class plus concise evidence excerpt evidence_ref=apply_check_stderr retryable=no attempt=3 max_retries=2 escalation=human_operator last_failure_class=INVALID_PATCH_APPLY_CHECK
+131:2026-03-12T17:24:51Z [task_runner] marked needs_human ops/tasks/task-777.json

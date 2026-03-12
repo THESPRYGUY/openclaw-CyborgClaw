@@ -12,6 +12,52 @@ public enum ErrorCode: String, Codable, Sendable {
     case unavailable = "UNAVAILABLE"
 }
 
+public struct CanonicalProvenance: Codable, Sendable {
+    public let jobid: String?
+    public let runid: String?
+    public let agentuuid: String?
+    public let agentfingerprint: String?
+    public let agentprofileid: String?
+    public let nodeid: String?
+    public let providerid: String?
+    public let modelid: String?
+    public let timestamp: Int?
+
+    public init(
+        jobid: String?,
+        runid: String?,
+        agentuuid: String?,
+        agentfingerprint: String?,
+        agentprofileid: String?,
+        nodeid: String?,
+        providerid: String?,
+        modelid: String?,
+        timestamp: Int?)
+    {
+        self.jobid = jobid
+        self.runid = runid
+        self.agentuuid = agentuuid
+        self.agentfingerprint = agentfingerprint
+        self.agentprofileid = agentprofileid
+        self.nodeid = nodeid
+        self.providerid = providerid
+        self.modelid = modelid
+        self.timestamp = timestamp
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case jobid = "job_id"
+        case runid = "run_id"
+        case agentuuid = "agent_uuid"
+        case agentfingerprint = "agent_fingerprint"
+        case agentprofileid = "agent_profile_id"
+        case nodeid = "node_id"
+        case providerid = "provider_id"
+        case modelid = "model_id"
+        case timestamp
+    }
+}
+
 public struct ConnectParams: Codable, Sendable {
     public let minprotocol: Int
     public let maxprotocol: Int
@@ -372,30 +418,42 @@ public struct ErrorShape: Codable, Sendable {
 
 public struct AgentEvent: Codable, Sendable {
     public let runid: String
+    public let run_id: String?
     public let seq: Int
     public let stream: String
     public let ts: Int
+    public let timestamp: Int?
+    public let provenance: CanonicalProvenance?
     public let data: [String: AnyCodable]
 
     public init(
         runid: String,
+        run_id: String?,
         seq: Int,
         stream: String,
         ts: Int,
+        timestamp: Int?,
+        provenance: CanonicalProvenance?,
         data: [String: AnyCodable])
     {
         self.runid = runid
+        self.run_id = run_id
         self.seq = seq
         self.stream = stream
         self.ts = ts
+        self.timestamp = timestamp
+        self.provenance = provenance
         self.data = data
     }
 
     private enum CodingKeys: String, CodingKey {
         case runid = "runId"
+        case run_id
         case seq
         case stream
         case ts
+        case timestamp
+        case provenance
         case data
     }
 }
@@ -2589,6 +2647,7 @@ public struct CronRunsParams: Codable, Sendable {
 public struct CronRunLogEntry: Codable, Sendable {
     public let ts: Int
     public let jobid: String
+    public let job_id: String?
     public let action: String
     public let status: AnyCodable?
     public let error: String?
@@ -2603,12 +2662,14 @@ public struct CronRunLogEntry: Codable, Sendable {
     public let nextrunatms: Int?
     public let model: String?
     public let provider: String?
+    public let provenance: CanonicalProvenance?
     public let usage: [String: AnyCodable]?
     public let jobname: String?
 
     public init(
         ts: Int,
         jobid: String,
+        job_id: String?,
         action: String,
         status: AnyCodable?,
         error: String?,
@@ -2623,11 +2684,13 @@ public struct CronRunLogEntry: Codable, Sendable {
         nextrunatms: Int?,
         model: String?,
         provider: String?,
+        provenance: CanonicalProvenance?,
         usage: [String: AnyCodable]?,
         jobname: String?)
     {
         self.ts = ts
         self.jobid = jobid
+        self.job_id = job_id
         self.action = action
         self.status = status
         self.error = error
@@ -2642,6 +2705,7 @@ public struct CronRunLogEntry: Codable, Sendable {
         self.nextrunatms = nextrunatms
         self.model = model
         self.provider = provider
+        self.provenance = provenance
         self.usage = usage
         self.jobname = jobname
     }
@@ -2649,6 +2713,7 @@ public struct CronRunLogEntry: Codable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case ts
         case jobid = "jobId"
+        case job_id
         case action
         case status
         case error
@@ -2663,6 +2728,7 @@ public struct CronRunLogEntry: Codable, Sendable {
         case nextrunatms = "nextRunAtMs"
         case model
         case provider
+        case provenance
         case usage
         case jobname = "jobName"
     }
@@ -3188,9 +3254,12 @@ public struct ChatInjectParams: Codable, Sendable {
 
 public struct ChatEvent: Codable, Sendable {
     public let runid: String
+    public let run_id: String?
     public let sessionkey: String
     public let seq: Int
     public let state: AnyCodable
+    public let timestamp: Int?
+    public let provenance: CanonicalProvenance?
     public let message: AnyCodable?
     public let errormessage: String?
     public let usage: AnyCodable?
@@ -3198,18 +3267,24 @@ public struct ChatEvent: Codable, Sendable {
 
     public init(
         runid: String,
+        run_id: String?,
         sessionkey: String,
         seq: Int,
         state: AnyCodable,
+        timestamp: Int?,
+        provenance: CanonicalProvenance?,
         message: AnyCodable?,
         errormessage: String?,
         usage: AnyCodable?,
         stopreason: String?)
     {
         self.runid = runid
+        self.run_id = run_id
         self.sessionkey = sessionkey
         self.seq = seq
         self.state = state
+        self.timestamp = timestamp
+        self.provenance = provenance
         self.message = message
         self.errormessage = errormessage
         self.usage = usage
@@ -3218,9 +3293,12 @@ public struct ChatEvent: Codable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case runid = "runId"
+        case run_id
         case sessionkey = "sessionKey"
         case seq
         case state
+        case timestamp
+        case provenance
         case message
         case errormessage = "errorMessage"
         case usage

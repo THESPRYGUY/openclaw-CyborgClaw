@@ -4,6 +4,7 @@ set -euo pipefail
 
 export KEEP_TMP="${KEEP_TMP:-1}"
 TS="$(date -u +%Y%m%d_%H%M%SZ)"
+TS_EPOCH="$(date -u +%s)"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 HEAD_SHA="$(git rev-parse HEAD)"
 
@@ -51,20 +52,63 @@ if [[ -z "${strike_id}" || -z "${alpha_id}" ]]; then
   exit 1
 fi
 
+node_id="$(rg -o '"nodeId"\s*:\s*"[^"]+"' "$health_out" | head -n1 | sed -E 's/.*"nodeId"\s*:\s*"([^"]+)".*/\1/' || true)"
+reviewer_agent="$(rg -o 'reviewer_agent=[^ ]+' "$alpha_out" | head -n1 | cut -d= -f2 || true)"
+
 base="ops/ledger/gate_${TS}_${alpha_id}"
 md="${base}.md"
 js="${base}.json"
+HANDOFF_SHA="2c65d4eb941439cf889749a81ff00176b1e115aa"
+REPO_ROOT="$(pwd -P)"
+PORCELAIN="$(git status --porcelain=v1)"
+NON_RUNTIME_DIRTY="$(printf '%s\n' "$PORCELAIN" | rg -v '^(.. )?(ops/tasks/task-[0-9]+\.json|ops/ledger/)' || true)"
+WORKTREE_CLEAN="yes"
+if [[ -n "$NON_RUNTIME_DIRTY" ]]; then
+  WORKTREE_CLEAN="no"
+fi
+HANDOFF_ANCESTOR="NO"
+if git merge-base --is-ancestor "$HANDOFF_SHA" "$HEAD_SHA"; then
+  HANDOFF_ANCESTOR="YES"
+fi
+PREFLIGHT_STATUS="pass"
+if [[ "$HANDOFF_ANCESTOR" != "YES" ]]; then
+  PREFLIGHT_STATUS="fail"
+fi
+POLICY_FLAGS="health_rc_zero,alpha_rc_zero,strike_echo_pass,pin_ok,alpha_smoke_pass_5_5,run_id_present,worktree_clean,handoff_ancestor"
 
 python3 - <<PY
 import json, pathlib
 health = pathlib.Path("${health_out}").read_text(encoding="utf-8", errors="replace")
 alpha  = pathlib.Path("${alpha_out}").read_text(encoding="utf-8", errors="replace")
 obj = {
+  "job_id": None,
+  "run_id": "${alpha_id}",
+  "agent_uuid": None,
+  "agent_fingerprint": None,
+  "agent_profile_id": "${reviewer_agent}" or None,
+  "node_id": "${node_id}" or None,
+  "provider_id": None,
+  "model_id": None,
+  "timestamp": int("${TS_EPOCH}"),
   "ts_utc": "${TS}",
   "branch": "${BRANCH}",
   "head": "${HEAD_SHA}",
+  "repo_root": "${REPO_ROOT}",
+  "worktree_clean": "${WORKTREE_CLEAN}",
+  "handoff_ancestor": "${HANDOFF_ANCESTOR}",
+  "preflight_status": "${PREFLIGHT_STATUS}",
+  "contract_version": "m04_preflight_v1",
+  "policy_flags": "${POLICY_FLAGS}",
+  "artifact_kind": "preflight_contract",
   "strike_echo_run_id": "${strike_id}",
   "alpha_smoke_run_id": "${alpha_id}",
+  "provenance_source_limits": [
+    "job_id unavailable in gate inputs",
+    "agent_uuid unavailable in gate inputs",
+    "agent_fingerprint unavailable in gate inputs",
+    "provider_id unavailable as single canonical value in mixed-role alpha output",
+    "model_id unavailable as single canonical value in mixed-role alpha output"
+  ],
   "health_output_raw": health,
   "alpha_output_raw": alpha,
   "gate_status": "PASS"
@@ -81,6 +125,15 @@ cat > "${md}" <<MD
 - HEAD: ${HEAD_SHA}
 - strike_echo run_id: ${strike_id}
 - alpha_smoke run_id: ${alpha_id}
+- job_id: UNKNOWN
+- run_id: ${alpha_id}
+- agent_uuid: UNKNOWN
+- agent_fingerprint: UNKNOWN
+- agent_profile_id: ${reviewer_agent:-UNKNOWN}
+- node_id: ${node_id:-UNKNOWN}
+- provider_id: UNKNOWN
+- model_id: UNKNOWN
+- timestamp: ${TS_EPOCH}
 - gate_status: PASS
 
 ## Files
