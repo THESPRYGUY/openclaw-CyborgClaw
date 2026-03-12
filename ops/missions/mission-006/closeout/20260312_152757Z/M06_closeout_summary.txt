@@ -1,0 +1,20 @@
+M06 closeout summary
+
+VERIFIED CURRENT STATE
+- Final status: M06_COMPLETE_WITH_LIMITS.
+- Canonical provenance keys were normalized across audited typed/emitter/receipt chain.
+- provider_id and model_id are truthful only as multi-step/per-role values in this chain.
+- job_id, agent_uuid, and agent_fingerprint are source-limited unknown/null in this chain.
+- No fabricated provenance values were introduced.
+
+TARGET / INTENDED STATE
+- Preserve truthful provenance representation without fabrication.
+
+UNKNOWN / TO VERIFY
+- Alternate runtime-path sourcing for unavailable fields.
+
+RISKS / BLOCKERS
+- Scope confusion beyond audited chain.
+
+EXACT NEXT ACTION
+- Mission manager reviews `M06_receipt_rule_decision.md` and approves or requests re-scope.
