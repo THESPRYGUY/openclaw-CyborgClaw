@@ -13,6 +13,7 @@ import { createDefaultDeps } from "../cli/deps.js";
 import { agentCommandFromIngress } from "../commands/agent.js";
 import type { ImageContent } from "../commands/agent/types.js";
 import type { GatewayHttpResponsesConfig } from "../config/types.gateway.js";
+import { governorExecute } from "../governor/governor.js";
 import { emitAgentEvent, onAgentEvent } from "../infra/agent-events.js";
 import { logWarn } from "../logger.js";
 import {
@@ -57,6 +58,8 @@ type OpenResponsesHttpOptions = {
 
 const DEFAULT_BODY_BYTES = 20 * 1024 * 1024;
 const DEFAULT_MAX_URL_PARTS = 8;
+const OVERLOAD_ERROR_CODE = "admission_overloaded";
+const OVERLOAD_ERROR_MESSAGE = "gateway admission queue full";
 
 function writeSseEvent(res: ServerResponse, event: StreamingEvent) {
   res.write(`event: ${event.type}\n`);
@@ -146,6 +149,20 @@ export { buildAgentPrompt } from "./openresponses-prompt.js";
 
 function createEmptyUsage(): Usage {
   return { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
+}
+
+function isAdmissionOverloadError(error: unknown): boolean {
+  return error instanceof Error && error.message === "governor_queue_full";
+}
+
+async function runResponsesWithAdmissionGuard<T>(params: {
+  admissionKey: string;
+  run: () => Promise<T>;
+}): Promise<T> {
+  return await governorExecute({
+    agentId: params.admissionKey,
+    fn: params.run,
+  });
 }
 
 function toUsage(
@@ -471,16 +488,20 @@ export async function handleOpenResponsesHttpRequest(
 
   if (!stream) {
     try {
-      const result = await runResponsesAgentCommand({
-        message: prompt.message,
-        images,
-        clientTools: resolvedClientTools,
-        extraSystemPrompt,
-        streamParams,
-        sessionKey,
-        runId: responseId,
-        messageChannel,
-        deps,
+      const result = await runResponsesWithAdmissionGuard({
+        admissionKey: sessionKey,
+        run: async () =>
+          await runResponsesAgentCommand({
+            message: prompt.message,
+            images,
+            clientTools: resolvedClientTools,
+            extraSystemPrompt,
+            streamParams,
+            sessionKey,
+            runId: responseId,
+            messageChannel,
+            deps,
+          }),
       });
 
       const payloads = (result as { payloads?: Array<{ text?: string }> } | null)?.payloads;
@@ -531,6 +552,17 @@ export async function handleOpenResponsesHttpRequest(
 
       sendJson(res, 200, response);
     } catch (err) {
+      if (isAdmissionOverloadError(err)) {
+        const response = createResponseResource({
+          id: responseId,
+          model,
+          status: "failed",
+          output: [],
+          error: { code: OVERLOAD_ERROR_CODE, message: OVERLOAD_ERROR_MESSAGE },
+        });
+        sendJson(res, 429, response);
+        return true;
+      }
       logWarn(`openresponses: non-stream response failed: ${String(err)}`);
       const response = createResponseResource({
         id: responseId,
@@ -698,16 +730,20 @@ export async function handleOpenResponsesHttpRequest(
 
   void (async () => {
     try {
-      const result = await runResponsesAgentCommand({
-        message: prompt.message,
-        images,
-        clientTools: resolvedClientTools,
-        extraSystemPrompt,
-        streamParams,
-        sessionKey,
-        runId: responseId,
-        messageChannel,
-        deps,
+      const result = await runResponsesWithAdmissionGuard({
+        admissionKey: sessionKey,
+        run: async () =>
+          await runResponsesAgentCommand({
+            message: prompt.message,
+            images,
+            clientTools: resolvedClientTools,
+            extraSystemPrompt,
+            streamParams,
+            sessionKey,
+            runId: responseId,
+            messageChannel,
+            deps,
+          }),
       });
 
       finalUsage = extractUsageFromResult(result);
@@ -809,6 +845,27 @@ export async function handleOpenResponsesHttpRequest(
         });
       }
     } catch (err) {
+      if (isAdmissionOverloadError(err)) {
+        if (closed) {
+          return;
+        }
+        finalUsage = finalUsage ?? createEmptyUsage();
+        const errorResponse = createResponseResource({
+          id: responseId,
+          model,
+          status: "failed",
+          output: [],
+          error: { code: OVERLOAD_ERROR_CODE, message: OVERLOAD_ERROR_MESSAGE },
+          usage: finalUsage,
+        });
+        writeSseEvent(res, { type: "response.failed", response: errorResponse });
+        emitAgentEvent({
+          runId: responseId,
+          stream: "lifecycle",
+          data: { phase: "error" },
+        });
+        return;
+      }
       logWarn(`openresponses: streaming response failed: ${String(err)}`);
       if (closed) {
         return;

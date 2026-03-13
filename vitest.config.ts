@@ -87,7 +87,10 @@ export default defineConfig({
       "ui/src/ui/controllers/agents.test.ts",
       "ui/src/ui/controllers/chat.test.ts",
     ],
-    setupFiles: ["test/setup.ts"],
+    setupFiles: ["test/setup.ts", "test/no-network.ts"],
+    sequence: {
+      setupFiles: "list",
+    },
     exclude: [
       "dist/**",
       "apps/macos/**",

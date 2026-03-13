@@ -581,6 +581,51 @@ describe("OpenResponses HTTP API (e2e)", () => {
     }
   });
 
+  it("maps non-stream admission overload to 429 with admission_overloaded", async () => {
+    const port = enabledPort;
+    agentCommand.mockClear();
+    agentCommand.mockRejectedValueOnce(new Error("governor_queue_full"));
+
+    const res = await postResponses(port, {
+      stream: false,
+      model: "openclaw",
+      input: "hi",
+    });
+    expect(res.status).toBe(429);
+    const body = (await res.json()) as {
+      status?: string;
+      error?: { code?: string; message?: string };
+    };
+    expect(body.status).toBe("failed");
+    expect(body.error?.code).toBe("admission_overloaded");
+    await ensureResponseConsumed(res);
+  });
+
+  it("emits structured failed SSE response with admission_overloaded on stream overload", async () => {
+    const port = enabledPort;
+    agentCommand.mockClear();
+    agentCommand.mockRejectedValueOnce(new Error("governor_queue_full"));
+
+    const res = await postResponses(port, {
+      stream: true,
+      model: "openclaw",
+      input: "hi",
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type") ?? "").toContain("text/event-stream");
+
+    const text = await res.text();
+    const events = parseSseEvents(text);
+    const failedEvent = events.find((event) => event.event === "response.failed");
+    expect(failedEvent).toBeDefined();
+
+    const failedPayload = JSON.parse(failedEvent?.data ?? "{}") as {
+      response?: { status?: string; error?: { code?: string; message?: string } };
+    };
+    expect(failedPayload.response?.status).toBe("failed");
+    expect(failedPayload.response?.error?.code).toBe("admission_overloaded");
+  });
+
   it("blocks unsafe URL-based file/image inputs", async () => {
     const port = enabledPort;
     agentCommand.mockClear();
