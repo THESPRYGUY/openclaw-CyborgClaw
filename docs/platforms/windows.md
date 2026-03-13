@@ -22,6 +22,33 @@ Native Windows companion apps are planned.
 - [Install & updates](/install/updating)
 - Official WSL2 guide (Microsoft): [https://learn.microsoft.com/windows/wsl/install](https://learn.microsoft.com/windows/wsl/install)
 
+## Native Windows status
+
+Native Windows CLI flows are improving, but WSL2 is still the recommended path.
+
+What works well on native Windows today:
+
+- website installer via `install.ps1`
+- local CLI use such as `openclaw --version`, `openclaw doctor`, and `openclaw plugins list --json`
+- embedded local-agent/provider smoke such as:
+
+```powershell
+openclaw agent --local --agent main --thinking low -m "Reply with exactly WINDOWS-HATCH-OK."
+```
+
+Current caveats:
+
+- `openclaw onboard --non-interactive` still expects a reachable local gateway unless you pass `--skip-health`
+- `openclaw onboard --non-interactive --install-daemon` and `openclaw gateway install` currently use Windows Scheduled Tasks
+- on some native Windows setups, Scheduled Task install may require running PowerShell as Administrator
+
+If you want the native CLI only, without gateway service install, use one of these:
+
+```powershell
+openclaw onboard --non-interactive --skip-health
+openclaw gateway run
+```
+
 ## Gateway
 
 - [Gateway runbook](/gateway)
@@ -53,6 +80,50 @@ Repair/migrate:
 
 ```
 openclaw doctor
+```
+
+## Gateway auto-start before Windows login
+
+For headless setups, ensure the full boot chain runs even when no one logs into
+Windows.
+
+### 1) Keep user services running without login
+
+Inside WSL:
+
+```bash
+sudo loginctl enable-linger "$(whoami)"
+```
+
+### 2) Install the OpenClaw gateway user service
+
+Inside WSL:
+
+```bash
+openclaw gateway install
+```
+
+### 3) Start WSL automatically at Windows boot
+
+In PowerShell as Administrator:
+
+```powershell
+schtasks /create /tn "WSL Boot" /tr "wsl.exe -d Ubuntu --exec /bin/true" /sc onstart /ru SYSTEM
+```
+
+Replace `Ubuntu` with your distro name from:
+
+```powershell
+wsl --list --verbose
+```
+
+### Verify startup chain
+
+After a reboot (before Windows sign-in), check from WSL:
+
+```bash
+systemctl --user is-enabled openclaw-gateway
+systemctl --user status openclaw-gateway --no-pager
 ```
 
 ## Advanced: expose WSL services over LAN (portproxy)

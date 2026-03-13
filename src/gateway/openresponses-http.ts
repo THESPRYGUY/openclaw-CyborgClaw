@@ -10,7 +10,7 @@ import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { ClientToolDefinition } from "../agents/pi-embedded-runner/run/params.js";
 import { createDefaultDeps } from "../cli/deps.js";
-import { agentCommand } from "../commands/agent.js";
+import { agentCommandFromIngress } from "../commands/agent.js";
 import type { ImageContent } from "../commands/agent/types.js";
 import type { GatewayHttpResponsesConfig } from "../config/types.gateway.js";
 import { governorExecute } from "../governor/governor.js";
@@ -35,7 +35,8 @@ import type { AuthRateLimiter } from "./auth-rate-limit.js";
 import type { ResolvedGatewayAuth } from "./auth.js";
 import { sendJson, setSseHeaders, writeDone } from "./http-common.js";
 import { handleGatewayPostJsonEndpoint } from "./http-endpoint-helpers.js";
-import { resolveAgentIdForRequest, resolveSessionKey } from "./http-utils.js";
+import { resolveGatewayRequestContext } from "./http-utils.js";
+import { normalizeInputHostnameAllowlist } from "./input-allowlist.js";
 import {
   CreateResponseBodySchema,
   type CreateResponseBody,
@@ -57,6 +58,8 @@ type OpenResponsesHttpOptions = {
 
 const DEFAULT_BODY_BYTES = 20 * 1024 * 1024;
 const DEFAULT_MAX_URL_PARTS = 8;
+const OVERLOAD_ERROR_CODE = "admission_overloaded";
+const OVERLOAD_ERROR_MESSAGE = "gateway admission queue full";
 
 function writeSseEvent(res: ServerResponse, event: StreamingEvent) {
   res.write(`event: ${event.type}\n`);
@@ -69,14 +72,6 @@ type ResolvedResponsesLimits = {
   files: InputFileLimits;
   images: InputImageLimits;
 };
-
-function normalizeHostnameAllowlist(values: string[] | undefined): string[] | undefined {
-  if (!values || values.length === 0) {
-    return undefined;
-  }
-  const normalized = values.map((value) => value.trim()).filter((value) => value.length > 0);
-  return normalized.length > 0 ? normalized : undefined;
-}
 
 function resolveResponsesLimits(
   config: GatewayHttpResponsesConfig | undefined,
@@ -92,11 +87,11 @@ function resolveResponsesLimits(
         : DEFAULT_MAX_URL_PARTS,
     files: {
       ...fileLimits,
-      urlAllowlist: normalizeHostnameAllowlist(files?.urlAllowlist),
+      urlAllowlist: normalizeInputHostnameAllowlist(files?.urlAllowlist),
     },
     images: {
       allowUrl: images?.allowUrl ?? true,
-      urlAllowlist: normalizeHostnameAllowlist(images?.urlAllowlist),
+      urlAllowlist: normalizeInputHostnameAllowlist(images?.urlAllowlist),
       allowedMimes: normalizeMimeList(images?.allowedMimes, DEFAULT_INPUT_IMAGE_MIMES),
       maxBytes: images?.maxBytes ?? DEFAULT_INPUT_IMAGE_MAX_BYTES,
       maxRedirects: images?.maxRedirects ?? DEFAULT_INPUT_MAX_REDIRECTS,
@@ -152,16 +147,22 @@ function applyToolChoice(params: {
 
 export { buildAgentPrompt } from "./openresponses-prompt.js";
 
-function resolveOpenResponsesSessionKey(params: {
-  req: IncomingMessage;
-  agentId: string;
-  user?: string | undefined;
-}): string {
-  return resolveSessionKey({ ...params, prefix: "openresponses" });
-}
-
 function createEmptyUsage(): Usage {
   return { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
+}
+
+function isAdmissionOverloadError(error: unknown): boolean {
+  return error instanceof Error && error.message === "governor_queue_full";
+}
+
+async function runResponsesWithAdmissionGuard<T>(params: {
+  admissionKey: string;
+  run: () => Promise<T>;
+}): Promise<T> {
+  return await governorExecute({
+    agentId: params.admissionKey,
+    fn: params.run,
+  });
 }
 
 function toUsage(
@@ -198,6 +199,19 @@ function extractUsageFromResult(result: unknown): Usage {
       | { input?: number; output?: number; cacheRead?: number; cacheWrite?: number; total?: number }
       | undefined,
   );
+}
+
+type PendingToolCall = { id: string; name: string; arguments: string };
+
+function resolveStopReasonAndPendingToolCalls(meta: unknown): {
+  stopReason: string | undefined;
+  pendingToolCalls: PendingToolCall[] | undefined;
+} {
+  if (!meta || typeof meta !== "object") {
+    return { stopReason: undefined, pendingToolCalls: undefined };
+  }
+  const record = meta as { stopReason?: string; pendingToolCalls?: PendingToolCall[] };
+  return { stopReason: record.stopReason, pendingToolCalls: record.pendingToolCalls };
 }
 
 function createResponseResource(params: {
@@ -242,9 +256,10 @@ async function runResponsesAgentCommand(params: {
   streamParams: { maxTokens: number } | undefined;
   sessionKey: string;
   runId: string;
+  messageChannel: string;
   deps: ReturnType<typeof createDefaultDeps>;
 }) {
-  return agentCommand(
+  return agentCommandFromIngress(
     {
       message: params.message,
       images: params.images.length > 0 ? params.images : undefined,
@@ -254,8 +269,10 @@ async function runResponsesAgentCommand(params: {
       sessionKey: params.sessionKey,
       runId: params.runId,
       deliver: false,
-      messageChannel: "webchat",
+      messageChannel: params.messageChannel,
       bestEffortDeliver: false,
+      // HTTP API callers are authenticated operator clients for this gateway context.
+      senderIsOwner: true,
     },
     defaultRuntime,
     params.deps,
@@ -336,12 +353,18 @@ export async function handleOpenResponsesHttpRequest(
               if (sourceType === "url") {
                 markUrlPart();
               }
-              const imageSource: InputImageSource = {
-                type: sourceType,
-                url: source.url,
-                data: source.data,
-                mediaType: source.media_type,
-              };
+              const imageSource: InputImageSource =
+                sourceType === "url"
+                  ? {
+                      type: "url",
+                      url: source.url ?? "",
+                      mediaType: source.media_type,
+                    }
+                  : {
+                      type: "base64",
+                      data: source.data ?? "",
+                      mediaType: source.media_type,
+                    };
               const image = await extractImageContentFromSource(imageSource, limits.images);
               images.push(image);
               continue;
@@ -364,13 +387,20 @@ export async function handleOpenResponsesHttpRequest(
                 markUrlPart();
               }
               const file = await extractFileContentFromSource({
-                source: {
-                  type: sourceType,
-                  url: source.url,
-                  data: source.data,
-                  mediaType: source.media_type,
-                  filename: source.filename,
-                },
+                source:
+                  sourceType === "url"
+                    ? {
+                        type: "url",
+                        url: source.url ?? "",
+                        mediaType: source.media_type,
+                        filename: source.filename,
+                      }
+                    : {
+                        type: "base64",
+                        data: source.data ?? "",
+                        mediaType: source.media_type,
+                        filename: source.filename,
+                      },
                 limits: limits.files,
               });
               if (file.text?.trim()) {
@@ -413,8 +443,14 @@ export async function handleOpenResponsesHttpRequest(
     });
     return true;
   }
-  const agentId = resolveAgentIdForRequest({ req, model });
-  const sessionKey = resolveOpenResponsesSessionKey({ req, agentId, user });
+  const { sessionKey, messageChannel } = resolveGatewayRequestContext({
+    req,
+    model,
+    user,
+    sessionPrefix: "openresponses",
+    defaultMessageChannel: "webchat",
+    useMessageChannelHeader: false,
+  });
 
   // Build prompt from input
   const prompt = buildAgentPrompt(payload.input);
@@ -452,9 +488,9 @@ export async function handleOpenResponsesHttpRequest(
 
   if (!stream) {
     try {
-      const result = await governorExecute({
-        agentId,
-        fn: async () =>
+      const result = await runResponsesWithAdmissionGuard({
+        admissionKey: sessionKey,
+        run: async () =>
           await runResponsesAgentCommand({
             message: prompt.message,
             images,
@@ -463,6 +499,7 @@ export async function handleOpenResponsesHttpRequest(
             streamParams,
             sessionKey,
             runId: responseId,
+            messageChannel,
             deps,
           }),
       });
@@ -470,13 +507,7 @@ export async function handleOpenResponsesHttpRequest(
       const payloads = (result as { payloads?: Array<{ text?: string }> } | null)?.payloads;
       const usage = extractUsageFromResult(result);
       const meta = (result as { meta?: unknown } | null)?.meta;
-      const stopReason =
-        meta && typeof meta === "object" ? (meta as { stopReason?: string }).stopReason : undefined;
-      const pendingToolCalls =
-        meta && typeof meta === "object"
-          ? (meta as { pendingToolCalls?: Array<{ id: string; name: string; arguments: string }> })
-              .pendingToolCalls
-          : undefined;
+      const { stopReason, pendingToolCalls } = resolveStopReasonAndPendingToolCalls(meta);
 
       // If agent called a client tool, return function_call instead of text
       if (stopReason === "tool_calls" && pendingToolCalls && pendingToolCalls.length > 0) {
@@ -521,6 +552,17 @@ export async function handleOpenResponsesHttpRequest(
 
       sendJson(res, 200, response);
     } catch (err) {
+      if (isAdmissionOverloadError(err)) {
+        const response = createResponseResource({
+          id: responseId,
+          model,
+          status: "failed",
+          output: [],
+          error: { code: OVERLOAD_ERROR_CODE, message: OVERLOAD_ERROR_MESSAGE },
+        });
+        sendJson(res, 429, response);
+        return true;
+      }
       logWarn(`openresponses: non-stream response failed: ${String(err)}`);
       const response = createResponseResource({
         id: responseId,
@@ -688,9 +730,9 @@ export async function handleOpenResponsesHttpRequest(
 
   void (async () => {
     try {
-      const result = await governorExecute({
-        agentId,
-        fn: async () =>
+      const result = await runResponsesWithAdmissionGuard({
+        admissionKey: sessionKey,
+        run: async () =>
           await runResponsesAgentCommand({
             message: prompt.message,
             images,
@@ -699,6 +741,7 @@ export async function handleOpenResponsesHttpRequest(
             streamParams,
             sessionKey,
             runId: responseId,
+            messageChannel,
             deps,
           }),
       });
@@ -715,18 +758,7 @@ export async function handleOpenResponsesHttpRequest(
         const resultAny = result as { payloads?: Array<{ text?: string }>; meta?: unknown };
         const payloads = resultAny.payloads;
         const meta = resultAny.meta;
-        const stopReason =
-          meta && typeof meta === "object"
-            ? (meta as { stopReason?: string }).stopReason
-            : undefined;
-        const pendingToolCalls =
-          meta && typeof meta === "object"
-            ? (
-                meta as {
-                  pendingToolCalls?: Array<{ id: string; name: string; arguments: string }>;
-                }
-              ).pendingToolCalls
-            : undefined;
+        const { stopReason, pendingToolCalls } = resolveStopReasonAndPendingToolCalls(meta);
 
         // If agent called a client tool, emit function_call instead of text
         if (stopReason === "tool_calls" && pendingToolCalls && pendingToolCalls.length > 0) {
@@ -813,6 +845,27 @@ export async function handleOpenResponsesHttpRequest(
         });
       }
     } catch (err) {
+      if (isAdmissionOverloadError(err)) {
+        if (closed) {
+          return;
+        }
+        finalUsage = finalUsage ?? createEmptyUsage();
+        const errorResponse = createResponseResource({
+          id: responseId,
+          model,
+          status: "failed",
+          output: [],
+          error: { code: OVERLOAD_ERROR_CODE, message: OVERLOAD_ERROR_MESSAGE },
+          usage: finalUsage,
+        });
+        writeSseEvent(res, { type: "response.failed", response: errorResponse });
+        emitAgentEvent({
+          runId: responseId,
+          stream: "lifecycle",
+          data: { phase: "error" },
+        });
+        return;
+      }
       logWarn(`openresponses: streaming response failed: ${String(err)}`);
       if (closed) {
         return;
