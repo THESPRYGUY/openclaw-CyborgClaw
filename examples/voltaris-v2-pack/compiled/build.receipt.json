@@ -1,0 +1,98 @@
+{
+  "kind": "agent.build-receipt",
+  "schemaVersion": 1,
+  "packageId": "voltaris-v2.pack",
+  "buildEpoch": "2026-03-15T00:00:00Z",
+  "reproducibility": {
+    "encoding": "utf-8",
+    "newline": "lf",
+    "jsonStyle": "pretty-2-space",
+    "selfDigestStrategy": "zero-all-digest-fields-before-hash",
+    "zeroDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "inputs": [
+    {
+      "path": "../voltaris-v2.genome.yaml",
+      "fileDigest": "sha256:b3c34ad62218285195292602863dec86d9e67dbd0644189b41a3059af76169f9"
+    },
+    {
+      "path": "../../../schemas/agent.genome.v1.schema.json",
+      "fileDigest": "sha256:d2172cc1deb247ccd1d5f12b67f34389b68eccfff4a7e8384eca33f57a5c50cf"
+    },
+    {
+      "path": "../../../schemas/agent.lineage.schema.json",
+      "fileDigest": "sha256:70df7e2b5d344ce7f8fc06f1a1f6e8d46742ccbf34b36f42a52268970a4b119a"
+    },
+    {
+      "path": "../../../schemas/agent.runtime.schema.json",
+      "fileDigest": "sha256:72d65f02a973c39eada1ed2dc0228dee0beac06e9b37266dd9d11c9316fa1e9a"
+    },
+    {
+      "path": "../../../schemas/agent.policy.schema.json",
+      "fileDigest": "sha256:9d02bb27de8df2790cd594effba8133aacb90e58e96b7c3c281e0f3a60a893a2"
+    },
+    {
+      "path": "package.manifest.json",
+      "fileDigest": "sha256:1f1ec5973f07b3d8059e6fb15fcf45661c6b2811ec2259def1dbfcc706929c89"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "workspace/IDENTITY.md",
+      "kind": "workspace-file",
+      "fileDigest": "sha256:9cee02981f1b2da721b80a85bb7ad0d787f2d2e89569c79337c098d44cef527d"
+    },
+    {
+      "path": "workspace/SOUL.md",
+      "kind": "workspace-file",
+      "fileDigest": "sha256:3b730cc50bc793b04a4e4a370284a318a76e72e7210d59200534e580c1fb61d4"
+    },
+    {
+      "path": "workspace/AGENTS.md",
+      "kind": "workspace-file",
+      "fileDigest": "sha256:20f739e206c1d4c2158c20d87a1b45cf6b3a03a9e64ba90f658a4b139dd24f69"
+    },
+    {
+      "path": "workspace/TOOLS.md",
+      "kind": "workspace-file",
+      "fileDigest": "sha256:072c03b4f238c600a27bf937a8a66598bac1e26638e4d64368bcd233ad92db81"
+    },
+    {
+      "path": "workspace/USER.md",
+      "kind": "workspace-file",
+      "fileDigest": "sha256:024102fd2ae974c459882421a83a29d6e1e67832a8f1e9dd3a91d31a7122e5ab"
+    },
+    {
+      "path": "manifests/agent.lineage.json",
+      "kind": "manifest",
+      "fileDigest": "sha256:f5ac854b4e9c735906095fc9e0885472f16183a1bfa2754c535925989977aedf",
+      "canonicalDigest": "sha256:8eb12a3f6af1115f9de1cbe7ad24af10a90fb383c1f03ff2d23a7af29dc87ddd",
+      "selfDigestField": "receipts.lineageDigest"
+    },
+    {
+      "path": "manifests/agent.runtime.json",
+      "kind": "manifest",
+      "fileDigest": "sha256:d95dae7d409996f4e6e9735ecf3151f9192cdfc1205bf0f96048d9fc0a065512",
+      "canonicalDigest": "sha256:134b76112b07777887e58f36bdf865a3d16b7199b1d4d3ae0300680ffca4f76f",
+      "selfDigestField": "receipts.runtimeDigest"
+    },
+    {
+      "path": "manifests/agent.policy.json",
+      "kind": "manifest",
+      "fileDigest": "sha256:ce205c668d23ad1c44c01325be013bc126c383cd2c3566e0c593ae3fe9ef0850",
+      "canonicalDigest": "sha256:68a8e7adaf417e605f378f406473a15e978fcf8848a44129b9b43d83d313b9d7",
+      "selfDigestField": "receipts.policyDigest"
+    },
+    {
+      "path": "manifests/deployment.manifest.json",
+      "kind": "deployment-manifest",
+      "fileDigest": "sha256:27127befb0bd5a751beb72befea5cda0863dd26f515246d7f44c17d72915d1f2"
+    }
+  ],
+  "parityChecks": [
+    "package manifest includes every compiled artifact",
+    "manifest self-digests use zero-self canonicalization",
+    "runtime and policy digests bind to the lineage canonical digest",
+    "designStudio output digest equals package manifest file digest"
+  ]
+}

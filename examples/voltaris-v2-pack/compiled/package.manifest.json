@@ -1,0 +1,62 @@
+{
+  "kind": "agent.package",
+  "schemaVersion": 1,
+  "packageId": "voltaris-v2.pack",
+  "agentId": "voltaris-v2",
+  "genomeSource": "../voltaris-v2.genome.yaml",
+  "buildReceipt": "build.receipt.json",
+  "artifactBase": ".",
+  "artifacts": [
+    {
+      "path": "workspace/IDENTITY.md",
+      "kind": "workspace-file",
+      "role": "identity"
+    },
+    {
+      "path": "workspace/SOUL.md",
+      "kind": "workspace-file",
+      "role": "soul"
+    },
+    {
+      "path": "workspace/AGENTS.md",
+      "kind": "workspace-file",
+      "role": "agents"
+    },
+    {
+      "path": "workspace/TOOLS.md",
+      "kind": "workspace-file",
+      "role": "tools"
+    },
+    {
+      "path": "workspace/USER.md",
+      "kind": "workspace-file",
+      "role": "user"
+    },
+    {
+      "path": "manifests/agent.lineage.json",
+      "kind": "manifest",
+      "role": "lineage"
+    },
+    {
+      "path": "manifests/agent.runtime.json",
+      "kind": "manifest",
+      "role": "runtime"
+    },
+    {
+      "path": "manifests/agent.policy.json",
+      "kind": "manifest",
+      "role": "policy"
+    },
+    {
+      "path": "manifests/deployment.manifest.json",
+      "kind": "deployment-manifest",
+      "role": "deployment"
+    }
+  ],
+  "runtimeBridge": {
+    "compilerOwns": ["genome", "compiled artifacts", "receipts"],
+    "runtimeOwns": ["execution beneath the compiled workspace"],
+    "gatewayOwns": ["live session truth", "routing", "approvals"],
+    "governanceOwns": ["clone approvals", "mutation approvals", "deployment authorization"]
+  }
+}

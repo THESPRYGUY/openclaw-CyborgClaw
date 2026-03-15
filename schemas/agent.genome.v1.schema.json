@@ -1,0 +1,451 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://openclaw.ai/schemas/agent.genome.v1.schema.json",
+  "title": "OpenClaw Agent Genome v1",
+  "description": "Canonical master-genome contract for governed agent compilation into OpenClaw workspace artifacts and frozen manifests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "genomeId",
+    "agentId",
+    "version",
+    "identity",
+    "mission",
+    "authority",
+    "tools",
+    "memory",
+    "bootstrap",
+    "runtime",
+    "providerPolicy",
+    "governance",
+    "telemetry",
+    "clones",
+    "mutations",
+    "validation",
+    "build"
+  ],
+  "properties": {
+    "kind": {
+      "const": "agent-genome"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "genomeId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._/-]{2,127}$"
+    },
+    "agentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,63}$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "inherits": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._/-]{2,127}$"
+      },
+      "uniqueItems": true
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "displayName",
+        "roleLabel",
+        "personaTone",
+        "executivePosture",
+        "symbolicIdentity"
+      ],
+      "properties": {
+        "displayName": { "type": "string", "minLength": 1 },
+        "roleLabel": { "type": "string", "minLength": 1 },
+        "personaTone": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["summary", "must", "mustNot"],
+          "properties": {
+            "summary": { "type": "string", "minLength": 1 },
+            "must": { "$ref": "#/definitions/stringArray" },
+            "mustNot": { "$ref": "#/definitions/stringArray" }
+          }
+        },
+        "executivePosture": { "type": "string", "minLength": 1 },
+        "symbolicIdentity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["archetype", "palette", "motif"],
+          "properties": {
+            "archetype": { "type": "string", "minLength": 1 },
+            "palette": { "$ref": "#/definitions/stringArray" },
+            "motif": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "mission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["existsTo", "serves", "doesNotDo", "successConditions", "nonGoals"],
+      "properties": {
+        "existsTo": { "type": "string", "minLength": 1 },
+        "serves": { "$ref": "#/definitions/stringArray" },
+        "doesNotDo": { "$ref": "#/definitions/stringArray" },
+        "successConditions": { "$ref": "#/definitions/stringArray" },
+        "nonGoals": { "$ref": "#/definitions/stringArray" }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observe",
+        "recommend",
+        "decide",
+        "delegate",
+        "executeDirectly",
+        "requiresApproval"
+      ],
+      "properties": {
+        "observe": { "$ref": "#/definitions/stringArray" },
+        "recommend": { "$ref": "#/definitions/stringArray" },
+        "decide": { "$ref": "#/definitions/stringArray" },
+        "delegate": { "$ref": "#/definitions/stringArray" },
+        "executeDirectly": { "$ref": "#/definitions/stringArray" },
+        "requiresApproval": { "$ref": "#/definitions/stringArray" }
+      }
+    },
+    "tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "readOnly",
+        "analysis",
+        "execution",
+        "acpPolicy",
+        "sandboxPolicy",
+        "explicitDenials"
+      ],
+      "properties": {
+        "profile": { "type": "string", "minLength": 1 },
+        "readOnly": { "$ref": "#/definitions/stringArray" },
+        "analysis": { "$ref": "#/definitions/stringArray" },
+        "execution": { "$ref": "#/definitions/stringArray" },
+        "acpPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "authority"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["disabled", "bridge-only", "runtime-default"]
+            },
+            "authority": { "type": "string", "minLength": 1 }
+          }
+        },
+        "sandboxPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["defaultMode", "workspaceAccess", "spawnInheritance"],
+          "properties": {
+            "defaultMode": {
+              "type": "string",
+              "enum": ["off", "ask", "on", "full"]
+            },
+            "workspaceAccess": {
+              "type": "string",
+              "enum": ["none", "ro", "rw"]
+            },
+            "spawnInheritance": { "type": "string", "minLength": 1 }
+          }
+        },
+        "explicitDenials": { "$ref": "#/definitions/stringArray" }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scopes",
+        "curatedExpectations",
+        "longTermPolicy",
+        "writePermissions",
+        "retentionBoundaries",
+        "antiLeakage"
+      ],
+      "properties": {
+        "scopes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/memoryScope" },
+          "minItems": 1
+        },
+        "curatedExpectations": { "$ref": "#/definitions/stringArray" },
+        "longTermPolicy": { "type": "string", "minLength": 1 },
+        "writePermissions": { "$ref": "#/definitions/stringArray" },
+        "retentionBoundaries": { "$ref": "#/definitions/stringArray" },
+        "antiLeakage": { "$ref": "#/definitions/stringArray" }
+      }
+    },
+    "bootstrap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identityFile", "soulFile", "agentsFile", "toolsFile", "userFile"],
+      "properties": {
+        "identityFile": { "$ref": "#/definitions/bootstrapFile" },
+        "soulFile": { "$ref": "#/definitions/bootstrapFile" },
+        "agentsFile": { "$ref": "#/definitions/bootstrapFile" },
+        "toolsFile": { "$ref": "#/definitions/bootstrapFile" },
+        "userFile": { "$ref": "#/definitions/bootstrapFile" }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "executor",
+        "gatewayAuthority",
+        "workspaceModel",
+        "sessionModel",
+        "laneBinding",
+        "deploymentProfiles"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["embedded", "acp-assisted"]
+        },
+        "executor": {
+          "type": "string",
+          "enum": ["embedded", "subagent", "acp"]
+        },
+        "gatewayAuthority": { "$ref": "#/definitions/stringArray" },
+        "workspaceModel": { "$ref": "#/definitions/stringArray" },
+        "sessionModel": { "$ref": "#/definitions/stringArray" },
+        "laneBinding": { "$ref": "#/definitions/stringArray" },
+        "deploymentProfiles": { "$ref": "#/definitions/stringArray" }
+      }
+    },
+    "providerPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary", "fallbacks", "switchingConstraints", "overrideRules"],
+      "properties": {
+        "primary": { "$ref": "#/definitions/providerTarget" },
+        "fallbacks": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/providerTarget" }
+        },
+        "switchingConstraints": { "$ref": "#/definitions/stringArray" },
+        "overrideRules": { "$ref": "#/definitions/stringArray" }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "riskTier",
+        "approvalModel",
+        "mandatoryTests",
+        "deploymentGates",
+        "mutationClassRules",
+        "lineageMetadata",
+        "ownershipMetadata"
+      ],
+      "properties": {
+        "riskTier": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "approvalModel": { "type": "string", "minLength": 1 },
+        "mandatoryTests": { "$ref": "#/definitions/stringArray" },
+        "deploymentGates": { "$ref": "#/definitions/stringArray" },
+        "mutationClassRules": { "$ref": "#/definitions/stringArray" },
+        "lineageMetadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["lineageId", "ancestorRole", "inheritanceMode"],
+          "properties": {
+            "lineageId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._/-]{2,127}$"
+            },
+            "ancestorRole": { "type": "string", "minLength": 1 },
+            "inheritanceMode": { "type": "string", "minLength": 1 }
+          }
+        },
+        "ownershipMetadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["owner", "stewards"],
+          "properties": {
+            "owner": { "type": "string", "minLength": 1 },
+            "stewards": { "$ref": "#/definitions/stringArray" }
+          }
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receiptEvents", "traceableDecisions", "riskyActionLogs"],
+      "properties": {
+        "receiptEvents": { "$ref": "#/definitions/stringArray" },
+        "traceableDecisions": { "$ref": "#/definitions/stringArray" },
+        "riskyActionLogs": { "$ref": "#/definitions/stringArray" }
+      }
+    },
+    "clones": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/cloneRule" },
+      "minItems": 5
+    },
+    "mutations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/mutationRule" },
+      "minItems": 4
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readinessBenchmarks",
+        "goldenSnapshots",
+        "parityChecks",
+        "reproducibilityChecks"
+      ],
+      "properties": {
+        "readinessBenchmarks": { "$ref": "#/definitions/stringArray" },
+        "goldenSnapshots": { "$ref": "#/definitions/stringArray" },
+        "parityChecks": { "$ref": "#/definitions/stringArray" },
+        "reproducibilityChecks": { "$ref": "#/definitions/stringArray" }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pipeline", "compiledArtifacts", "packageId", "deploymentBridge", "unknowns"],
+      "properties": {
+        "pipeline": { "$ref": "#/definitions/stringArray" },
+        "compiledArtifacts": { "$ref": "#/definitions/stringArray" },
+        "packageId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._/-]{2,127}$"
+        },
+        "deploymentBridge": { "$ref": "#/definitions/stringArray" },
+        "unknowns": { "$ref": "#/definitions/stringArray" }
+      }
+    }
+  },
+  "definitions": {
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "memoryScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "purpose", "visibility", "retention", "writeAccess"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._/-]{1,63}$"
+        },
+        "purpose": { "type": "string", "minLength": 1 },
+        "visibility": {
+          "type": "string",
+          "enum": ["private-session", "shared-governance", "shared-runtime", "compiler-only"]
+        },
+        "retention": {
+          "type": "string",
+          "enum": ["session", "build", "lineage", "bounded-persistent"]
+        },
+        "writeAccess": {
+          "type": "string",
+          "enum": ["none", "runtime", "governance", "compiler", "operator"]
+        }
+      }
+    },
+    "bootstrapFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "expresses"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "expresses": { "$ref": "#/definitions/stringArray" }
+      }
+    },
+    "providerTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 }
+      }
+    },
+    "cloneRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "mayChange",
+        "mustInherit",
+        "requiredApprovals",
+        "rerunTests",
+        "lineageRecord"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "exact-clone",
+            "identity-clone",
+            "capability-clone",
+            "mission-clone",
+            "lane-specific-clone"
+          ]
+        },
+        "mayChange": { "$ref": "#/definitions/stringArray" },
+        "mustInherit": { "$ref": "#/definitions/stringArray" },
+        "requiredApprovals": { "$ref": "#/definitions/stringArray" },
+        "rerunTests": { "$ref": "#/definitions/stringArray" },
+        "lineageRecord": { "$ref": "#/definitions/stringArray" }
+      }
+    },
+    "mutationRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class",
+        "surfaces",
+        "requiredReviewers",
+        "validationSteps",
+        "rollbackRequirement",
+        "semanticDiff",
+        "lineageUpdate"
+      ],
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["low-risk", "medium-risk", "high-risk", "forbidden"]
+        },
+        "surfaces": { "$ref": "#/definitions/stringArray" },
+        "requiredReviewers": { "$ref": "#/definitions/stringArray" },
+        "validationSteps": { "$ref": "#/definitions/stringArray" },
+        "rollbackRequirement": { "type": "string", "minLength": 1 },
+        "semanticDiff": { "type": "string", "minLength": 1 },
+        "lineageUpdate": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "kind": "agent.runtime",
+  "schemaVersion": 1,
+  "runtimeId": "runtime.cyborgclaw.voltaris-v2.reference",
+  "lineage": {
+    "lineageId": "lineage.cyborgclaw.voltaris-v2.master",
+    "lineageDigest": "sha256:8eb12a3f6af1115f9de1cbe7ad24af10a90fb383c1f03ff2d23a7af29dc87ddd"
+  },
+  "agent": {
+    "agentId": "voltaris-v2",
+    "seatId": "cyborgclaw/voltaris/reference"
+  },
+  "registry": {
+    "namespace": "cyborgclaw/voltaris",
+    "recordKey": "master/voltaris-v2"
+  },
+  "runtimeTruthSource": "manifest",
+  "runtime": {
+    "executor": "embedded",
+    "provider": "openai",
+    "model": "gpt-5.3-codex",
+    "instructionsDigest": "sha256:53080987b115cdd9aa5509183e037ce1195803ee1c942ad1a6c3e1e83b1e9145",
+    "toolCatalogDigest": "sha256:d42e893edab61eba50afb7ce56022cbf51fa3c18c35be498f297422fe9491009"
+  },
+  "provenance": {
+    "sourceOfTruth": "runtime-manifest",
+    "authoredAt": "2026-03-15T00:00:00Z",
+    "authoredBy": "codex",
+    "designStudioOutputDigest": "sha256:1f1ec5973f07b3d8059e6fb15fcf45661c6b2811ec2259def1dbfcc706929c89",
+    "lineageDigest": "sha256:8eb12a3f6af1115f9de1cbe7ad24af10a90fb383c1f03ff2d23a7af29dc87ddd"
+  },
+  "trace": {
+    "traceNamespace": "cyborgclaw/voltaris-v2/trace",
+    "receiptNamespace": "cyborgclaw/voltaris-v2/receipt",
+    "routeLawNamespace": "cyborgclaw/voltaris-v2/route-law",
+    "approvalNamespace": "cyborgclaw/voltaris-v2/approval"
+  },
+  "receipts": {
+    "runtimeDigest": "sha256:134b76112b07777887e58f36bdf865a3d16b7199b1d4d3ae0300680ffca4f76f",
+    "lineageDigest": "sha256:8eb12a3f6af1115f9de1cbe7ad24af10a90fb383c1f03ff2d23a7af29dc87ddd",
+    "policyDigest": "sha256:68a8e7adaf417e605f378f406473a15e978fcf8848a44129b9b43d83d313b9d7"
+  }
+}

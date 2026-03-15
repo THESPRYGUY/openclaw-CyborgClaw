@@ -1,0 +1,55 @@
+{
+  "kind": "agent.policy",
+  "schemaVersion": 1,
+  "policyId": "policy.cyborgclaw.voltaris-v2.reference",
+  "lineage": {
+    "lineageId": "lineage.cyborgclaw.voltaris-v2.master",
+    "lineageDigest": "sha256:8eb12a3f6af1115f9de1cbe7ad24af10a90fb383c1f03ff2d23a7af29dc87ddd"
+  },
+  "registry": {
+    "namespace": "cyborgclaw/voltaris",
+    "recordKey": "master/voltaris-v2"
+  },
+  "admission": {
+    "lineageRequired": true,
+    "runtimeManifestRequired": true,
+    "policyManifestRequired": true,
+    "registryWriteRequiresCanonicalLineage": true
+  },
+  "deterministicRejects": {
+    "unknownTopLevelField": true,
+    "uiStatePresentedAsTruth": true,
+    "nonCanonicalLineage": true,
+    "digestMismatch": true,
+    "missingProvenance": true,
+    "missingApprovalNamespace": true
+  },
+  "approvals": {
+    "mode": "manual",
+    "requiredFor": [
+      "registry-write",
+      "runtime-change",
+      "policy-change",
+      "route-law-change",
+      "tool-elevation"
+    ]
+  },
+  "provenance": {
+    "sourceOfTruth": "policy-manifest",
+    "authoredAt": "2026-03-15T00:00:00Z",
+    "authoredBy": "codex",
+    "designStudioOutputDigest": "sha256:1f1ec5973f07b3d8059e6fb15fcf45661c6b2811ec2259def1dbfcc706929c89",
+    "lineageDigest": "sha256:8eb12a3f6af1115f9de1cbe7ad24af10a90fb383c1f03ff2d23a7af29dc87ddd"
+  },
+  "trace": {
+    "traceNamespace": "cyborgclaw/voltaris-v2/trace",
+    "receiptNamespace": "cyborgclaw/voltaris-v2/receipt",
+    "routeLawNamespace": "cyborgclaw/voltaris-v2/route-law",
+    "approvalNamespace": "cyborgclaw/voltaris-v2/approval"
+  },
+  "receipts": {
+    "policyDigest": "sha256:68a8e7adaf417e605f378f406473a15e978fcf8848a44129b9b43d83d313b9d7",
+    "lineageDigest": "sha256:8eb12a3f6af1115f9de1cbe7ad24af10a90fb383c1f03ff2d23a7af29dc87ddd",
+    "runtimeDigest": "sha256:134b76112b07777887e58f36bdf865a3d16b7199b1d4d3ae0300680ffca4f76f"
+  }
+}

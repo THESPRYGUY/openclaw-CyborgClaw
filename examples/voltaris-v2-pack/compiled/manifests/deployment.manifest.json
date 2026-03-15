@@ -1,0 +1,40 @@
+{
+  "kind": "agent.deployment",
+  "schemaVersion": 1,
+  "agentId": "voltaris-v2",
+  "genomeId": "cyborgclaw/voltaris-v2/master",
+  "packageId": "voltaris-v2.pack",
+  "workspace": {
+    "root": "workspace",
+    "bootstrapFiles": ["IDENTITY.md", "SOUL.md", "AGENTS.md", "TOOLS.md", "USER.md"]
+  },
+  "runtime": {
+    "executor": "embedded",
+    "defaultSessionKey": "agent:voltaris-v2:main",
+    "laneBinding": "session:<sessionKey>",
+    "acpMode": "bridge-only",
+    "transcripts": "~/.openclaw/agents/voltaris-v2/sessions/*.jsonl"
+  },
+  "ownership": {
+    "compilerOwns": [
+      "genome resolution",
+      "artifact rendering",
+      "manifest emission",
+      "receipt generation"
+    ],
+    "runtimeOwns": ["tool execution", "sandbox behavior", "session-local state"],
+    "gatewayOwns": [
+      "session truth",
+      "routing",
+      "channel state",
+      "approvals",
+      "control-plane truth"
+    ],
+    "governanceOwns": ["approval receipts", "mutation authorization", "deployment gates"]
+  },
+  "deploymentProfiles": ["reference-lab", "sandboxed-development", "governed-production"],
+  "unknowns": [
+    "UNKNOWN: canonical CyborgClaw registry publication API not present in this repo.",
+    "UNKNOWN: final governance overlay storage surface should be inspected next."
+  ]
+}

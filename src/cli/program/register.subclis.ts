@@ -187,6 +187,15 @@ const entries: SubCliEntry[] = [
     },
   },
   {
+    name: "genome",
+    description: "Governed genome pack validation and deployment tools",
+    hasSubcommands: true,
+    register: async (program) => {
+      const mod = await import("../genome-cli.js");
+      mod.registerGenomeCli(program);
+    },
+  },
+  {
     name: "webhooks",
     description: "Webhook helpers and integrations",
     hasSubcommands: true,
