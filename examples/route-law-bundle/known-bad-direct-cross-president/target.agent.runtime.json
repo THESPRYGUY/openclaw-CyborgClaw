@@ -1,0 +1,43 @@
+{
+  "kind": "agent.runtime",
+  "schemaVersion": 1,
+  "runtimeId": "runtime.ops-seat.beta",
+  "lineage": {
+    "lineageId": "lineage.ops-seat.beta",
+    "lineageDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+  },
+  "agent": {
+    "agentId": "ops-seat",
+    "seatId": "ops-seat-beta"
+  },
+  "registry": {
+    "namespace": "openclaw.ops",
+    "recordKey": "ops-seat-beta"
+  },
+  "runtimeTruthSource": "manifest",
+  "runtime": {
+    "executor": "acp",
+    "provider": "openai",
+    "model": "gpt-5.4",
+    "instructionsDigest": "sha256:abababababababababababababababababababababababababababababababab",
+    "toolCatalogDigest": "sha256:bcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbc"
+  },
+  "provenance": {
+    "sourceOfTruth": "runtime-manifest",
+    "authoredAt": "2026-03-15T00:00:00Z",
+    "authoredBy": "mission-m12-example",
+    "designStudioOutputDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "lineageDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+  },
+  "trace": {
+    "traceNamespace": "trace.ops-seat.beta",
+    "receiptNamespace": "receipt.ops-seat.beta",
+    "routeLawNamespace": "route-law.ops-seat.beta",
+    "approvalNamespace": "approval.ops-seat.beta"
+  },
+  "receipts": {
+    "runtimeDigest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+    "lineageDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+    "policyDigest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+  }
+}

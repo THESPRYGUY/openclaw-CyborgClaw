@@ -1,0 +1,78 @@
+{
+  "kind": "route.decision",
+  "schemaVersion": 1,
+  "decisionId": "route-decision.engineering-to-ops.alpha",
+  "request": {
+    "requestId": "request.engineering-to-ops.alpha",
+    "workId": "work.engineering-to-ops.alpha",
+    "requestedAt": "2026-03-15T12:00:00Z",
+    "summary": "Produce a bounded ops validation bundle for a cross-lane request.",
+    "artifactIntent": ["docs", "evidence", "receipt", "test"]
+  },
+  "requester": {
+    "agentId": "engineering-seat",
+    "role": "team-agent",
+    "seatId": "engineering-seat-alpha",
+    "seatKind": "engineering",
+    "lineageId": "lineage.engineering-seat.alpha",
+    "lineageDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "runtimeId": "runtime.engineering-seat.alpha",
+    "policyId": "policy.engineering-seat.alpha",
+    "registryNamespace": "openclaw.engineering",
+    "recordKey": "engineering-seat-alpha",
+    "traceNamespace": "trace.engineering-seat.alpha",
+    "receiptNamespace": "receipt.engineering-seat.alpha",
+    "routeLawNamespace": "route-law.engineering-seat.alpha",
+    "approvalNamespace": "approval.engineering-seat.alpha"
+  },
+  "target": {
+    "agentId": "ops-seat",
+    "role": "team-agent",
+    "seatId": "ops-seat-beta",
+    "seatKind": "ops",
+    "lineageId": "lineage.ops-seat.beta",
+    "lineageDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+    "runtimeId": "runtime.ops-seat.beta",
+    "policyId": "policy.ops-seat.beta",
+    "registryNamespace": "openclaw.ops",
+    "recordKey": "ops-seat-beta",
+    "traceNamespace": "trace.ops-seat.beta",
+    "receiptNamespace": "receipt.ops-seat.beta",
+    "routeLawNamespace": "route-law.ops-seat.beta",
+    "approvalNamespace": "approval.ops-seat.beta"
+  },
+  "route": {
+    "requesterPresidentId": "president.engineering",
+    "targetPresidentId": "president.ops",
+    "sharedPresident": false,
+    "classification": "cousin"
+  },
+  "decision": {
+    "legal": true,
+    "verdict": "allow",
+    "requiresPresidentMediation": true,
+    "mediationState": "approved",
+    "cousinTicketRequired": true,
+    "artifactReturnRequired": true,
+    "rejectReasons": []
+  },
+  "cousinTicket": {
+    "ticketId": "cousin-ticket.engineering-to-ops.alpha",
+    "ticketDigest": "sha256:3434343434343434343434343434343434343434343434343434343434343434"
+  },
+  "trace": {
+    "traceNamespace": "trace.route-law.engineering-to-ops.alpha",
+    "receiptNamespace": "receipt.route-law.engineering-to-ops.alpha",
+    "routeLawNamespace": "route-law.cross-president.alpha",
+    "approvalNamespace": "approval.route-law.cross-president.alpha",
+    "correlationId": "corr.route-law.engineering-to-ops.alpha"
+  },
+  "receipts": {
+    "decisionDigest": "sha256:1212121212121212121212121212121212121212121212121212121212121212",
+    "cousinTicketDigest": "sha256:3434343434343434343434343434343434343434343434343434343434343434",
+    "requesterLineageDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "requesterPolicyDigest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+    "targetLineageDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+    "targetPolicyDigest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+  }
+}

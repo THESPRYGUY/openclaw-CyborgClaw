@@ -1,0 +1,379 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://openclaw.ai/schemas/cousin-ticket.schema.json",
+  "title": "OpenClaw Cousin Ticket",
+  "description": "Frozen M12 cousin-ticket contract for cross-President delegation, mediation, and artifact-return obligations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "ticketId",
+    "decisionId",
+    "issuedAt",
+    "request",
+    "requester",
+    "target",
+    "mediation",
+    "artifactReturn",
+    "trace",
+    "receipts"
+  ],
+  "properties": {
+    "kind": {
+      "const": "cousin.ticket"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "ticketId": {
+      "$ref": "#/definitions/namespacedId"
+    },
+    "decisionId": {
+      "$ref": "#/definitions/namespacedId"
+    },
+    "issuedAt": {
+      "$ref": "#/definitions/timestamp"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "workId",
+        "requestedAt",
+        "summary",
+        "requestedArtifacts",
+        "expiresAt"
+      ],
+      "properties": {
+        "requestId": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "workId": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "requestedAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280
+        },
+        "requestedArtifacts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "analysis",
+              "code-change",
+              "config-change",
+              "docs",
+              "evidence",
+              "receipt",
+              "test"
+            ]
+          }
+        },
+        "expiresAt": {
+          "$ref": "#/definitions/timestamp"
+        }
+      }
+    },
+    "requester": {
+      "$ref": "#/definitions/partyBinding"
+    },
+    "target": {
+      "$ref": "#/definitions/partyBinding"
+    },
+    "mediation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "requesterPresidentId",
+        "targetPresidentId",
+        "mode",
+        "state",
+        "mediators"
+      ],
+      "properties": {
+        "required": {
+          "const": true
+        },
+        "requesterPresidentId": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "targetPresidentId": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["requester-president", "target-president", "joint-presidents"]
+        },
+        "state": {
+          "type": "string",
+          "enum": ["approved", "pending", "rejected"]
+        },
+        "mediators": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/presidentApproval"
+          }
+        }
+      }
+    },
+    "artifactReturn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "returnTo",
+        "requiredArtifacts",
+        "requiredReceipts",
+        "returnBy",
+        "completionSummaryRequired",
+        "partialReturnAllowed"
+      ],
+      "properties": {
+        "required": {
+          "const": true
+        },
+        "returnTo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["lineageId", "receiptNamespace", "approvalNamespace", "routeLawNamespace"],
+          "properties": {
+            "lineageId": {
+              "$ref": "#/definitions/namespacedId"
+            },
+            "receiptNamespace": {
+              "$ref": "#/definitions/namespacedId"
+            },
+            "approvalNamespace": {
+              "$ref": "#/definitions/namespacedId"
+            },
+            "routeLawNamespace": {
+              "$ref": "#/definitions/namespacedId"
+            }
+          }
+        },
+        "requiredArtifacts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "artifact-manifest",
+              "completion-summary",
+              "diff-or-output",
+              "receipt-pack",
+              "validation-proof"
+            ]
+          }
+        },
+        "requiredReceipts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "approval-proof",
+              "artifact-manifest",
+              "cousin-ticket",
+              "route-decision",
+              "validation-proof"
+            ]
+          }
+        },
+        "returnBy": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "completionSummaryRequired": {
+          "const": true
+        },
+        "partialReturnAllowed": {
+          "const": false
+        }
+      }
+    },
+    "trace": {
+      "$ref": "#/definitions/traceEnvelope"
+    },
+    "receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ticketDigest",
+        "routeDecisionDigest",
+        "requesterLineageDigest",
+        "requesterPolicyDigest",
+        "targetLineageDigest",
+        "targetPolicyDigest"
+      ],
+      "properties": {
+        "ticketDigest": {
+          "$ref": "#/definitions/sha256Digest"
+        },
+        "routeDecisionDigest": {
+          "$ref": "#/definitions/sha256Digest"
+        },
+        "requesterLineageDigest": {
+          "$ref": "#/definitions/sha256Digest"
+        },
+        "requesterPolicyDigest": {
+          "$ref": "#/definitions/sha256Digest"
+        },
+        "targetLineageDigest": {
+          "$ref": "#/definitions/sha256Digest"
+        },
+        "targetPolicyDigest": {
+          "$ref": "#/definitions/sha256Digest"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "agentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,63}$"
+    },
+    "namespacedId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._/-]{2,127}$"
+    },
+    "sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "partyBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "role",
+        "seatId",
+        "seatKind",
+        "lineageId",
+        "lineageDigest",
+        "runtimeId",
+        "policyId",
+        "registryNamespace",
+        "recordKey",
+        "traceNamespace",
+        "receiptNamespace",
+        "routeLawNamespace",
+        "approvalNamespace"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "#/definitions/agentId"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["team-agent", "president"]
+        },
+        "seatId": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "seatKind": {
+          "type": "string",
+          "enum": ["engineering", "ops", "product", "support"]
+        },
+        "lineageId": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "lineageDigest": {
+          "$ref": "#/definitions/sha256Digest"
+        },
+        "runtimeId": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "policyId": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "registryNamespace": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "recordKey": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "traceNamespace": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "receiptNamespace": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "routeLawNamespace": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "approvalNamespace": {
+          "$ref": "#/definitions/namespacedId"
+        }
+      }
+    },
+    "presidentApproval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["presidentId", "lane", "approvalNamespace", "approvalReceiptId", "approvedAt"],
+      "properties": {
+        "presidentId": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "lane": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "approvalNamespace": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "approvalReceiptId": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "approvedAt": {
+          "$ref": "#/definitions/timestamp"
+        }
+      }
+    },
+    "traceEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "traceNamespace",
+        "receiptNamespace",
+        "routeLawNamespace",
+        "approvalNamespace",
+        "correlationId"
+      ],
+      "properties": {
+        "traceNamespace": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "receiptNamespace": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "routeLawNamespace": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "approvalNamespace": {
+          "$ref": "#/definitions/namespacedId"
+        },
+        "correlationId": {
+          "$ref": "#/definitions/namespacedId"
+        }
+      }
+    }
+  }
+}

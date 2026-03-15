@@ -1,0 +1,49 @@
+{
+  "kind": "agent.policy",
+  "schemaVersion": 1,
+  "policyId": "policy.ops-seat.beta",
+  "lineage": {
+    "lineageId": "lineage.ops-seat.beta",
+    "lineageDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+  },
+  "registry": {
+    "namespace": "openclaw.ops",
+    "recordKey": "ops-seat-beta"
+  },
+  "admission": {
+    "lineageRequired": true,
+    "runtimeManifestRequired": true,
+    "policyManifestRequired": true,
+    "registryWriteRequiresCanonicalLineage": true
+  },
+  "deterministicRejects": {
+    "unknownTopLevelField": true,
+    "uiStatePresentedAsTruth": true,
+    "nonCanonicalLineage": true,
+    "digestMismatch": true,
+    "missingProvenance": true,
+    "missingApprovalNamespace": true
+  },
+  "approvals": {
+    "mode": "manual",
+    "requiredFor": ["policy-change", "registry-write", "route-law-change", "runtime-change"]
+  },
+  "provenance": {
+    "sourceOfTruth": "policy-manifest",
+    "authoredAt": "2026-03-15T00:00:00Z",
+    "authoredBy": "mission-m12-example",
+    "designStudioOutputDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "lineageDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+  },
+  "trace": {
+    "traceNamespace": "trace.ops-seat.beta",
+    "receiptNamespace": "receipt.ops-seat.beta",
+    "routeLawNamespace": "route-law.ops-seat.beta",
+    "approvalNamespace": "approval.ops-seat.beta"
+  },
+  "receipts": {
+    "policyDigest": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+    "lineageDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+    "runtimeDigest": "sha256:8888888888888888888888888888888888888888888888888888888888888888"
+  }
+}

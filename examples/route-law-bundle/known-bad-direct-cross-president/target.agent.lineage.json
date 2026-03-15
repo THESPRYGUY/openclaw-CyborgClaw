@@ -1,0 +1,46 @@
+{
+  "kind": "agent.lineage",
+  "schemaVersion": 1,
+  "lineageId": "lineage.ops-seat.beta",
+  "agentId": "ops-seat",
+  "canonical": true,
+  "seat": {
+    "seatId": "ops-seat-beta",
+    "seatKind": "ops",
+    "registryNamespace": "openclaw.ops"
+  },
+  "designStudio": {
+    "studioId": "design-studio",
+    "outputId": "design-studio-output-2026-03-15-ops",
+    "outputVersion": 1,
+    "outputDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "exportedAt": "2026-03-15T00:00:00Z"
+  },
+  "parents": [],
+  "provenance": {
+    "sourceOfTruth": "design-studio",
+    "authoredAt": "2026-03-15T00:00:00Z",
+    "authoredBy": "mission-m12-example",
+    "sourceCommit": "30d8cd5abc68047bd135e59a5f78b0f743b2453e",
+    "inputs": [
+      {
+        "kind": "brief",
+        "digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      },
+      {
+        "kind": "snapshot",
+        "digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    ]
+  },
+  "trace": {
+    "traceNamespace": "trace.ops-seat.beta",
+    "receiptNamespace": "receipt.ops-seat.beta",
+    "routeLawNamespace": "route-law.ops-seat.beta",
+    "approvalNamespace": "approval.ops-seat.beta"
+  },
+  "receipts": {
+    "lineageDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+    "admissionContractDigest": "sha256:1010101010101010101010101010101010101010101010101010101010101010"
+  }
+}
