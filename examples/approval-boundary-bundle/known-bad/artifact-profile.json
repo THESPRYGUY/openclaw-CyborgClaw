@@ -1,0 +1,58 @@
+{
+  "kind": "artifact.profile",
+  "schemaVersion": 1,
+  "mission": "M15",
+  "profileId": "m14:approval-boundary:profile-known-bad",
+  "branch": "cyborg/v2026.2.26-pr",
+  "headSha": "315286045f85d305e39cb5ef01ea070120f7a2c0",
+  "publishedShas": [
+    "033cbf6865713216eef187c3bde9ff590c25fe04",
+    "3e7573eb01bfab8f250e7d17ca381970fbfba1e5",
+    "ed092c30950761565089d0005d921391a78b200c",
+    "315286045f85d305e39cb5ef01ea070120f7a2c0"
+  ],
+  "artifactBundleRoot": "examples/approval-boundary-bundle",
+  "boundaries": {
+    "mcpSetupGate": {
+      "file": "src/acp/translator.ts",
+      "symbol": "assertSupportedSessionSetup",
+      "lineRange": "421-451",
+      "proofTest": "src/acp/translator.session-rate-limit.test.ts",
+      "commitSha": "033cbf6865713216eef187c3bde9ff590c25fe04"
+    },
+    "approvalMapping": {
+      "file": "src/acp/control-plane/runtime-options.ts",
+      "symbol": "ACP_APPROVAL_POLICY_CONFIG_KEY",
+      "lineRange": "1-160",
+      "proofTest": "src/auto-reply/reply/commands-acp.test.ts",
+      "commitSha": "3e7573eb01bfab8f250e7d17ca381970fbfba1e5"
+    },
+    "artifactPersistence": {
+      "file": "src/acp/control-plane/manager.core.ts",
+      "symbol": "preserveRouteLawEnvelope",
+      "lineRange": "204-208",
+      "proofTest": "src/acp/control-plane/manager.test.ts",
+      "commitSha": "315286045f85d305e39cb5ef01ea070120f7a2c0"
+    }
+  },
+  "artifacts": [
+    {
+      "type": "schema",
+      "path": "schemas/artifact-profile.schema.json",
+      "summary": "Known-bad intentionally mismatches mission const."
+    }
+  ],
+  "validation": {
+    "startupReceipt": {
+      "command": "git status --porcelain=v1 --branch",
+      "statusLine": "## cyborg/v2026.2.26-pr...origin/cyborg/v2026.2.26-pr",
+      "headSha": "315286045f85d305e39cb5ef01ea070120f7a2c0"
+    },
+    "validationReceipt": {
+      "commands": ["pnpm -s vitest run test/m14-approval-boundary-proof.test.ts"],
+      "resultSummary": "Known-bad sample should fail schema checks."
+    },
+    "status": "to-verify"
+  },
+  "unexpectedBoundary": true
+}

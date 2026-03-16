@@ -1,0 +1,84 @@
+{
+  "kind": "artifact.profile",
+  "schemaVersion": 1,
+  "mission": "M14",
+  "profileId": "m14:approval-boundary:profile-20260316",
+  "branch": "cyborg/v2026.2.26-pr",
+  "headSha": "315286045f85d305e39cb5ef01ea070120f7a2c0",
+  "publishedShas": [
+    "033cbf6865713216eef187c3bde9ff590c25fe04",
+    "3e7573eb01bfab8f250e7d17ca381970fbfba1e5",
+    "ed092c30950761565089d0005d921391a78b200c",
+    "315286045f85d305e39cb5ef01ea070120f7a2c0"
+  ],
+  "artifactBundleRoot": "examples/approval-boundary-bundle",
+  "boundaries": {
+    "mcpSetupGate": {
+      "file": "src/acp/translator.ts",
+      "symbol": "assertSupportedSessionSetup",
+      "lineRange": "421-451",
+      "proofTest": "src/acp/translator.session-rate-limit.test.ts",
+      "commitSha": "033cbf6865713216eef187c3bde9ff590c25fe04"
+    },
+    "approvalMapping": {
+      "file": "src/acp/control-plane/runtime-options.ts",
+      "symbol": "ACP_APPROVAL_POLICY_CONFIG_KEY",
+      "lineRange": "1-160",
+      "proofTest": "src/auto-reply/reply/commands-acp.test.ts",
+      "commitSha": "3e7573eb01bfab8f250e7d17ca381970fbfba1e5"
+    },
+    "awaitLookup": {
+      "file": "src/acp/translator.ts",
+      "symbol": "findPendingBySessionKey",
+      "lineRange": "882-900",
+      "proofTest": "src/acp/translator.cancel-scoping.test.ts",
+      "commitSha": "ed092c30950761565089d0005d921391a78b200c"
+    },
+    "artifactPersistence": {
+      "file": "src/acp/control-plane/manager.core.ts",
+      "symbol": "preserveRouteLawEnvelope",
+      "lineRange": "204-208",
+      "proofTest": "src/acp/control-plane/manager.test.ts",
+      "commitSha": "315286045f85d305e39cb5ef01ea070120f7a2c0"
+    }
+  },
+  "artifacts": [
+    {
+      "type": "schema",
+      "path": "schemas/artifact-profile.schema.json",
+      "summary": "M14 artifact profile contract"
+    },
+    {
+      "type": "schema",
+      "path": "schemas/approval-checkpoint.schema.json",
+      "summary": "M14 approval checkpoint contract"
+    },
+    {
+      "type": "doc",
+      "path": "docs/architecture/approval-await-gateway.md",
+      "summary": "Approval and await gateway boundary map"
+    },
+    {
+      "type": "test",
+      "path": "test/m14-approval-boundary-proof.test.ts",
+      "summary": "M14 boundary package coherence proof"
+    }
+  ],
+  "validation": {
+    "startupReceipt": {
+      "command": "git status --porcelain=v1 --branch && git rev-parse HEAD",
+      "statusLine": "## cyborg/v2026.2.26-pr...origin/cyborg/v2026.2.26-pr",
+      "headSha": "315286045f85d305e39cb5ef01ea070120f7a2c0"
+    },
+    "validationReceipt": {
+      "commands": [
+        "pnpm -s vitest run src/acp/translator.session-rate-limit.test.ts",
+        "pnpm -s vitest run src/auto-reply/reply/commands-acp.test.ts -t \"updates ACP permissions via /acp permissions using the canonical approval key\"",
+        "pnpm -s vitest run src/acp/translator.cancel-scoping.test.ts",
+        "pnpm -s vitest run src/acp/control-plane/manager.test.ts -t \"gates initializeSession on frozen M12 route law and persists the minimal route envelope\""
+      ],
+      "resultSummary": "All four focused M14 seam checks passed before closeout packaging."
+    },
+    "status": "verified"
+  }
+}

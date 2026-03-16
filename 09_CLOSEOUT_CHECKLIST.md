@@ -101,3 +101,60 @@
   - required M13 deliverables now exist and are evidenced by file path
   - mission-local status truth is explicit in `01_MISSION_SPEC.md`
   - deferred residual is explicitly documented as non-blocking
+
+## Mission M14
+
+### Final classification (M14)
+
+- `VERIFIED`
+
+### Fully proven (M14)
+
+- Required M14 schemas exist:
+  - `schemas/artifact-profile.schema.json`
+  - `schemas/approval-checkpoint.schema.json`
+- Required M14 architecture docs exist:
+  - `docs/architecture/artifact-contract.md`
+  - `docs/architecture/approval-await-gateway.md`
+  - `docs/architecture/mcp-tool-boundary.md`
+  - `docs/architecture/approval-trace-model.md`
+- Required M14 example bundle exists:
+  - `examples/approval-boundary-bundle/minimal-clean/artifact-profile.json`
+  - `examples/approval-boundary-bundle/minimal-clean/approval-checkpoint.json`
+  - `examples/approval-boundary-bundle/known-bad/artifact-profile.json`
+  - `examples/approval-boundary-bundle/known-bad/approval-checkpoint.json`
+- Required M14 proof test exists:
+  - `test/m14-approval-boundary-proof.test.ts`
+- M14 handoff/closeout receipts are captured in:
+  - `07_HANDOVER_ADDENDUM.md` (M14 startup + validation + seam SHA receipts)
+
+### Validation receipts (M14)
+
+- `pnpm -s vitest run test/m14-approval-boundary-proof.test.ts`
+  - `Test Files 1 passed (1)`
+  - `Tests 3 passed (3)`
+- `pnpm -s vitest run src/acp/translator.session-rate-limit.test.ts`
+  - `Test Files 1 passed (1)`
+  - `Tests 20 passed (20)`
+- `pnpm -s vitest run src/auto-reply/reply/commands-acp.test.ts -t "updates ACP permissions via /acp permissions using the canonical approval key"`
+  - `Test Files 1 passed (1)`
+  - `Tests 1 passed | 22 skipped (23)`
+- `pnpm -s vitest run src/acp/translator.cancel-scoping.test.ts`
+  - `Test Files 1 passed (1)`
+  - `Tests 8 passed (8)`
+- `pnpm -s vitest run src/acp/control-plane/manager.test.ts -t "gates initializeSession on frozen M12 route law and persists the minimal route envelope"`
+  - `Test Files 1 passed (1)`
+  - `Tests 1 passed | 49 skipped (50)`
+
+### Actual blockers to honest closeout
+
+- None.
+
+### Closure decision (M14)
+
+- `YES`
+- Decision basis:
+  - required M14 deliverables now exist and are evidenced by file path
+  - M14 proof test passes with clean + known-bad deterministic behavior
+  - focused seam checks for published M14 code commits pass
+  - handoff and closeout artifacts now include M14-specific startup and validation receipts

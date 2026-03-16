@@ -1,0 +1,20 @@
+{
+  "kind": "approval.checkpoint",
+  "schemaVersion": 1,
+  "checkpointId": "approval:m14:checkpoint-known-bad",
+  "runId": "run:m14:approval-boundary-known-bad",
+  "approvalPolicy": "legacy",
+  "outcome": "deny",
+  "state": "approved",
+  "recordedAt": "2026-03-16T17:37:34Z",
+  "expiresAt": "2026-03-16T19:37:34Z",
+  "artifactProfileId": "m14:approval-boundary:profile-known-bad",
+  "artifactIds": [],
+  "trace": {
+    "traceNamespace": "trace:m14:approval-boundary",
+    "receiptNamespace": "receipt:m14:approval-boundary",
+    "routeLawNamespace": "route-law:m14:approval-boundary",
+    "approvalNamespace": "approval:m14:approval-boundary",
+    "correlationId": "corr:m14:approval-boundary-known-bad"
+  }
+}

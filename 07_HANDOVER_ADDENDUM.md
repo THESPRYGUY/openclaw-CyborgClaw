@@ -259,3 +259,111 @@ Result:
 ### One next action
 
 - Consume the frozen M12 route-law artifacts in M13 so bus/run/session orchestration can rely on canonical kinship classes, cousin tickets, and reject receipts without redefining M11 or M12 truth.
+
+## Session 2026-03-16 M14 boundary closeout package
+
+### Exact start state
+
+- Repo: `/home/spryguy/openclaw-workspace/repos/openclaw`
+- Host: `voltaris`
+- Branch: `cyborg/v2026.2.26-pr`
+- Open SHA: `315286045f85d305e39cb5ef01ea070120f7a2c0`
+- Startup receipt:
+
+```text
+/home/spryguy/openclaw-workspace/repos/openclaw
+/home/spryguy/openclaw-workspace/repos/openclaw
+## cyborg/v2026.2.26-pr...origin/cyborg/v2026.2.26-pr
+315286045f85d305e39cb5ef01ea070120f7a2c0
+origin	https://github.com/THESPRYGUY/openclaw-CyborgClaw.git (fetch)
+origin	https://github.com/THESPRYGUY/openclaw-CyborgClaw.git (push)
+upstream	https://github.com/openclaw/openclaw.git (fetch)
+upstream	https://github.com/openclaw/openclaw.git (push)
+```
+
+- M14 missing-deliverable gate at start:
+  - `schemas/artifact-profile.schema.json`
+  - `schemas/approval-checkpoint.schema.json`
+  - `docs/architecture/artifact-contract.md`
+  - `docs/architecture/approval-await-gateway.md`
+  - `docs/architecture/mcp-tool-boundary.md`
+  - `docs/architecture/approval-trace-model.md`
+  - `examples/approval-boundary-bundle/`
+  - `test/m14-approval-boundary-proof.test.ts`
+
+### Files created in this session
+
+- `schemas/artifact-profile.schema.json`
+- `schemas/approval-checkpoint.schema.json`
+- `docs/architecture/artifact-contract.md`
+- `docs/architecture/approval-await-gateway.md`
+- `docs/architecture/mcp-tool-boundary.md`
+- `docs/architecture/approval-trace-model.md`
+- `examples/approval-boundary-bundle/minimal-clean/artifact-profile.json`
+- `examples/approval-boundary-bundle/minimal-clean/approval-checkpoint.json`
+- `examples/approval-boundary-bundle/known-bad/artifact-profile.json`
+- `examples/approval-boundary-bundle/known-bad/approval-checkpoint.json`
+- `test/m14-approval-boundary-proof.test.ts`
+
+### Files updated in this session
+
+- `07_HANDOVER_ADDENDUM.md`
+- `09_CLOSEOUT_CHECKLIST.md`
+
+### Validation receipts
+
+#### M14 deliverable proof test
+
+Command run:
+
+```text
+pnpm -s vitest run test/m14-approval-boundary-proof.test.ts
+```
+
+Result:
+
+```text
+RUN  v4.1.0 /home/spryguy/openclaw-workspace/repos/openclaw
+Test Files  1 passed (1)
+Tests       3 passed (3)
+Duration    346ms
+```
+
+#### Focused seam checks (published M14 code seams)
+
+Commands run:
+
+```text
+pnpm -s vitest run src/acp/translator.session-rate-limit.test.ts
+pnpm -s vitest run src/auto-reply/reply/commands-acp.test.ts -t "updates ACP permissions via /acp permissions using the canonical approval key"
+pnpm -s vitest run src/acp/translator.cancel-scoping.test.ts
+pnpm -s vitest run src/acp/control-plane/manager.test.ts -t "gates initializeSession on frozen M12 route law and persists the minimal route envelope"
+```
+
+Result:
+
+```text
+RUN  v4.1.0 /home/spryguy/openclaw-workspace/repos/openclaw
+Test Files  1 passed (1) | Tests 20 passed (20)
+Test Files  1 passed (1) | Tests 1 passed | 22 skipped (23)
+Test Files  1 passed (1) | Tests 8 passed (8)
+Test Files  1 passed (1) | Tests 1 passed | 49 skipped (50)
+```
+
+### Published M14 seam SHAs carried into this closeout package
+
+- `033cbf6865713216eef187c3bde9ff590c25fe04` — MCP setup gate hardening
+- `3e7573eb01bfab8f250e7d17ca381970fbfba1e5` — approval key canonicalization
+- `ed092c30950761565089d0005d921391a78b200c` — await lookup hardening
+- `315286045f85d305e39cb5ef01ea070120f7a2c0` — route-law carry-forward persistence
+
+### Verified truths
+
+- M14 deliverable files now exist for schema, docs, example bundle, and proof test.
+- The M14 boundary proof test passes.
+- The four published M14 seam tests pass in focused runs.
+- M14 closeout/handoff artifacts now include mission-specific startup and validation receipts.
+
+### One next action
+
+- Run manager closeout review on M14 using this addendum, `09_CLOSEOUT_CHECKLIST.md`, and the published M14 seam SHAs as the authoritative evidence set.

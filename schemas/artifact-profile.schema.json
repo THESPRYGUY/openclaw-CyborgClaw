@@ -1,0 +1,190 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://openclaw.ai/schemas/artifact-profile.schema.json",
+  "title": "OpenClaw M14 Artifact Profile",
+  "description": "M14 boundary package profile that records published seam receipts, boundary symbol anchors, and validation evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "mission",
+    "profileId",
+    "branch",
+    "headSha",
+    "publishedShas",
+    "artifactBundleRoot",
+    "boundaries",
+    "artifacts",
+    "validation"
+  ],
+  "properties": {
+    "kind": {
+      "const": "artifact.profile"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "mission": {
+      "const": "M14"
+    },
+    "profileId": {
+      "$ref": "#/definitions/namespacedId"
+    },
+    "branch": {
+      "type": "string",
+      "pattern": "^[a-z0-9._/-]{3,128}$"
+    },
+    "headSha": {
+      "$ref": "#/definitions/gitSha"
+    },
+    "publishedShas": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/gitSha"
+      }
+    },
+    "artifactBundleRoot": {
+      "const": "examples/approval-boundary-bundle"
+    },
+    "boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mcpSetupGate", "approvalMapping", "awaitLookup", "artifactPersistence"],
+      "properties": {
+        "mcpSetupGate": {
+          "$ref": "#/definitions/boundaryRecord"
+        },
+        "approvalMapping": {
+          "$ref": "#/definitions/boundaryRecord"
+        },
+        "awaitLookup": {
+          "$ref": "#/definitions/boundaryRecord"
+        },
+        "artifactPersistence": {
+          "$ref": "#/definitions/boundaryRecord"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/artifactRef"
+      }
+    },
+    "validation": {
+      "$ref": "#/definitions/validationReceipt"
+    }
+  },
+  "definitions": {
+    "namespacedId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._:/-]{2,255}$"
+    },
+    "gitSha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "relativePath": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._/-]{1,255}$"
+    },
+    "lineRange": {
+      "type": "string",
+      "pattern": "^[0-9]+-[0-9]+$"
+    },
+    "boundaryRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "symbol", "lineRange", "proofTest", "commitSha"],
+      "properties": {
+        "file": {
+          "$ref": "#/definitions/relativePath"
+        },
+        "symbol": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lineRange": {
+          "$ref": "#/definitions/lineRange"
+        },
+        "proofTest": {
+          "$ref": "#/definitions/relativePath"
+        },
+        "commitSha": {
+          "$ref": "#/definitions/gitSha"
+        }
+      }
+    },
+    "artifactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path", "summary"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["schema", "doc", "example", "test", "receipt"]
+        },
+        "path": {
+          "$ref": "#/definitions/relativePath"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280
+        }
+      }
+    },
+    "validationReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startupReceipt", "validationReceipt", "status"],
+      "properties": {
+        "startupReceipt": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["command", "statusLine", "headSha"],
+          "properties": {
+            "command": {
+              "type": "string",
+              "minLength": 1
+            },
+            "statusLine": {
+              "type": "string",
+              "minLength": 1
+            },
+            "headSha": {
+              "$ref": "#/definitions/gitSha"
+            }
+          }
+        },
+        "validationReceipt": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["commands", "resultSummary"],
+          "properties": {
+            "commands": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "resultSummary": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["verified", "to-verify"]
+        }
+      }
+    }
+  }
+}
