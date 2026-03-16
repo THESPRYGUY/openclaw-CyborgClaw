@@ -13,6 +13,12 @@ const MAX_BACKEND_OPTION_VALUE_LENGTH = 512;
 const MAX_BACKEND_EXTRAS = 32;
 
 const SAFE_OPTION_KEY_RE = /^[a-z0-9][a-z0-9._:-]*$/i;
+export const ACP_APPROVAL_POLICY_CONFIG_KEY = "approval_policy";
+const PERMISSION_PROFILE_CONFIG_KEY_ALIASES = new Set([
+  ACP_APPROVAL_POLICY_CONFIG_KEY,
+  "permission_profile",
+  "permissions",
+]);
 
 function failInvalidOption(message: string): never {
   throw new AcpRuntimeError("ACP_INVALID_RUNTIME_OPTION", message);
@@ -306,7 +312,7 @@ export function buildRuntimeConfigOptionPairs(
     pairs.set("model", normalized.model);
   }
   if (normalized.permissionProfile) {
-    pairs.set("approval_policy", normalized.permissionProfile);
+    pairs.set(ACP_APPROVAL_POLICY_CONFIG_KEY, normalized.permissionProfile);
   }
   if (typeof normalized.timeoutSeconds === "number") {
     pairs.set("timeout", String(normalized.timeoutSeconds));
@@ -328,11 +334,7 @@ export function inferRuntimeOptionPatchFromConfigOption(
   if (normalizedKey === "model") {
     return { model: validateRuntimeModelInput(validated.value) };
   }
-  if (
-    normalizedKey === "approval_policy" ||
-    normalizedKey === "permission_profile" ||
-    normalizedKey === "permissions"
-  ) {
+  if (PERMISSION_PROFILE_CONFIG_KEY_ALIASES.has(normalizedKey)) {
     return { permissionProfile: validateRuntimePermissionProfileInput(validated.value) };
   }
   if (normalizedKey === "timeout" || normalizedKey === "timeout_seconds") {

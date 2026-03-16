@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ACP_APPROVAL_POLICY_CONFIG_KEY } from "../../acp/control-plane/runtime-options.js";
 import { AcpRuntimeError } from "../../acp/runtime/errors.js";
 import type { OpenClawConfig } from "../../config/config.js";
 import type { SessionBindingRecord } from "../../infra/outbound/session-binding-service.js";
@@ -817,6 +818,20 @@ describe("/acp command", () => {
 
     expect(result?.reply?.text).toContain("ACP error (ACP_INVALID_RUNTIME_OPTION)");
     expect(hoisted.setConfigOptionMock).not.toHaveBeenCalled();
+  });
+
+  it("updates ACP permissions via /acp permissions using the canonical approval key", async () => {
+    mockBoundThreadSession();
+
+    const result = await runThreadAcpCommand("/acp permissions strict", baseCfg);
+
+    expect(hoisted.setConfigOptionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: ACP_APPROVAL_POLICY_CONFIG_KEY,
+        value: "strict",
+      }),
+    );
+    expect(result?.reply?.text).toContain("Updated ACP permissions profile");
   });
 
   it("returns actionable doctor output when backend is missing", async () => {

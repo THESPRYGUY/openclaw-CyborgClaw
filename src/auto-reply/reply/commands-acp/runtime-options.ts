@@ -1,5 +1,6 @@
 import { getAcpSessionManager } from "../../../acp/control-plane/manager.js";
 import {
+  ACP_APPROVAL_POLICY_CONFIG_KEY,
   parseRuntimeTimeoutSecondsInput,
   validateRuntimeConfigOptionInput,
   validateRuntimeCwdInput,
@@ -277,7 +278,7 @@ export async function handleAcpPermissionsAction(
           const options = await getAcpSessionManager().setSessionConfigOption({
             cfg: params.cfg,
             sessionKey: targetSessionKey,
-            key: "approval_policy",
+            key: ACP_APPROVAL_POLICY_CONFIG_KEY,
             value: permissionProfile,
           });
           return {
