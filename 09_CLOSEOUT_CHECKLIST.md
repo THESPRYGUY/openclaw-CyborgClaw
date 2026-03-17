@@ -177,3 +177,69 @@
   - M14 proof test passes with clean + known-bad deterministic behavior
   - focused seam checks for published M14 code commits pass
   - handoff and closeout artifacts now include M14-specific startup and validation receipts
+
+## Mission M16
+
+### Final classification (M16)
+
+- `VERIFIED`
+
+### Fully proven (M16)
+
+- Smallest approval-surface accommodation succeeded:
+  - `pnpm ui:build` built `dist/control-ui` assets for the gateway-served Control UI.
+- Foreground node-host bring-up succeeded:
+  - `openclaw node run --host 127.0.0.1 --port 18789`
+  - connected node `eb5dc35848953cad45eb7a47b18e3ede90b266f9d22b45111d515b938913e730` advertised:
+    - `system.run`
+    - `system.run.prepare`
+    - `system.which`
+- One approval-gated operator-path probe succeeded:
+  - `openclaw nodes run --node eb5dc35848953cad45eb7a47b18e3ede90b266f9d22b45111d515b938913e730 --cwd /home/spryguy/openclaw-workspace/repos/openclaw --raw 'pwd && git rev-parse HEAD' --json`
+  - returned `payload.exitCode=0` and `payload.success=true`
+  - returned `payload.stdout` containing both:
+    - `/home/spryguy/openclaw-workspace/repos/openclaw`
+    - `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`
+- Start and end repo-state receipts were clean:
+  - `## cyborg/v2026.2.26-pr...origin/cyborg/v2026.2.26-pr`
+
+### Actual blockers to honest closeout (M16)
+
+- None for first-lap evidence recording.
+
+### Closure decision (M16 first-lap evidence)
+
+- `YES`
+- Decision basis:
+  - first real lap is proven through approval-gated operator path to the same repo-backed substrate as startup truth
+  - evidence is recorded in:
+    - `07_HANDOVER_ADDENDUM.md`
+    - `08_DAILY_LOG.md`
+    - `09_CLOSEOUT_CHECKLIST.md`
+
+### Final manager sign-off gate (M16)
+
+- `[x]` startup receipt present
+  - recorded in `07_HANDOVER_ADDENDUM.md` (M16 section) and aligned with mission path/branch/SHA truth.
+- `[x]` operator-path lap receipt present
+  - `openclaw nodes run ... --raw 'pwd && git rev-parse HEAD' --json` with success payload and stdout receipts.
+- `[x]` repo-backed proof present
+  - stdout includes:
+    - `/home/spryguy/openclaw-workspace/repos/openclaw`
+    - `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`
+- `[x]` approval identity clarification present
+  - clarification recorded in `08_DAILY_LOG.md` closeout block:
+    - default-agent resolution explained (`qwen14-test` case)
+    - explicit `--agent voltaris-v2` documented as the identity-alignment operator control.
+- `[x]` artifact files updated
+  - `07_HANDOVER_ADDENDUM.md`
+  - `08_DAILY_LOG.md`
+  - `09_CLOSEOUT_CHECKLIST.md`
+- `[x]` residuals classified
+  - non-blocking follow-ons explicitly separated:
+    - node service hygiene
+    - default agent configuration hygiene
+    - plugin mismatch warning hygiene
+- `[x]` final branch/SHA recorded
+  - branch: `cyborg/v2026.2.26-pr`
+  - SHA: `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`

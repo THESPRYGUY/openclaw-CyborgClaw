@@ -53,3 +53,44 @@
   - recorded final mission path: `/home/spryguy/openclaw-workspace/repos/openclaw` at `cyborg/v2026.2.26-pr#165e6d571b9e29080945fc6ad1b9121ec7d29386`
   - rehydrate from artifacts alone: `YES` (schemas + examples + proof test + closeout addendum/checklist committed together)
 - Next action: manager archival close review and signoff for M14.
+
+## 2026-03-16 UTC - M16 first real lap evidence
+
+- Start state: branch `cyborg/v2026.2.26-pr`, SHA `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`, clean tree.
+- Smallest approval-surface accommodation applied:
+  - `pnpm ui:build` succeeded and emitted `dist/control-ui` assets.
+  - `curl http://127.0.0.1:18789/` returned Control UI HTML with `assets/index-DTCjrpAe.js` and `assets/index-yp2NJnHN.css`.
+- Node host + capability receipts:
+  - `openclaw node run --host 127.0.0.1 --port 18789` started in foreground.
+  - `openclaw nodes status --connected --json` showed node `eb5dc35848953cad45eb7a47b18e3ede90b266f9d22b45111d515b938913e730` with commands `system.run`, `system.run.prepare`, `system.which`.
+- Approval-gated operator-path probe receipt:
+  - `openclaw nodes run --node eb5dc35848953cad45eb7a47b18e3ede90b266f9d22b45111d515b938913e730 --cwd /home/spryguy/openclaw-workspace/repos/openclaw --raw 'pwd && git rev-parse HEAD' --json`
+  - `payload.exitCode=0`, `payload.success=true`
+  - `payload.stdout`:
+    - `/home/spryguy/openclaw-workspace/repos/openclaw`
+    - `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`
+- Final state receipt: tree clean at end (`## cyborg/v2026.2.26-pr...origin/cyborg/v2026.2.26-pr`).
+- Verified truth: first real lap is proven through approval-gated operator path to the same repo-backed substrate; no approval-policy bypass was used.
+- Next action: carry this receipt set into manager gate review as the M16 first-lap proof basis.
+
+## 2026-03-17 UTC - M16 final closeout decision request
+
+- Final closeout decision requested: `Mission 16 CLOSED / READY FOR MANAGER SIGN-OFF`.
+- Successful lap summary:
+  - one honest operator-path run (`openclaw nodes run` -> approval gate -> `system.run`) completed with success receipts on the real repo-backed substrate.
+- Exact operator-path success statement:
+  - the approval-gated operator path returned the same repository path and commit SHA as startup truth from operator-path stdout itself.
+- Exact repo path returned:
+  - `/home/spryguy/openclaw-workspace/repos/openclaw`
+- Exact SHA returned:
+  - `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`
+- Explicit approval note:
+  - the final successful path was approval-gated.
+- Explicit bypass note:
+  - the final successful path required no approval-policy bypass.
+- Identity clarification note:
+  - approval dialog agent labeling followed default agent resolution (`qwen14-test` when no `default: true` was set and that entry was first in `agents.list`); explicit `--agent voltaris-v2` is the bounded operator control path to align approval identity with Voltaris V2.
+- Residuals carried forward separately (non-blocking):
+  - node service hygiene
+  - default agent configuration hygiene
+  - plugin mismatch warning hygiene

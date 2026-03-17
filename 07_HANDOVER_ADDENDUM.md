@@ -425,3 +425,147 @@ non-fatal existing telemetry missing-export warnings printed during build
 ### One next action
 
 - Manager performs strict archival close signoff for M14 using this addendum plus `09_CLOSEOUT_CHECKLIST.md`.
+
+## Session 2026-03-16 M16 first real lap proof package
+
+### Exact start state
+
+- Repo: `/home/spryguy/openclaw-workspace/repos/openclaw`
+- Host: `voltaris`
+- Branch: `cyborg/v2026.2.26-pr`
+- Open SHA: `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`
+- Clean-tree startup receipt:
+
+```text
+## cyborg/v2026.2.26-pr...origin/cyborg/v2026.2.26-pr
+```
+
+### Bounded accommodation and operator-path receipts
+
+#### Control UI asset restore (smallest working approval surface)
+
+Command run:
+
+```text
+pnpm ui:build
+```
+
+Result:
+
+```text
+vite v8.0.0 building client environment for production...
+../dist/control-ui/index.html
+../dist/control-ui/assets/index-DTCjrpAe.js
+../dist/control-ui/assets/index-yp2NJnHN.css
+✓ built in 343ms
+```
+
+Control UI HTTP receipt:
+
+```text
+curl -sS http://127.0.0.1:18789/ | sed -n '1,40p'
+<!doctype html>
+...
+<script type="module" crossorigin src="./assets/index-DTCjrpAe.js"></script>
+...
+<openclaw-app></openclaw-app>
+```
+
+#### Foreground node-host receipt
+
+Command run:
+
+```text
+openclaw node run --host 127.0.0.1 --port 18789
+```
+
+Connected-node receipt:
+
+```text
+openclaw nodes status --connected --json
+{
+  "nodeId": "eb5dc35848953cad45eb7a47b18e3ede90b266f9d22b45111d515b938913e730",
+  "commands": ["browser.proxy", "system.run", "system.run.prepare", "system.which"],
+  "paired": true,
+  "connected": true
+}
+```
+
+#### Approval-gated operator-path substrate proof
+
+Command run:
+
+```text
+openclaw nodes run --node eb5dc35848953cad45eb7a47b18e3ede90b266f9d22b45111d515b938913e730 --cwd /home/spryguy/openclaw-workspace/repos/openclaw --raw 'pwd && git rev-parse HEAD' --json
+```
+
+Result:
+
+```json
+{
+  "ok": true,
+  "command": "system.run",
+  "payload": {
+    "exitCode": 0,
+    "timedOut": false,
+    "success": true,
+    "stdout": "/home/spryguy/openclaw-workspace/repos/openclaw\n771a1cc79dfd54d45ca3e26320deff0fe4d2dc30\n",
+    "stderr": "",
+    "error": null
+  }
+}
+```
+
+### Final repo-state receipt
+
+- Branch: `cyborg/v2026.2.26-pr`
+- Close SHA: `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`
+- Final clean-tree receipt:
+
+```text
+## cyborg/v2026.2.26-pr...origin/cyborg/v2026.2.26-pr
+```
+
+### Verified truths
+
+- M16 first-lap proof is recorded via a real approval-gated operator path (`nodes run` → `system.run`), not terminal-local substitution.
+- Operator-path stdout matched the startup substrate exactly:
+  - `/home/spryguy/openclaw-workspace/repos/openclaw`
+  - `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`
+- No source, config, service-unit, branch, or approval-policy edits were needed to obtain this receipt.
+
+### One next action
+
+- Treat this section plus `08_DAILY_LOG.md` and `09_CLOSEOUT_CHECKLIST.md` as the authoritative M16 first-lap evidence bundle for manager signoff.
+
+## Session 2026-03-17 M16 final manager closeout addendum
+
+### Final mission outcome
+
+- Requested mission status: `CLOSED / READY FOR MANAGER SIGN-OFF`.
+- Mission 16 converted the system from pit-lane validation to one real on-track lap.
+
+### What was newly proven architecturally
+
+- The intended operator path was proven end-to-end for one real lap:
+  - `openclaw nodes run` -> approval gate -> node `system.run` -> repo-backed stdout receipts.
+- The successful operator-path receipt was substrate-consistent with startup proof:
+  - path: `/home/spryguy/openclaw-workspace/repos/openclaw`
+  - SHA: `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`
+- The final successful lap required no approval-policy bypass.
+- Temporary accommodations used during the sprint were bounded and explicit (Control UI asset build and foreground node-host run); no source/config/service-unit edits were required for the successful lap itself.
+
+### What remains unverified or deferred
+
+- Platform-wide readiness, multi-lap repeatability, service hygiene completion, approval subsystem redesign, and scale-out hardening were not proven in M16 and are not claimed here.
+
+### Exact carry-forward items for next mission
+
+- Node service hygiene:
+  - reconcile persistent service launch shape with the proven foreground node-host lane.
+- Default agent configuration hygiene:
+  - set an explicit default agent or enforce explicit `--agent` usage to prevent identity ambiguity in approval prompts.
+- Approval identity control-path hygiene:
+  - use explicit `--agent voltaris-v2` in operator-path probes where Voltaris V2 provenance is required.
+- Plugin mismatch warning hygiene:
+  - collect and triage warnings as non-blocking operational debt outside M16 first-lap proof scope.
