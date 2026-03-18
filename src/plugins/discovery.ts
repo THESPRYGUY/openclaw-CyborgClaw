@@ -15,6 +15,12 @@ import type { PluginDiagnostic, PluginOrigin } from "./types.js";
 
 const EXTENSION_EXTS = new Set([".ts", ".js", ".mts", ".cts", ".mjs", ".cjs"]);
 
+const SINGLE_EXTENSION_PACKAGE_ID_HINT_ALIASES = new Map<string, string>([
+  ["ollama-provider", "ollama"],
+  ["sglang-provider", "sglang"],
+  ["vllm-provider", "vllm"],
+]);
+
 export type PluginCandidate = {
   idHint: string;
   source: string;
@@ -335,7 +341,7 @@ function deriveIdHint(params: {
     : rawPackageName;
 
   if (!params.hasMultipleExtensions) {
-    return unscoped;
+    return SINGLE_EXTENSION_PACKAGE_ID_HINT_ALIASES.get(unscoped.toLowerCase()) ?? unscoped;
   }
   return `${unscoped}/${base}`;
 }

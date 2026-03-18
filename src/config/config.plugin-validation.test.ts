@@ -139,7 +139,7 @@ describe("config plugin validation", () => {
     process.umask(previousUmask);
   });
 
-  it("reports missing plugin refs across load paths, entries, and allowlist surfaces", async () => {
+  it("reports missing plugin refs across load paths and remaining hard-fail plugin guard surfaces", async () => {
     const missingPath = path.join(suiteHome, "missing-plugin-dir");
     const res = validateInSuite({
       agents: { list: [{ id: "pi" }] },
@@ -162,15 +162,37 @@ describe("config plugin validation", () => {
       ).toBe(true);
       expect(res.issues).toEqual(
         expect.arrayContaining([
-          { path: "plugins.allow", message: "plugin not found: missing-allow" },
           { path: "plugins.deny", message: "plugin not found: missing-deny" },
           { path: "plugins.slots.memory", message: "plugin not found: missing-slot" },
         ]),
       );
       expect(res.warnings).toContainEqual({
+        path: "plugins.allow",
+        message:
+          "plugin not found: missing-allow (stale config entry ignored; remove it from plugins config)",
+      });
+      expect(res.warnings).toContainEqual({
         path: "plugins.entries.missing-plugin",
         message:
           "plugin not found: missing-plugin (stale config entry ignored; remove it from plugins config)",
+      });
+    }
+  });
+
+  it("warns for unknown plugin ids in plugins.allow instead of failing validation", async () => {
+    const res = validateInSuite({
+      agents: { list: [{ id: "pi" }] },
+      plugins: {
+        enabled: false,
+        allow: ["missing-allow"],
+      },
+    });
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.warnings).toContainEqual({
+        path: "plugins.allow",
+        message:
+          "plugin not found: missing-allow (stale config entry ignored; remove it from plugins config)",
       });
     }
   });

@@ -200,6 +200,36 @@ describe("discoverOpenClawPlugins", () => {
     expect(ids).toContain("voice-call");
   });
 
+  it("maps known provider package names to canonical provider plugin ids", async () => {
+    const stateDir = makeTempDir();
+    const providers = [
+      ["ollama-pack", "@openclaw/ollama-provider", "ollama"],
+      ["sglang-pack", "@openclaw/sglang-provider", "sglang"],
+      ["vllm-pack", "@openclaw/vllm-provider", "vllm"],
+    ] as const;
+
+    for (const [dirName, packageName] of providers) {
+      const packageDir = path.join(stateDir, "extensions", dirName);
+      mkdirSafe(packageDir);
+      writePluginPackageManifest({
+        packageDir,
+        packageName,
+        extensions: ["./index.ts"],
+      });
+      fs.writeFileSync(path.join(packageDir, "index.ts"), "export default function () {}", "utf-8");
+    }
+
+    const { candidates } = await discoverWithStateDir(stateDir, {});
+    const ids = candidates.map((candidate) => candidate.idHint);
+
+    expect(ids).toContain("ollama");
+    expect(ids).toContain("sglang");
+    expect(ids).toContain("vllm");
+    expect(ids).not.toContain("ollama-provider");
+    expect(ids).not.toContain("sglang-provider");
+    expect(ids).not.toContain("vllm-provider");
+  });
+
   it("treats configured directory paths as plugin packages", async () => {
     const stateDir = makeTempDir();
     const packDir = path.join(stateDir, "packs", "demo-plugin-dir");
