@@ -243,3 +243,58 @@
 - `[x]` final branch/SHA recorded
   - branch: `cyborg/v2026.2.26-pr`
   - SHA: `771a1cc79dfd54d45ca3e26320deff0fe4d2dc30`
+
+## Mission M20
+
+### Final classification (M20)
+
+- `VERIFIED`
+
+### Fully proven (M20)
+
+- True inherited M20 baseline pinned and used for proof:
+  - `d934d6ba7299952110fccba399d87028491712e2`
+- Selected M20 proof claim:
+  - the `m18.child.receipt` validation boundary accepts the inherited clean receipt and refuses the inherited known-bad receipt as invalid
+- Required inherited baseline pair exists:
+  - `schemas/m18-child-receipt.schema.json`
+  - `examples/m18-official-richer-helper-bundle/minimal-clean/child-receipt.json`
+  - `examples/m18-official-richer-helper-bundle/known-bad/child-receipt.json`
+- Existing narrow proof path exists and was reused without edits:
+  - `src/cyborgclaw/m18/official-richer-helper-bundle.test.ts`
+  - focused test: `validates clean and known-bad child receipt examples`
+- Focused execution receipt:
+  - `pnpm exec vitest run src/cyborgclaw/m18/official-richer-helper-bundle.test.ts -t "validates clean and known-bad child receipt examples"`
+  - `Test Files 1 passed (1)`
+  - `Tests 1 passed | 3 skipped (4)`
+- Clean control validation receipt:
+  - `VALIDATION:examples/m18-official-richer-helper-bundle/minimal-clean/child-receipt.json`
+  - `OK:true`
+  - `[]`
+- Known-bad comparator validation receipt:
+  - `VALIDATION:examples/m18-official-richer-helper-bundle/known-bad/child-receipt.json`
+  - `OK:false`
+- Preserved schema failures for the known-bad receipt:
+  - `/observedInParent` `const`
+  - root `if` / `then`
+  - `/childSessionId` `minLength`
+  - `/childResultText` `minLength`
+  - `/childReceiptPayload` `minProperties`
+  - `/observedAt` `pattern`
+- Boundary discipline proven:
+  - no widening into bundle, harness, live-lap, transcript, summary, or parent-delta behavior
+- Code-change scope:
+  - no runtime, schema, test, example, or harness edits were required to prove M20
+
+### Actual blockers to honest closeout (M20)
+
+- None.
+
+### Closure decision (M20)
+
+- `YES`
+- Decision basis:
+  - the bounded M20 proof claim was executed successfully at the pinned baseline
+  - the clean receipt passed schema validation
+  - the inherited known-bad receipt failed schema validation with preserved concrete errors
+  - no code changes were needed

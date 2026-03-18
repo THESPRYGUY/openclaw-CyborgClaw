@@ -94,3 +94,119 @@
   - node service hygiene
   - default agent configuration hygiene
   - plugin mismatch warning hygiene
+
+## 2026-03-18 UTC - M20 trust-the-refusal validation-boundary proof
+
+- Start state:
+  - pinned baseline `d934d6ba7299952110fccba399d87028491712e2`
+  - detached `HEAD`
+  - clean tree (`## HEAD (no branch)`)
+- Exact proof claim:
+  - the `m18.child.receipt` validation boundary accepts the inherited clean receipt and refuses the inherited known-bad receipt as invalid
+- Selected boundary:
+  - schema validation only
+  - no widening into bundle, harness, live-lap, transcript, summary, or parent-delta behavior
+- Existing narrow proof path reused:
+  - `src/cyborgclaw/m18/official-richer-helper-bundle.test.ts`
+  - focused test name: `validates clean and known-bad child receipt examples`
+- Exact focused test command:
+
+```text
+pnpm exec vitest run src/cyborgclaw/m18/official-richer-helper-bundle.test.ts -t "validates clean and known-bad child receipt examples"
+```
+
+- Focused test receipt:
+
+```text
+ RUN  v4.1.0 /home/spryguy/openclaw-workspace/repos/openclaw
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 3 skipped (4)
+   Start at  20:47:47
+   Duration  332ms (transform 127ms, setup 208ms, import 26ms, tests 28ms, environment 0ms)
+```
+
+- Exact clean-pass validator receipt:
+
+```text
+VALIDATION:examples/m18-official-richer-helper-bundle/minimal-clean/child-receipt.json
+OK:true
+[]
+```
+
+- Exact known-bad-fail validator receipt:
+
+```text
+VALIDATION:examples/m18-official-richer-helper-bundle/known-bad/child-receipt.json
+OK:false
+```
+
+- Preserved schema errors for the inherited known-bad receipt:
+
+```json
+[
+  {
+    "instancePath": "/observedInParent",
+    "schemaPath": "#/allOf/0/then/properties/observedInParent/const",
+    "keyword": "const",
+    "params": {
+      "allowedValue": true
+    },
+    "message": "must be equal to constant"
+  },
+  {
+    "instancePath": "",
+    "schemaPath": "#/allOf/0/if",
+    "keyword": "if",
+    "params": {
+      "failingKeyword": "then"
+    },
+    "message": "must match \"then\" schema"
+  },
+  {
+    "instancePath": "/childSessionId",
+    "schemaPath": "#/properties/childSessionId/minLength",
+    "keyword": "minLength",
+    "params": {
+      "limit": 1
+    },
+    "message": "must NOT have fewer than 1 characters"
+  },
+  {
+    "instancePath": "/childResultText",
+    "schemaPath": "#/properties/childResultText/minLength",
+    "keyword": "minLength",
+    "params": {
+      "limit": 1
+    },
+    "message": "must NOT have fewer than 1 characters"
+  },
+  {
+    "instancePath": "/childReceiptPayload",
+    "schemaPath": "#/properties/childReceiptPayload/minProperties",
+    "keyword": "minProperties",
+    "params": {
+      "limit": 1
+    },
+    "message": "must NOT have fewer than 1 properties"
+  },
+  {
+    "instancePath": "/observedAt",
+    "schemaPath": "#/properties/observedAt/pattern",
+    "keyword": "pattern",
+    "params": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "message": "must match pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$\""
+  }
+]
+```
+
+- Verified truth:
+  - inherited clean receipt passed schema validation
+  - inherited known-bad receipt failed schema validation
+  - no code edits were required
+  - proof remained inside the `m18.child.receipt` validation boundary
+- Next action:
+  - capture Mission 20 closeout classification in `09_CLOSEOUT_CHECKLIST.md`
