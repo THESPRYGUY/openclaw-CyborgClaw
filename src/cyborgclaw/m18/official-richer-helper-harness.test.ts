@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+
 import {
   emitOfficialM18RicherHelperBundleFromFixture,
   loadOfficialM18RicherHelperFixtureInputs,
@@ -34,9 +35,9 @@ describe("M18 official richer-helper harness", () => {
     expect(result.disposition).toBe("CLEAN");
     expect(result.failReason).toBe("");
     expect(result.childReceipt.result).toBe("observed");
-    await expect(
-      fs.readFile(path.join(outputDir, "approval-checkpoint.json"), "utf8"),
-    ).resolves.toContain('"kind": "approval.checkpoint"');
+    await expect(fs.readFile(path.join(outputDir, "approval-checkpoint.json"), "utf8")).resolves.toContain(
+      "\"kind\": \"approval.checkpoint\"",
+    );
     await expect(fs.readFile(path.join(outputDir, "RH-O01.summary"), "utf8")).resolves.toContain(
       "child_event_before_parent=yes",
     );
@@ -45,10 +46,10 @@ describe("M18 official richer-helper harness", () => {
     ).resolves.toContain("sessions_spawn");
     await expect(
       fs.readFile(path.join(outputDir, "RH-O01.child.receipt.json"), "utf8"),
-    ).resolves.toContain('"childSessionId": "child-session:m18:official-richer-helper:01"');
-    await expect(
-      fs.readFile(path.join(outputDir, "comparable-lap-set.tsv"), "utf8"),
-    ).resolves.toContain("\tCLEAN\t");
+    ).resolves.toContain("\"childSessionId\": \"child-session:m18:official-richer-helper:01\"");
+    await expect(fs.readFile(path.join(outputDir, "comparable-lap-set.tsv"), "utf8")).resolves.toContain(
+      "\tCLEAN\t",
+    );
   });
 
   it("emits an invalid bundle when the fixture lane has ordering contradiction and missing child evidence", async () => {
@@ -65,9 +66,9 @@ describe("M18 official richer-helper harness", () => {
     expect(result.disposition).toBe("INVALID");
     expect(result.failReason).toBe("ordering contradiction");
     expect(result.childReceipt.result).toBe("invalid");
-    await expect(
-      fs.readFile(path.join(outputDir, "comparable-lap-set.tsv"), "utf8"),
-    ).resolves.toContain("fail=ordering contradiction");
+    await expect(fs.readFile(path.join(outputDir, "comparable-lap-set.tsv"), "utf8")).resolves.toContain(
+      "fail=ordering contradiction",
+    );
   });
 
   it("keeps child receipt, summary, and parent delta identities aligned for the clean fixture", async () => {

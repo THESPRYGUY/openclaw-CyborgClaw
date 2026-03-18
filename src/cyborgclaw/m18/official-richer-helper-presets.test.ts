@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+
 import { runOfficialM18RicherHelperPreset } from "./official-richer-helper-presets.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -50,9 +51,9 @@ describe("M18 official richer-helper presets", () => {
 
     expect(result.emitted.disposition).toBe("INVALID");
     expect(result.emitted.failReason).toBe("missing child evidence");
-    await expect(
-      fs.readFile(path.join(bundleDir, "comparable-lap-set.tsv"), "utf8"),
-    ).resolves.toContain("fail=missing child evidence");
+    await expect(fs.readFile(path.join(bundleDir, "comparable-lap-set.tsv"), "utf8")).resolves.toContain(
+      "fail=missing child evidence",
+    );
   });
 
   it("preserves the full expected artifact set through the preset path", async () => {

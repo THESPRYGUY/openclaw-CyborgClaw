@@ -1,7 +1,9 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
+
 import {
   assertOfficialM18ApprovalConsumerReady,
   buildSummaryText,
@@ -136,15 +138,11 @@ describe("M18 live execute repairs", () => {
         timeoutMs: 100,
         pollIntervalMs: 10,
       }),
-    ).rejects.toThrow(
-      "parent transcript did not advance after approval resolution for approval-01",
-    );
+    ).rejects.toThrow("parent transcript did not advance after approval resolution for approval-01");
   });
 
   it("waits for a child completion event before freezing the parent transcript", async () => {
-    const sessionsDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "m18-live-execute-child-complete-"),
-    );
+    const sessionsDir = await fs.mkdtemp(path.join(os.tmpdir(), "m18-live-execute-child-complete-"));
     tempDirs.push(sessionsDir);
     const transcriptPath = path.join(sessionsDir, "parent.jsonl");
     const baseline = `{"type":"session","id":"session-parent-01"}

@@ -1,4 +1,5 @@
 import path from "node:path";
+
 import type { M18LiveComparabilityPins } from "./official-richer-helper-live-lap.js";
 import type {
   OfficialM18RicherHelperLiveReceiptRefs,
@@ -163,16 +164,7 @@ export function planOfficialM18RicherHelperLiveCapture(
       model,
     },
     launch: {
-      gatewayCommand: [
-        "pnpm",
-        "--silent",
-        "openclaw",
-        "gateway",
-        "run",
-        "--bind",
-        "loopback",
-        "--verbose",
-      ],
+      gatewayCommand: ["pnpm", "--silent", "openclaw", "gateway", "run", "--bind", "loopback", "--verbose"],
       agentCommand: [
         "pnpm",
         "--silent",

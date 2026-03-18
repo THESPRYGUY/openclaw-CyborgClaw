@@ -90,10 +90,7 @@ function parseJsonLines(text: string): ParentDeltaEntry[] {
     .map((line) => JSON.parse(line) as ParentDeltaEntry);
 }
 
-function extractChildObservation(
-  parentDeltaText: string,
-  childSessionKey: string,
-): ChildObservation | null {
+function extractChildObservation(parentDeltaText: string, childSessionKey: string): ChildObservation | null {
   const entries = parseJsonLines(parentDeltaText);
   for (const entry of entries) {
     const messageText = entry.message?.content

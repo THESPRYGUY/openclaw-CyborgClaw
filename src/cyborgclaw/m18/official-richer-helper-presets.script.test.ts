@@ -1,9 +1,9 @@
-import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
@@ -20,25 +20,21 @@ async function runScript(args: {
   preparedDir: string;
   bundleDir: string;
 }): Promise<void> {
-  await execFileAsync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      "src/cyborgclaw/m18/official-richer-helper-presets.script.ts",
-      "--preset",
-      args.preset,
-      "--source-dir",
-      args.sourceDir,
-      "--prepared-dir",
-      args.preparedDir,
-      "--bundle-dir",
-      args.bundleDir,
-    ],
-    {
-      cwd: repoRoot,
-    },
-  );
+  await execFileAsync(process.execPath, [
+    "--import",
+    "tsx",
+    "src/cyborgclaw/m18/official-richer-helper-presets.script.ts",
+    "--preset",
+    args.preset,
+    "--source-dir",
+    args.sourceDir,
+    "--prepared-dir",
+    args.preparedDir,
+    "--bundle-dir",
+    args.bundleDir,
+  ], {
+    cwd: repoRoot,
+  });
 }
 
 afterEach(async () => {
@@ -61,9 +57,9 @@ describe("M18 official richer-helper preset script", () => {
     await expect(fs.readFile(path.join(bundleDir, "PK-L01.summary"), "utf8")).resolves.toContain(
       "result=CLEAN",
     );
-    await expect(
-      fs.readFile(path.join(bundleDir, "PK-L01.child.receipt.json"), "utf8"),
-    ).resolves.toContain('"result": "observed"');
+    await expect(fs.readFile(path.join(bundleDir, "PK-L01.child.receipt.json"), "utf8")).resolves.toContain(
+      "\"result\": \"observed\"",
+    );
   });
 
   it("runs the bad preset end-to-end and emits an invalid bundle", async () => {
@@ -81,9 +77,9 @@ describe("M18 official richer-helper preset script", () => {
     await expect(fs.readFile(path.join(bundleDir, "PK-L03.summary"), "utf8")).resolves.toContain(
       "result=INVALID",
     );
-    await expect(
-      fs.readFile(path.join(bundleDir, "comparable-lap-set.tsv"), "utf8"),
-    ).resolves.toContain("fail=missing child evidence");
+    await expect(fs.readFile(path.join(bundleDir, "comparable-lap-set.tsv"), "utf8")).resolves.toContain(
+      "fail=missing child evidence",
+    );
   });
 
   it("emits the full expected artifact set through the script entry", async () => {

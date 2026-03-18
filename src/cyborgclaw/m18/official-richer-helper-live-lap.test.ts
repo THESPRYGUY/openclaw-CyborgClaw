@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+
 import {
   buildOfficialM18RicherHelperApprovalCheckpoint,
   emitOfficialM18RicherHelperLiveLap,
@@ -129,7 +130,7 @@ describe("M18 official richer-helper live lap adapter", () => {
       "comparable-lap-set.tsv",
     ]);
     await expect(fs.readFile(result.files.metadataPath, "utf8")).resolves.toContain(
-      '"laneTarget": "agent:main"',
+      "\"laneTarget\": \"agent:main\"",
     );
   });
 
@@ -154,10 +155,7 @@ describe("M18 official richer-helper live lap adapter", () => {
         .replaceAll("RH-LIVE-01", "RH-LIVE-02")
         .replaceAll("run:m18:official-richer-helper:01", "run:m18:official-richer-helper:02")
         .replaceAll("spawn:m18:official-richer-helper:01", "spawn:m18:official-richer-helper:02")
-        .replaceAll(
-          "child-session:m18:official-richer-helper:01",
-          "child-session:m18:official-richer-helper:02",
-        )
+        .replaceAll("child-session:m18:official-richer-helper:01", "child-session:m18:official-richer-helper:02")
         .replace("child_artifact=yes", "child_artifact=no")
         .replace("child_receipt_count=1", "child_receipt_count=0")
         .replace("result=CLEAN", "result=INVALID")
@@ -170,24 +168,18 @@ describe("M18 official richer-helper live lap adapter", () => {
         .replaceAll("RH-LIVE-01", "RH-LIVE-02")
         .replaceAll("run:m18:official-richer-helper:01", "run:m18:official-richer-helper:02")
         .replaceAll("spawn:m18:official-richer-helper:01", "spawn:m18:official-richer-helper:02")
-        .replaceAll(
-          "child-session:m18:official-richer-helper:01",
-          "child-session:m18:official-richer-helper:02",
-        ),
+        .replaceAll("child-session:m18:official-richer-helper:01", "child-session:m18:official-richer-helper:02"),
       childTranscriptText: fixture.childTranscriptText
         .replaceAll("RH-LIVE-01", "RH-LIVE-02")
-        .replaceAll(
-          "child-session:m18:official-richer-helper:01",
-          "child-session:m18:official-richer-helper:02",
-        ),
+        .replaceAll("child-session:m18:official-richer-helper:01", "child-session:m18:official-richer-helper:02"),
       comparabilityPins: fixture.comparabilityPins,
     });
 
     expect(result.bundle.disposition).toBe("INVALID");
     expect(result.bundle.failReason).toBe("missing child evidence");
-    await expect(
-      fs.readFile(result.bundle.files.comparabilityManifestPath, "utf8"),
-    ).resolves.toContain("fail=missing child evidence");
+    await expect(fs.readFile(result.bundle.files.comparabilityManifestPath, "utf8")).resolves.toContain(
+      "fail=missing child evidence",
+    );
   });
 
   it("stops clearly when approval evidence is missing or mismatched", async () => {

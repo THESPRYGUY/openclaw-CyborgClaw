@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+
 import { emitOfficialM18RicherHelperBundleFromFixture } from "./official-richer-helper-harness.js";
 import { normalizeOfficialM18RicherHelperHarnessInputs } from "./official-richer-helper-prep.js";
 
@@ -29,12 +30,8 @@ describe("M18 official richer-helper prep", () => {
       approvalCheckpointPath: repoPath(
         "examples/m18-official-richer-helper-bundle/source-clean/approval-source.json",
       ),
-      summaryPath: repoPath(
-        "examples/m18-official-richer-helper-bundle/source-clean/PK-L01.summary",
-      ),
-      auditPath: repoPath(
-        "examples/m18-official-richer-helper-bundle/source-clean/PK-L01.audit.json",
-      ),
+      summaryPath: repoPath("examples/m18-official-richer-helper-bundle/source-clean/PK-L01.summary"),
+      auditPath: repoPath("examples/m18-official-richer-helper-bundle/source-clean/PK-L01.audit.json"),
       parentTranscriptPath: repoPath(
         "examples/m18-official-richer-helper-bundle/source-clean/747ce949-f54d-4058-be66-cb63866bd312.jsonl.reset.2026-03-17T16-53-32.513Z",
       ),
@@ -43,9 +40,7 @@ describe("M18 official richer-helper prep", () => {
       ),
     });
 
-    await expect(fs.readFile(normalized.files.summaryPath, "utf8")).resolves.toContain(
-      "lap=PK-L01",
-    );
+    await expect(fs.readFile(normalized.files.summaryPath, "utf8")).resolves.toContain("lap=PK-L01");
     await expect(fs.readFile(normalized.files.parentDeltaPath, "utf8")).resolves.toContain(
       "sessions_spawn",
     );
@@ -74,12 +69,8 @@ describe("M18 official richer-helper prep", () => {
       approvalCheckpointPath: repoPath(
         "examples/m18-official-richer-helper-bundle/source-known-bad/approval-source.json",
       ),
-      summaryPath: repoPath(
-        "examples/m18-official-richer-helper-bundle/source-known-bad/PK-L03.summary",
-      ),
-      auditPath: repoPath(
-        "examples/m18-official-richer-helper-bundle/source-known-bad/PK-L03.audit.json",
-      ),
+      summaryPath: repoPath("examples/m18-official-richer-helper-bundle/source-known-bad/PK-L03.summary"),
+      auditPath: repoPath("examples/m18-official-richer-helper-bundle/source-known-bad/PK-L03.audit.json"),
       parentTranscriptPath: repoPath(
         "examples/m18-official-richer-helper-bundle/source-known-bad/747ce949-f54d-4058-be66-cb63866bd312.jsonl.reset.2026-03-17T16-46-18.698Z",
       ),
@@ -110,12 +101,8 @@ describe("M18 official richer-helper prep", () => {
       approvalCheckpointPath: repoPath(
         "examples/m18-official-richer-helper-bundle/source-clean/approval-source.json",
       ),
-      summaryPath: repoPath(
-        "examples/m18-official-richer-helper-bundle/source-clean/PK-L01.summary",
-      ),
-      auditPath: repoPath(
-        "examples/m18-official-richer-helper-bundle/source-clean/PK-L01.audit.json",
-      ),
+      summaryPath: repoPath("examples/m18-official-richer-helper-bundle/source-clean/PK-L01.summary"),
+      auditPath: repoPath("examples/m18-official-richer-helper-bundle/source-clean/PK-L01.audit.json"),
       parentTranscriptPath: repoPath(
         "examples/m18-official-richer-helper-bundle/source-clean/747ce949-f54d-4058-be66-cb63866bd312.jsonl.reset.2026-03-17T16-53-32.513Z",
       ),
@@ -134,7 +121,7 @@ describe("M18 official richer-helper prep", () => {
       "020d28fc-d7cc-427b-91e3-ed3cf1b3aa15",
     );
     await expect(fs.readFile(normalized.files.childTranscriptPath, "utf8")).resolves.toContain(
-      '"id":"0fda66f8-ed45-4755-ba51-24a92bc1785e"',
+      "\"id\":\"0fda66f8-ed45-4755-ba51-24a92bc1785e\"",
     );
   });
 });

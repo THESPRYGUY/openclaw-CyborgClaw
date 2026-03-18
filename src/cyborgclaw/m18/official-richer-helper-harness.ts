@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+
 import {
   type EmitOfficialM18RicherHelperBundleResult,
   emitOfficialM18RicherHelperBundle,
@@ -43,10 +44,7 @@ export async function loadOfficialM18RicherHelperFixtureInputs(params: {
   const summaryPath = fixtureFilePath(params.fixtureDir, `${params.lapId}.summary`);
   const auditPath = fixtureFilePath(params.fixtureDir, `${params.lapId}.audit.json`);
   const parentDeltaPath = fixtureFilePath(params.fixtureDir, `${params.lapId}.parent.delta.jsonl`);
-  const childTranscriptPath = fixtureFilePath(
-    params.fixtureDir,
-    `${params.lapId}.child.transcript.jsonl`,
-  );
+  const childTranscriptPath = fixtureFilePath(params.fixtureDir, `${params.lapId}.child.transcript.jsonl`);
 
   const [approvalCheckpoint, summaryText, auditText, parentDeltaText, childTranscriptText] =
     await Promise.all([

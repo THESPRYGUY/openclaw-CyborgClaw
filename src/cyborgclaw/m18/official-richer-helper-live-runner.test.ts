@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+
 import {
   loadOfficialM18RicherHelperLiveLapRunnerInputs,
   runOfficialM18RicherHelperLiveLapRunner,
@@ -88,22 +89,13 @@ fail_reason=`,
   };
 }
 
-async function writeFixtureFiles(
-  fixtureDir: string,
-  fixture: ReturnType<typeof createLiveFixture>,
-) {
+async function writeFixtureFiles(fixtureDir: string, fixture: ReturnType<typeof createLiveFixture>) {
   await Promise.all([
-    fs.writeFile(
-      path.join(fixtureDir, "approval-evidence.json"),
-      JSON.stringify(fixture.approvalCheckpoint, null, 2),
-    ),
+    fs.writeFile(path.join(fixtureDir, "approval-evidence.json"), JSON.stringify(fixture.approvalCheckpoint, null, 2)),
     fs.writeFile(path.join(fixtureDir, "RH-LIVE-01.summary"), fixture.summaryText),
     fs.writeFile(path.join(fixtureDir, "RH-LIVE-01.audit.json"), fixture.auditText),
     fs.writeFile(path.join(fixtureDir, "RH-LIVE-01.parent.delta.jsonl"), fixture.parentDeltaText),
-    fs.writeFile(
-      path.join(fixtureDir, "RH-LIVE-01.child.transcript.jsonl"),
-      fixture.childTranscriptText,
-    ),
+    fs.writeFile(path.join(fixtureDir, "RH-LIVE-01.child.transcript.jsonl"), fixture.childTranscriptText),
     fs.writeFile(path.join(fixtureDir, "RH-LIVE-01.stdout.log"), fixture.stdoutText),
     fs.writeFile(path.join(fixtureDir, "RH-LIVE-01.stderr.log"), fixture.stderrText),
   ]);
@@ -203,7 +195,7 @@ describe("M18 official richer-helper live runner", () => {
     expect(result.inputs.approvalCheckpoint.runId).toBe("run:m18:official-richer-helper:01");
     expect(result.emitted.bundle.disposition).toBe("CLEAN");
     await expect(fs.readFile(result.emitted.files.metadataPath, "utf8")).resolves.toContain(
-      '"parentTranscriptRef": "/tmp/live-parent.jsonl"',
+      "\"parentTranscriptRef\": \"/tmp/live-parent.jsonl\"",
     );
   });
 });

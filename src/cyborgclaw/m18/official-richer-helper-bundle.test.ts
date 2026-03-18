@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import AjvPkg from "ajv";
 import { afterEach, describe, expect, it } from "vitest";
+
 import {
   buildM18ChildReceipt,
   emitOfficialM18RicherHelperBundle,

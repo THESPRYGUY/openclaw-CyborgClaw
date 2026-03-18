@@ -6,12 +6,15 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
+
 import { loadConfig, resolveStateDir } from "../../config/config.js";
 import { GatewayClient } from "../../gateway/client.js";
 import type { HelloOk } from "../../gateway/protocol/index.js";
 import { stripInlineDirectiveTagsForDisplay } from "../../utils/directive-tags.js";
 import { GATEWAY_CLIENT_MODES, GATEWAY_CLIENT_NAMES } from "../../utils/message-channel.js";
-import { planOfficialM18RicherHelperLiveCapture } from "./official-richer-helper-live-capture.js";
+import {
+  planOfficialM18RicherHelperLiveCapture,
+} from "./official-richer-helper-live-capture.js";
 import { runOfficialM18RicherHelperLiveLapRunner } from "./official-richer-helper-live-runner.js";
 
 const execFileAsync = promisify(execFile);
@@ -417,8 +420,7 @@ async function resolveOfficialM18ParentSessionId(params: {
     sessionsIndexText = await fs.readFile(sessionsIndexPath, "utf8");
   } catch (error) {
     throw new Error(
-      `missing parent session index fallback at ${sessionsIndexPath}: ${error instanceof Error ? error.message : String(error)}`,
-      { cause: error },
+      `missing parent session index fallback at ${sessionsIndexPath}: ${error instanceof Error ? error.message : String(error)}`, { cause: error },
     );
   }
 
@@ -427,8 +429,7 @@ async function resolveOfficialM18ParentSessionId(params: {
     parsedIndex = JSON.parse(sessionsIndexText) as Record<string, SessionIndexEntry>;
   } catch (error) {
     throw new Error(
-      `invalid parent session index fallback at ${sessionsIndexPath}: ${error instanceof Error ? error.message : String(error)}`,
-      { cause: error },
+      `invalid parent session index fallback at ${sessionsIndexPath}: ${error instanceof Error ? error.message : String(error)}`, { cause: error },
     );
   }
 
@@ -441,11 +442,7 @@ async function resolveOfficialM18ParentSessionId(params: {
 
   const agentPrefix = `agent:${parseAgentIdFromLaneTarget(params.laneTarget)}:`;
   const nearbyMatches = Object.entries(parsedIndex).filter(([key, value]) => {
-    return (
-      key.startsWith(agentPrefix) &&
-      typeof value?.sessionId === "string" &&
-      value.sessionId.trim() !== ""
-    );
+    return key.startsWith(agentPrefix) && typeof value?.sessionId === "string" && value.sessionId.trim() !== "";
   });
   if (nearbyMatches.length > 1) {
     throw new Error(`ambiguous parent session id fallback for ${params.laneTarget}`);
@@ -471,11 +468,11 @@ async function waitForOfficialM18PostApprovalTranscriptGrowth(params: {
   while (Date.now() - startedAt < timeoutMs) {
     const nextTranscriptText = await fs.readFile(params.parentTranscriptPath, "utf8");
     if (nextTranscriptText.length > params.baselineTranscriptText.length) {
-      const deltaText = new Set(nextTranscriptText.slice(params.baselineTranscriptText.length));
+      const deltaText = nextTranscriptText.slice(params.baselineTranscriptText.length);
       if (
-        deltaText.has("An async command the user already approved has completed.") ||
-        deltaText.has("sessions_spawn") ||
-        deltaText.has("[Internal task completion event]")
+        deltaText.includes("An async command the user already approved has completed.") ||
+        deltaText.includes("sessions_spawn") ||
+        deltaText.includes("[Internal task completion event]")
       ) {
         return nextTranscriptText;
       }
@@ -487,7 +484,9 @@ async function waitForOfficialM18PostApprovalTranscriptGrowth(params: {
   );
 }
 
-function findOfficialM18ChildCompletionInTranscript(parentTranscriptText: string): {
+function findOfficialM18ChildCompletionInTranscript(
+  parentTranscriptText: string,
+): {
   childSessionId: string;
   childResultText: string;
 } | null {
@@ -653,8 +652,7 @@ function buildSummaryText(params: {
       .filter((entry) => entry.role === "assistant" && entry.text !== "")
       .at(-1)?.text ?? "";
   const childPayload = parseAssistantPayload(childAssistantText);
-  const childEventText =
-    childEventIndex > 0 ? extractMessageText(entries[childEventIndex - 1] ?? {}) : "";
+  const childEventText = childEventIndex > 0 ? extractMessageText(entries[childEventIndex - 1] ?? {}) : "";
   const childCompletion = parseChildCompletion(childEventText);
   const childSessionId =
     childCompletion?.childSessionId ||
@@ -708,7 +706,10 @@ function buildSummaryText(params: {
   ].join("\n");
 }
 
-function buildAuditText(params: { parentRunId: string; parentSessionId: string }): string {
+function buildAuditText(params: {
+  parentRunId: string;
+  parentSessionId: string;
+}): string {
   return JSON.stringify(
     {
       load: {
@@ -865,55 +866,22 @@ async function executeOfficialM18RicherHelperLiveLap(
 
   await runTextCommand(env, ["config", "set", "gateway.mode", "local"]);
   await runTextCommand(env, ["config", "set", "gateway.auth.mode", "none"]);
-  await runTextCommand(env, [
-    "config",
-    "set",
-    "gateway.port",
-    JSON.stringify(port),
-    "--strict-json",
-  ]);
-  await runTextCommand(env, [
-    "config",
-    "set",
-    "tools.exec.host",
-    JSON.stringify("gateway"),
-    "--strict-json",
-  ]);
-  await runTextCommand(env, [
-    "config",
-    "set",
-    "tools.exec.security",
-    JSON.stringify("full"),
-    "--strict-json",
-  ]);
-  await runTextCommand(env, [
-    "config",
-    "set",
-    "tools.exec.ask",
-    JSON.stringify("always"),
-    "--strict-json",
-  ]);
-  await runTextCommand(env, [
-    "config",
-    "set",
-    "tools.allow",
-    JSON.stringify(["exec", "sessions_spawn"]),
-    "--strict-json",
-  ]);
-  await runTextCommand(env, [
-    "config",
-    "set",
-    "agents.defaults.model.primary",
-    JSON.stringify(plan.tempRuntime.model),
-    "--strict-json",
-  ]);
-  await runTextCommand(env, [
-    "config",
-    "set",
-    "agents.defaults.model.fallbacks",
-    JSON.stringify(modelFallbacks),
-    "--strict-json",
-  ]);
+  await runTextCommand(env, ["config", "set", "gateway.port", JSON.stringify(port), "--strict-json"]);
+  await runTextCommand(env, ["config", "set", "tools.exec.host", JSON.stringify("gateway"), "--strict-json"]);
+  await runTextCommand(env, ["config", "set", "tools.exec.security", JSON.stringify("full"), "--strict-json"]);
+  await runTextCommand(env, ["config", "set", "tools.exec.ask", JSON.stringify("always"), "--strict-json"]);
+  await runTextCommand(
+    env,
+    ["config", "set", "tools.allow", JSON.stringify(["exec", "sessions_spawn"]), "--strict-json"],
+  );
+  await runTextCommand(
+    env,
+    ["config", "set", "agents.defaults.model.primary", JSON.stringify(plan.tempRuntime.model), "--strict-json"],
+  );
+  await runTextCommand(
+    env,
+    ["config", "set", "agents.defaults.model.fallbacks", JSON.stringify(modelFallbacks), "--strict-json"],
+  );
 
   const gatewayStdout: string[] = [];
   const gatewayStderr: string[] = [];
@@ -1068,11 +1036,7 @@ async function executeOfficialM18RicherHelperLiveLap(
 
     await fs.writeFile(plan.files.summaryPath, `${summaryText}\n`, "utf8");
     await fs.writeFile(plan.files.auditPath, `${auditText}\n`, "utf8");
-    await fs.writeFile(
-      plan.files.approvalEvidencePath,
-      `${JSON.stringify(approvalEvidence, null, 2)}\n`,
-      "utf8",
-    );
+    await fs.writeFile(plan.files.approvalEvidencePath, `${JSON.stringify(approvalEvidence, null, 2)}\n`, "utf8");
 
     const emitted = await runOfficialM18RicherHelperLiveLapRunner(plan.runnerParams);
     return {
