@@ -1,0 +1,2 @@
+{"type":"session","id":"child-session:m18:official-richer-helper:02","timestamp":"2026-03-18T00:05:02Z"}
+{"type":"message","timestamp":"2026-03-18T00:05:03Z","message":{"role":"assistant","content":[{"type":"text","text":"{\"lap\":\"RH-O02\",\"helper\":true,\"token\":\"HELPER-OK-RH-O02\"}"}]}}

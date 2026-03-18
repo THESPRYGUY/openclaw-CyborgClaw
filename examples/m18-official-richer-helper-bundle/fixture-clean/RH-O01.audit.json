@@ -1,0 +1,21 @@
+{
+  "load": {
+    "1": {
+      "loadedSessionId": "session:m18:official-richer-helper:01"
+    }
+  },
+  "predispatch": {
+    "1": {
+      "runId": "run:m18:official-richer-helper:01",
+      "chosenSessionId": "session:m18:official-richer-helper:01",
+      "writtenBackSessionId": "session:m18:official-richer-helper:01"
+    }
+  },
+  "write": {
+    "1": {
+      "afterMain": {
+        "sessionId": "session:m18:official-richer-helper:01"
+      }
+    }
+  }
+}

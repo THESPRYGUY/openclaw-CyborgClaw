@@ -1,0 +1,21 @@
+{
+  "load": {
+    "1": {
+      "loadedSessionId": "747ce949-f54d-4058-be66-cb63866bd312"
+    }
+  },
+  "predispatch": {
+    "1": {
+      "runId": "de02b2fd-f296-49ef-8642-9a22cb2efd42",
+      "chosenSessionId": "747ce949-f54d-4058-be66-cb63866bd312",
+      "writtenBackSessionId": "747ce949-f54d-4058-be66-cb63866bd312"
+    }
+  },
+  "write": {
+    "1": {
+      "afterMain": {
+        "sessionId": "747ce949-f54d-4058-be66-cb63866bd312"
+      }
+    }
+  }
+}

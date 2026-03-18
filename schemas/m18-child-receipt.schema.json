@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://openclaw.ai/schemas/m18-child-receipt.schema.json",
+  "title": "OpenClaw M18 Child Receipt",
+  "description": "Mission-local M18 child receipt contract for one official richer-helper lap bundle.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "lapId",
+    "parentRunId",
+    "parentSessionId",
+    "childSessionKey",
+    "childSessionId",
+    "spawnRunId",
+    "observedInParent",
+    "childResultText",
+    "childReceiptPayload",
+    "observedAt",
+    "result"
+  ],
+  "properties": {
+    "kind": {
+      "const": "m18.child.receipt"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "lapId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "parentRunId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "parentSessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "childSessionKey": {
+      "type": "string",
+      "pattern": "^agent:[a-z0-9._-]+:subagent:[a-z0-9-]+$"
+    },
+    "childSessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "spawnRunId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observedInParent": {
+      "type": "boolean"
+    },
+    "childResultText": {
+      "type": "string",
+      "minLength": 1
+    },
+    "childReceiptPayload": {
+      "type": "object",
+      "additionalProperties": true,
+      "minProperties": 1
+    },
+    "observedAt": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "result": {
+      "type": "string",
+      "enum": ["observed", "invalid"]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "result": {
+            "const": "observed"
+          }
+        },
+        "required": ["result"]
+      },
+      "then": {
+        "properties": {
+          "observedInParent": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}

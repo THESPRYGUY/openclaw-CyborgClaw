@@ -39,6 +39,7 @@ export async function sendExecApprovalFollowup(
     params.turnSourceThreadId != null && params.turnSourceThreadId !== ""
       ? String(params.turnSourceThreadId)
       : undefined;
+  const hasDeliveryTarget = Boolean(channel && to);
 
   await callGatewayTool(
     "agent",
@@ -46,12 +47,12 @@ export async function sendExecApprovalFollowup(
     {
       sessionKey,
       message: buildExecApprovalFollowupPrompt(resultText),
-      deliver: true,
-      bestEffortDeliver: true,
-      channel: channel && to ? channel : undefined,
-      to: channel && to ? to : undefined,
-      accountId: channel && to ? params.turnSourceAccountId?.trim() || undefined : undefined,
-      threadId: channel && to ? threadId : undefined,
+      deliver: hasDeliveryTarget ? true : undefined,
+      bestEffortDeliver: hasDeliveryTarget ? true : undefined,
+      channel: hasDeliveryTarget ? channel : undefined,
+      to: hasDeliveryTarget ? to : undefined,
+      accountId: hasDeliveryTarget ? params.turnSourceAccountId?.trim() || undefined : undefined,
+      threadId: hasDeliveryTarget ? threadId : undefined,
       idempotencyKey: `exec-approval-followup:${params.approvalId}`,
     },
     { expectFinal: true },

@@ -1,0 +1,20 @@
+{
+  "kind": "approval.checkpoint",
+  "schemaVersion": 1,
+  "checkpointId": "approval:m18:prep-source:pk-l03",
+  "runId": "de02b2fd-f296-49ef-8642-9a22cb2efd42",
+  "approvalPolicy": "strict",
+  "outcome": "approve",
+  "state": "approved",
+  "recordedAt": "2026-03-18T00:05:00Z",
+  "expiresAt": "2026-03-18T02:05:00Z",
+  "artifactProfileId": "m18:prep-source:pk-l03",
+  "artifactIds": ["artifact:m18:prep-source:pk-l03"],
+  "trace": {
+    "traceNamespace": "trace:m18:prep-source",
+    "receiptNamespace": "receipt:m18:prep-source",
+    "routeLawNamespace": "route-law:m18:prep-source",
+    "approvalNamespace": "approval:m18:prep-source",
+    "correlationId": "corr:m18:prep-source:pk-l03"
+  }
+}

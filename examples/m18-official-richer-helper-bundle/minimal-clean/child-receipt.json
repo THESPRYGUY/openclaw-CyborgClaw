@@ -1,0 +1,19 @@
+{
+  "kind": "m18.child.receipt",
+  "schemaVersion": 1,
+  "lapId": "RH-O01",
+  "parentRunId": "run:m18:official-richer-helper:01",
+  "parentSessionId": "session:m18:official-richer-helper:01",
+  "childSessionKey": "agent:main:subagent:11111111-2222-3333-4444-555555555555",
+  "childSessionId": "child-session:m18:official-richer-helper:01",
+  "spawnRunId": "spawn:m18:official-richer-helper:01",
+  "observedInParent": true,
+  "childResultText": "{\"lap\":\"RH-O01\",\"helper\":true,\"token\":\"HELPER-OK-RH-O01\"}",
+  "childReceiptPayload": {
+    "lap": "RH-O01",
+    "helper": true,
+    "token": "HELPER-OK-RH-O01"
+  },
+  "observedAt": "2026-03-18T00:00:00Z",
+  "result": "observed"
+}
