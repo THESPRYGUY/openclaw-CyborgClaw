@@ -1,0 +1,61 @@
+{
+  "templateVersion": "dev-pack-v1",
+  "missionId": "openclaw-governance/team-collaboration-optimization-v1",
+  "status": "monitoring-active",
+  "promptGuideRoot": "PROMPT_GUIDE",
+  "currentRoute": "plan_first",
+  "lead": {
+    "agent": "Voltaris V2",
+    "role": "strategist-orchestrator"
+  },
+  "executor": {
+    "agent": "Codex",
+    "role": "implementation-verification"
+  },
+  "subagents": [
+    {
+      "agent": "CollaboratorPlanner",
+      "role": "bounded strategy-draft helper",
+      "model": "gpt-5.4-mini",
+      "status": "completed"
+    },
+    {
+      "agent": "CollaborationObserver",
+      "role": "bounded collaboration-receipt observer",
+      "model": "gpt-5.4-mini",
+      "status": "completed"
+    },
+    {
+      "agent": "StrategyRefiner",
+      "role": "bounded refinement-threshold assessor",
+      "model": "gpt-5.4-mini",
+      "status": "completed"
+    }
+  ],
+  "collaborationReceiptState": "active",
+  "collaborationReceiptCategories": [
+    "packet_quality",
+    "codex_feedback_quality",
+    "escalation_blocker",
+    "subagent_effectiveness",
+    "strategy_drift"
+  ],
+  "monitoringState": "active",
+  "monitoringLog": "MONITORING_LOG.md",
+  "monitoringLastAssessedAt": "2026-03-21T19:05:25Z",
+  "monitoringTriggerStatus": "not-met",
+  "strategyRefinementState": "not-triggered",
+  "strategyReviewTrigger": "Trigger a collaboration-strategy review when either: (1) two consecutive implementation lanes produce partial or blocked receipts in packet_quality or codex_feedback_quality, or (2) drift or blocker receipts recur with the same cited cause across lanes.",
+  "activeArtifacts": {
+    "missionSpec": "01_MISSION_SPEC.md",
+    "receiptsIndex": "RECEIPTS_INDEX.md",
+    "monitoringLog": "MONITORING_LOG.md",
+    "nextLaneContract": "NEXT_LANE_CONTRACT.md",
+    "handoff": "07_HANDOVER_ADDENDUM.md",
+    "dailyLog": "08_DAILY_LOG.md",
+    "promptTemplates": "PROMPT_GUIDE/04_PROMPT_TEMPLATES.md",
+    "decisionTree": "PROMPT_GUIDE/09_OPERATOR_DECISION_TREE.md",
+    "teamCollaborationStrategy": "TEAM_COLLABORATION_STRATEGY.md"
+  },
+  "currentNextAction": "Start Team Collaboration Optimization application review and refinement planning when either: (1) two consecutive implementation lanes produce partial or blocked receipts in packet_quality or codex_feedback_quality, or (2) drift or blocker receipts recur with the same cited cause across lanes; at that point, analyze RECEIPTS_INDEX.md and propose bounded artifact-only updates to TEAM_COLLABORATION_STRATEGY.md."
+}

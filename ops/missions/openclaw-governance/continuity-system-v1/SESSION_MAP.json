@@ -1,0 +1,85 @@
+{
+  "templateVersion": "dev-pack-v1",
+  "missionId": "openclaw-governance/continuity-system-v1",
+  "status": "archived",
+  "trustState": "VERIFIED",
+  "promptGuideRoot": "PROMPT_GUIDE",
+  "currentRoute": "plan_first",
+  "briefingLastRefreshedAt": "2026-03-21T18:20:37Z",
+  "briefingRefreshMode": "operator-generated",
+  "promotionModelState": "manual-file-backed",
+  "promotionRulesArtifact": "PROMOTION_RULES.md",
+  "serviceReadinessState": "DEFERRED",
+  "serviceReadinessArtifact": "SERVICE_READINESS_RECOMMENDATION.md",
+  "serviceReadinessDecision": "Option 1",
+  "serviceReadinessDecisionRecordedAt": "2026-03-21T16:30:04Z",
+  "strategicDirection": "file-backed-archived",
+  "optimizationPlanState": "IMPLEMENTED",
+  "optimizationImplementedAt": "2026-03-21T17:03:57Z",
+  "nextLaneAuthoritySet": [
+    "NEXT_LANE_CONTRACT.md",
+    "mission.yaml.continuity.next_action",
+    "SESSION_MAP.json.currentNextAction"
+  ],
+  "briefingInputModel": "4-core-plus-3-conditional-local",
+  "privateMemoryLocation": "~/private-strategist-notes.md",
+  "promotionStates": ["PRIVATE", "PROMOTABLE", "PROMOTED", "NON_PROMOTABLE"],
+  "briefingSources": [
+    "mission.yaml",
+    "CURRENT_LANE_SUMMARY.md",
+    "NEXT_LANE_CONTRACT.md",
+    "OPERATIONAL_REVIEW_REPORT.md"
+  ],
+  "briefingConditionalSources": [
+    "PROMOTION_RULES.md",
+    "SERVICE_READINESS_RECOMMENDATION.md",
+    "LANDED_STATE_INDEX.md"
+  ],
+  "briefingOutputMirrors": ["SESSION_MAP.json", "HANDOFF.md", "RECEIPTS_INDEX.md"],
+  "handoffMirror": "HANDOFF.md",
+  "operationalReviewState": "COMPLETED",
+  "operationalReviewCompletedAt": "2026-03-21T17:33:48Z",
+  "operationalReviewReport": "OPERATIONAL_REVIEW_REPORT.md",
+  "closeoutRecommendation": "CLOSEOUT_READY_PENDING_RATIFICATION",
+  "closeoutRatificationState": "ARCHIVED",
+  "closeoutRatifiedAt": "2026-03-21T18:20:37Z",
+  "closeoutRatifiedBy": "Voltaris V2",
+  "closeoutChosenOption": "Option 1",
+  "authorizedFollowOnClass": "artifact-only-receipt-ledger-hygiene",
+  "authorizedFollowOnCompletedAt": "2026-03-21T18:05:59Z",
+  "finalDisposition": "archived-in-place",
+  "archiveRecord": "FINAL_MISSION_COMPLETION_REPORT.md",
+  "archivePath": "ops/missions/openclaw-governance/continuity-system-v1/",
+  "closeoutOptionalFollowOns": [
+    "receipt-ledger hygiene to further reduce citation cycles",
+    "optional localization of external baseline proof if shared-workspace dependence becomes operationally costly"
+  ],
+  "lead": {
+    "agent": "Voltaris V2",
+    "role": "strategist-orchestrator"
+  },
+  "executor": {
+    "agent": "Codex",
+    "role": "implementation-verification"
+  },
+  "subagents": [],
+  "activeArtifacts": {
+    "missionSpec": "01_MISSION_SPEC.md",
+    "receiptsIndex": "RECEIPTS_INDEX.md",
+    "handoff": "07_HANDOVER_ADDENDUM.md",
+    "dailyLog": "08_DAILY_LOG.md",
+    "promptTemplates": "PROMPT_GUIDE/04_PROMPT_TEMPLATES.md",
+    "decisionTree": "PROMPT_GUIDE/09_OPERATOR_DECISION_TREE.md",
+    "continuityImplPlan": "CONTINUITY_SYSTEM_IMPL_PLAN.md",
+    "bootstrap": "BOOTSTRAP.md",
+    "currentLaneSummary": "CURRENT_LANE_SUMMARY.md",
+    "currentLaneBriefing": "CURRENT_LANE_BRIEFING.md",
+    "landedStateIndex": "LANDED_STATE_INDEX.md",
+    "nextLaneContract": "NEXT_LANE_CONTRACT.md",
+    "promotionRules": "PROMOTION_RULES.md",
+    "serviceReadinessRecommendation": "SERVICE_READINESS_RECOMMENDATION.md",
+    "operationalReviewReport": "OPERATIONAL_REVIEW_REPORT.md",
+    "finalMissionCompletionReport": "FINAL_MISSION_COMPLETION_REPORT.md"
+  },
+  "currentNextAction": "Continuity System V1 is archived in place at ops/missions/openclaw-governance/continuity-system-v1/; FINAL_MISSION_COMPLETION_REPORT.md is the terminal archive record, and no further execution lane is active unless a future separately governed archive-relocation procedure is approved."
+}

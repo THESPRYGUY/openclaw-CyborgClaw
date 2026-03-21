@@ -1,0 +1,92 @@
+template_version: dev-pack-v1
+mode: extended
+mission:
+  id: "openclaw-governance/team-collaboration-optimization-v1"
+  name: "Team Collaboration Optimization V1"
+  type: "PLANNING"
+  status: "YELLOW"
+  summary: "Active governance mission applying the Voltaris V2 and Codex collaboration strategy through a file-backed monitoring loop, recording collaboration-quality receipts, and waiting on explicit review triggers before any bounded artifact-only strategy refinement."
+  owner: "Voltaris V2"
+  reviewer: "spryguy"
+  operator: "Codex"
+repo:
+  name: "openclaw"
+  root: "/home/spryguy/openclaw-workspace/repos/openclaw"
+  branch_policy: "working-branch-only"
+  branch: "m20-trust-the-refusal-closeout"
+  start_sha: "bd22e71c9e36806edd9c01a5d53ac3859e8f289e"
+scope:
+  in_scope:
+    - "Apply TEAM_COLLABORATION_STRATEGY.md as the active working standard in governance lanes."
+    - "Capture collaboration receipts on packet quality, Codex feedback quality, blocker/escalation handling, subagent effectiveness, and strategy drift."
+    - "Ground collaboration review triggers in artifact-backed evidence without reopening runtime or service scope."
+  out_of_scope:
+    - "Mutating product code in src/, apps/, extensions/, ui/, or runtime systems."
+    - "Changing agent runtime behavior or introducing collaboration tooling in this lane."
+    - "Reopening service-abstraction scope or replacing the archived continuity system."
+dependencies:
+  required_artifacts:
+    - "AGENTS.md"
+    - "ops/missions/openclaw-governance/continuity-system-v1/FINAL_MISSION_COMPLETION_REPORT.md"
+    - "ops/missions/openclaw-governance/continuity-system-v1/CURRENT_LANE_BRIEFING.md"
+    - "ops/missions/openclaw-governance/continuity-system-v1/PROMOTION_RULES.md"
+    - "/home/spryguy/.openclaw/workspace-voltaris-v2/ops/templates/dev-pack-v1/"
+  required_services:
+    - "Local filesystem access to the openclaw repo."
+    - "Local filesystem access to the shared workspace template source."
+  required_auth:
+    - "No external auth required beyond local repo and workspace access."
+acceptance:
+  must_pass:
+    - "TEAM_COLLABORATION_STRATEGY.md exists and remains the active strategy baseline without unratified substantive changes."
+    - "RECEIPTS_INDEX.md contains a normalized collaboration-receipt schema, initial receipt entries, and explicit review triggers."
+    - "MONITORING_LOG.md exists and records the current trigger-status assessment for the strategy-review gate."
+    - "mission.yaml, HANDOFF.md, RECEIPTS_INDEX.md, NEXT_LANE_CONTRACT.md, and SESSION_MAP.json truthfully record this monitoring lane and one bounded next conditional review lane."
+    - "The archived continuity pack remains archived while CURRENT_LANE_SUMMARY.md and CURRENT_LANE_BRIEFING.md acknowledge the sibling mission's live strategy monitoring status."
+  stop_conditions:
+    - "The archived continuity-system-v1 pack or its referenced artifacts are unavailable."
+    - "This mission would require product/runtime code changes to proceed."
+    - "A proposed collaboration rule would depend on hidden memory or ungoverned private notes."
+continuity:
+  trust_state: "VERIFIED"
+  receipt_capture:
+    state: "ACTIVE"
+    categories:
+      - "packet_quality"
+      - "codex_feedback_quality"
+      - "escalation_blocker"
+      - "subagent_effectiveness"
+      - "strategy_drift"
+    receipts_recorded: 6
+    last_reviewed_at: "2026-03-21T19:05:25Z"
+  monitoring:
+    state: "ACTIVE"
+    log: "MONITORING_LOG.md"
+    trigger_status: "NOT_MET"
+    last_assessed_at: "2026-03-21T19:05:25Z"
+  refinement_review:
+    state: "NOT_TRIGGERED"
+    assessed_at: "2026-03-21T19:05:25Z"
+    trigger: "Trigger a collaboration-strategy review when either: (1) two consecutive implementation lanes produce partial or blocked receipts in packet_quality or codex_feedback_quality, or (2) drift or blocker receipts recur with the same cited cause across lanes."
+  next_action: "Start Team Collaboration Optimization application review and refinement planning when either: (1) two consecutive implementation lanes produce partial or blocked receipts in packet_quality or codex_feedback_quality, or (2) drift or blocker receipts recur with the same cited cause across lanes; at that point, analyze RECEIPTS_INDEX.md and propose bounded artifact-only updates to TEAM_COLLABORATION_STRATEGY.md."
+  handoff_ready: true
+prompt_strategy:
+  enabled: true
+  guide_root: "PROMPT_GUIDE"
+  default_route: "plan_first"
+  current_route: "plan_first"
+  startup_prompt: "PROMPT_GUIDE/07_STARTUP_AND_REANCHOR_PROMPTS.md"
+  prompt_templates: "PROMPT_GUIDE/04_PROMPT_TEMPLATES.md"
+  decision_tree: "PROMPT_GUIDE/09_OPERATOR_DECISION_TREE.md"
+  subagent_standard: "PROMPT_GUIDE/05_SUBAGENT_OPERATING_STANDARD.md"
+artifacts:
+  mission_spec: "01_MISSION_SPEC.md"
+  receipts_index: "RECEIPTS_INDEX.md"
+  monitoring_log: "MONITORING_LOG.md"
+  next_lane_contract: "NEXT_LANE_CONTRACT.md"
+  session_map: "SESSION_MAP.json"
+  handoff: "07_HANDOVER_ADDENDUM.md"
+  daily_log: "08_DAILY_LOG.md"
+  closeout: "09_CLOSEOUT_CHECKLIST.md"
+  prompt_guide_root: "PROMPT_GUIDE"
+  team_collaboration_strategy: "TEAM_COLLABORATION_STRATEGY.md"

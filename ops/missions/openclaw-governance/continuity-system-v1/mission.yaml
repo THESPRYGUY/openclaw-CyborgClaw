@@ -1,0 +1,185 @@
+template_version: dev-pack-v1
+mode: extended
+mission:
+  id: "openclaw-governance/continuity-system-v1"
+  name: "Continuity System V1 Governance"
+  type: "PLANNING"
+  status: "ARCHIVED"
+  summary: "Dedicated continuity governing pack for a file-backed Continuity System V1 whose re-entry spine, trust/provenance layer, promotion model, deferred service-abstraction posture, optimization pass, operational review, and final hygiene pass are complete, and which is now archived in place with a terminal completion report."
+  owner: "Voltaris V2"
+  reviewer: "spryguy"
+  operator: "Codex"
+repo:
+  name: "openclaw"
+  root: "/home/spryguy/openclaw-workspace/repos/openclaw"
+  branch_policy: "working-branch-only"
+  branch: "m20-trust-the-refusal-closeout"
+  start_sha: "bd22e71c9e36806edd9c01a5d53ac3859e8f289e"
+scope:
+  in_scope:
+    - "Keep BOOTSTRAP.md, CURRENT_LANE_SUMMARY.md, and NEXT_LANE_CONTRACT.md as the active authoritative re-entry spine."
+    - "Keep the private/shared memory boundary and promotion rules explicit across the active continuity artifacts."
+    - "Preserve the ratified DEFERRED service-readiness decision, final completion report, archive path, and truthful terminal packet for this archived pack."
+  out_of_scope:
+    - "Mutating product code in src/, apps/, extensions/, ui/, or runtime systems."
+    - "Implementing runtime continuity automation or service integration in this lane."
+    - "Adopting a new memory service, database, or API runtime in v1."
+    - "Storing strategist-private notes inside the governing pack."
+dependencies:
+  required_artifacts:
+    - "/home/spryguy/.openclaw/workspace-voltaris-v2/ops/templates/dev-pack-v1/"
+    - "AGENTS.md"
+    - "ops/"
+  required_services:
+    - "Local filesystem access to the openclaw repo."
+    - "Local filesystem access to the shared workspace template source."
+  required_auth:
+    - "No external auth required beyond local repo and workspace access."
+acceptance:
+  must_pass:
+    - "BOOTSTRAP.md, CURRENT_LANE_SUMMARY.md, and NEXT_LANE_CONTRACT.md act as the active synchronized re-entry spine."
+    - "PROMOTION_RULES.md exists and defines private strategist memory, shared mission truth, promotion criteria, and non-promotable classes."
+    - "SERVICE_READINESS_RECOMMENDATION.md exists and records a proof-backed service-readiness recommendation."
+    - "CONTINUITY_SYSTEM_IMPL_PLAN.md records the implemented Phase 4 reduction, the hygiene-pass cleanup, and the terminal archived disposition."
+    - "OPERATIONAL_REVIEW_REPORT.md exists and records a proof-backed closeout recommendation without reopening service-abstraction scope."
+    - "The final closeout decision is explicitly recorded, the authorized hygiene follow-on is complete, and the mission is archived in place."
+    - "mission.yaml, NEXT_LANE_CONTRACT.md, and SESSION_MAP.json carry one exact terminal packet, while CURRENT_LANE_SUMMARY.md and HANDOFF.md reference that state without duplicating full packet text."
+    - "Service abstraction remains deferred by an explicit Option 1 strategic decision unless a future separately governed lane changes that state."
+  stop_conditions:
+    - "The shared dev-pack-v1 template source is unavailable."
+    - "Operational review or closeout planning would require product/runtime code changes."
+    - "The pack would need to store strategist-private notes in-repo to complete the lane."
+    - "Pre-existing repo state conflicts make artifact-only work unsafe."
+continuity:
+  trust_state: "VERIFIED"
+  provenance:
+    - "CURRENT_LANE_SUMMARY.md"
+    - "CURRENT_LANE_BRIEFING.md"
+    - "NEXT_LANE_CONTRACT.md"
+    - "PROMOTION_RULES.md"
+    - "OPERATIONAL_REVIEW_REPORT.md"
+  briefing_refresh:
+    mode: "operator-generated"
+    last_refreshed_at: "2026-03-21T18:20:37Z"
+    inputs:
+      core:
+        - "mission.yaml"
+        - "CURRENT_LANE_SUMMARY.md"
+        - "NEXT_LANE_CONTRACT.md"
+        - "OPERATIONAL_REVIEW_REPORT.md"
+      conditional:
+        - "PROMOTION_RULES.md"
+        - "SERVICE_READINESS_RECOMMENDATION.md"
+        - "LANDED_STATE_INDEX.md"
+      output_mirrors:
+        - "SESSION_MAP.json"
+        - "HANDOFF.md"
+        - "RECEIPTS_INDEX.md"
+      external_input_policy: "external carry-through enters the briefing only through LANDED_STATE_INDEX.md"
+  promotion_model:
+    mode: "manual-approval"
+    private_memory_location: "~/private-strategist-notes.md"
+    rules_artifact: "PROMOTION_RULES.md"
+    allowed_states:
+      - "PRIVATE"
+      - "PROMOTABLE"
+      - "PROMOTED"
+      - "NON_PROMOTABLE"
+    last_reviewed_at: "2026-03-21T15:57:57Z"
+  service_readiness:
+    state: "DEFERRED"
+    recommendation_artifact: "SERVICE_READINESS_RECOMMENDATION.md"
+    reviewed_at: "2026-03-21T16:21:31Z"
+    ratified_by: "Voltaris V2"
+    decision_recorded_at: "2026-03-21T16:30:04Z"
+    strategic_direction: "file-backed-optimization"
+    summary: "Current continuity pain is synchronization overhead, not performance or retrieval failure."
+    measured_baseline:
+      top_level_files: 23
+      top_level_lines: 2298
+      active_eval_set_bytes: 50069
+      active_eval_set_read_ms: 0.15
+      core_parse_ms: 6.25
+      briefing_input_count: 10
+      next_lane_sync_artifacts: 13
+  optimization_plan:
+    state: "IMPLEMENTED"
+    planned_at: "2026-03-21T16:49:32Z"
+    implemented_at: "2026-03-21T17:03:57Z"
+    audited_baseline:
+      exact_next_lane_artifacts: 13
+      declared_briefing_inputs: 11
+      known_issues:
+        - "briefing input declarations drifted across mission.yaml, CURRENT_LANE_BRIEFING.md, RECEIPTS_INDEX.md, and SESSION_MAP.json"
+        - "CURRENT_LANE_BRIEFING.md still depended on direct external Mission 2 file reads"
+        - "summary artifacts were still cited as proof, creating avoidable source cycles"
+    next_lane_authority_set:
+      - "NEXT_LANE_CONTRACT.md"
+      - "mission.yaml.continuity.next_action"
+      - "SESSION_MAP.json.currentNextAction"
+    implemented_summary_posture: "compact lane label plus pointer to NEXT_LANE_CONTRACT.md"
+    implemented_briefing_model:
+      core:
+        - "mission.yaml"
+        - "CURRENT_LANE_SUMMARY.md"
+        - "NEXT_LANE_CONTRACT.md"
+        - "OPERATIONAL_REVIEW_REPORT.md"
+      conditional:
+        - "PROMOTION_RULES.md"
+        - "SERVICE_READINESS_RECOMMENDATION.md"
+        - "LANDED_STATE_INDEX.md"
+      output_mirrors:
+        - "SESSION_MAP.json"
+        - "HANDOFF.md"
+        - "RECEIPTS_INDEX.md"
+      external_input_policy: "external carry-through enters the briefing only through LANDED_STATE_INDEX.md"
+  operational_review:
+    state: "COMPLETED"
+    reviewed_at: "2026-03-21T17:33:48Z"
+    report_artifact: "OPERATIONAL_REVIEW_REPORT.md"
+    recommendation: "CLOSEOUT_READY_PENDING_RATIFICATION"
+    measured_findings:
+      exact_next_lane_artifacts_before: 13
+      exact_next_lane_artifacts_after: 3
+      routine_briefing_inputs_before: 11
+      routine_briefing_core_after: 4
+      conditional_briefing_inputs_after: 3
+      output_mirrors_after: 3
+    summary: "The file-backed continuity spine validates end to end, the burden reduction is meaningful, and only bounded non-blocking artifact hygiene remains."
+  closeout_ratification:
+    state: "ARCHIVED"
+    ratified_at: "2026-03-21T18:20:37Z"
+    ratified_by: "Voltaris V2"
+    chosen_option: "Option 1"
+    follow_on_class: "artifact-only-receipt-ledger-hygiene"
+    follow_on_completed_at: "2026-03-21T18:05:59Z"
+    summary: "The authorized hygiene iteration is complete, final ratification chose archive now, and the pack is archived in place."
+  next_action: "Continuity System V1 is archived in place at ops/missions/openclaw-governance/continuity-system-v1/; FINAL_MISSION_COMPLETION_REPORT.md is the terminal archive record, and no further execution lane is active unless a future separately governed archive-relocation procedure is approved."
+  handoff_ready: true
+prompt_strategy:
+  enabled: true
+  guide_root: "PROMPT_GUIDE"
+  default_route: "plan_first"
+  current_route: "plan_first"
+  startup_prompt: "PROMPT_GUIDE/07_STARTUP_AND_REANCHOR_PROMPTS.md"
+  prompt_templates: "PROMPT_GUIDE/04_PROMPT_TEMPLATES.md"
+  decision_tree: "PROMPT_GUIDE/09_OPERATOR_DECISION_TREE.md"
+  subagent_standard: "PROMPT_GUIDE/05_SUBAGENT_OPERATING_STANDARD.md"
+artifacts:
+  mission_spec: "01_MISSION_SPEC.md"
+  receipts_index: "RECEIPTS_INDEX.md"
+  session_map: "SESSION_MAP.json"
+  handoff: "07_HANDOVER_ADDENDUM.md"
+  daily_log: "08_DAILY_LOG.md"
+  closeout: "09_CLOSEOUT_CHECKLIST.md"
+  prompt_guide_root: "PROMPT_GUIDE"
+  continuity_impl_plan: "CONTINUITY_SYSTEM_IMPL_PLAN.md"
+  bootstrap: "BOOTSTRAP.md"
+  current_lane_summary: "CURRENT_LANE_SUMMARY.md"
+  current_lane_briefing: "CURRENT_LANE_BRIEFING.md"
+  landed_state_index: "LANDED_STATE_INDEX.md"
+  next_lane_contract: "NEXT_LANE_CONTRACT.md"
+  promotion_rules: "PROMOTION_RULES.md"
+  service_readiness_recommendation: "SERVICE_READINESS_RECOMMENDATION.md"
+  operational_review_report: "OPERATIONAL_REVIEW_REPORT.md"
+  final_completion_report: "FINAL_MISSION_COMPLETION_REPORT.md"
