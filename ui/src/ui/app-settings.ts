@@ -5,6 +5,8 @@ import {
   stopLogsPolling,
   startDebugPolling,
   stopDebugPolling,
+  startAgentsPolling,
+  stopAgentsPolling,
 } from "./app-polling.ts";
 import { scheduleChatScroll, scheduleLogsScroll } from "./app-scroll.ts";
 import type { OpenClawApp } from "./app.ts";
@@ -410,6 +412,11 @@ function applyTabSelection(
     startDebugPolling(host as unknown as Parameters<typeof startDebugPolling>[0]);
   } else {
     stopDebugPolling(host as unknown as Parameters<typeof stopDebugPolling>[0]);
+  }
+  if (next === "agents") {
+    startAgentsPolling(host as unknown as Parameters<typeof startAgentsPolling>[0]);
+  } else {
+    stopAgentsPolling(host as unknown as Parameters<typeof stopAgentsPolling>[0]);
   }
 
   if (options.refreshPolicy === "always" || host.connected) {

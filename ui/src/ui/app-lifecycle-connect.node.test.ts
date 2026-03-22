@@ -24,8 +24,10 @@ vi.mock("./app-settings.ts", () => ({
 }));
 
 vi.mock("./app-polling.ts", () => ({
+  startAgentsPolling: vi.fn(),
   startLogsPolling: vi.fn(),
   startNodesPolling: vi.fn(),
+  stopAgentsPolling: vi.fn(),
   stopLogsPolling: vi.fn(),
   stopNodesPolling: vi.fn(),
   startDebugPolling: vi.fn(),

@@ -919,6 +919,9 @@ export function renderApp(state: AppViewState) {
                   },
                   onRefresh: async () => {
                     await loadAgents(state);
+                    if (!state.configFormDirty && !state.configSaving) {
+                      await loadConfig(state);
+                    }
                     const agentIds = state.agentsList?.agents?.map((entry) => entry.id) ?? [];
                     if (agentIds.length > 0) {
                       void loadAgentIdentities(state, agentIds);
