@@ -1,0 +1,99 @@
+template_version: dev-pack-v1
+mode: extended
+mission:
+  id: "cnv-mission-2-workforce-alpha-v2"
+  name: "Mission 23 - Workforce Alpha V2"
+  type: "IMPLEMENTATION"
+  status: "GREEN"
+  summary: "Workforce Alpha V2 build-progress closeout remains finalized across three preserved slices: the sibling sprytly-internal-dashboard product implementation, the smaller openclaw Control UI sync fix, and the Workforce Alpha V2 mission-pack memory trail. The bounded UI hardening pass is now complete, UI_VALIDATION_REPORT.md is refreshed against the current live cockpit, responsive collapse and trust-language normalization are proven, and the packet is ready for deployment ratification with one explicit execution-feed signal caveat still disclosed."
+  owner: "Voltaris V2"
+  reviewer: "spryguy"
+  operator: "Codex"
+repo:
+  name: "openclaw"
+  root: "/home/spryguy/openclaw-workspace/repos/openclaw"
+  branch_policy: "working-branch-only"
+  branch: "m20-trust-the-refusal-closeout"
+  start_sha: "7062e82a6efeb61e9218c64a2d62af382ff781d4"
+scope:
+  in_scope:
+    - "Initialize the Workforce Alpha V2 mission pack from the shared dev-pack-v1 template source."
+    - "Locate any tracked Workforce Alpha V1 page, route, component, or data surfaces in the repo."
+    - "Complete sections A) VERIFIED CURRENT STATE, B) DESIGN CHARRETTE, C) 3 COMPETING V2 CONCEPTS, D) SELECTED DIRECTION, E) WIREFRAME, F) TELEMETRY CONTRACT MAP, G) COMPONENT / IMPLEMENTATION PLAN, H) ACCEPTANCE CRITERIA, and I) TO VERIFY / UNCONFIRMED ITEMS with explicit evidence boundaries."
+    - "Add a bounded first PR cut recommendation that stays inside the proven Control UI seams and keeps unresolved contract gaps visible."
+    - "Define Workforce Alpha V2 data contracts, gateway API requirements, provenance handling, and delivery order before UI implementation begins."
+    - "Implement the ratified Workforce Alpha backend API surface in the sibling sprytly-internal-dashboard repo by landing the authenticated snapshot, execution, and inspector contracts without expanding into UI work."
+    - "Implement the first Workforce Alpha Command Cockpit frontend slice in the sibling sprytly-internal-dashboard repo against the landed snapshot, execution, and inspector routes without hiding missing runtime truth."
+    - "Debug and fix the authenticated HTML-for-JSON regression on the live sibling sprytly-internal-dashboard Workforce Alpha instance so snapshot and execution calls stay machine-readable on the screenshot origin."
+    - "Review and validate the landed Workforce Alpha Command Cockpit UI slice against the frozen wireframe, acceptance bar, and contract truth, and record whether it is actually deployment-ready."
+  out_of_scope:
+    - "Product or runtime code changes in this openclaw repo's src/, apps/, extensions/, ui/, or runtime systems."
+    - "Inventing backend fields, runtime states, event streams, or file paths that are not evidenced in tracked artifacts."
+    - "Further Workforce backend contract expansion beyond the landed snapshot, execution, and inspector routes unless a narrow bug blocks truthful UI rendering."
+dependencies:
+  required_artifacts:
+    - "AGENTS.md"
+    - "docs/cyborgclaw/SSOT.md"
+    - "docs/web/control-ui.md"
+    - "src/commands/dashboard.ts"
+    - "src/gateway/control-ui-contract.ts"
+    - "ops/missions/openclaw-governance/continuity-system-v1/CURRENT_LANE_BRIEFING.md"
+    - "/home/spryguy/.openclaw/workspace-voltaris-v2/ops/templates/dev-pack-v1/"
+  required_services:
+    - "Local filesystem access to the openclaw repo."
+    - "Local filesystem access to the shared template source."
+  required_auth:
+    - "No external auth required beyond local repo and workspace access."
+acceptance:
+  must_pass:
+    - "The new mission pack exists at ops/missions/cnv-mission-2-workforce-alpha-v2/ and its core mission-truth files are initialized."
+    - "CHARRETTE_OUTPUT.md contains complete sections A through I plus a bounded first PR cut recommendation."
+    - "V2_WIREFRAME.md contains a populated desktop-first wireframe description for Command Cockpit with explicit TO VERIFY / UNCONFIRMED handling."
+    - "Section F of CHARRETTE_OUTPUT.md classifies each required telemetry field as EXISTING, TO VERIFY, or NEW FIELD NEEDED without inventing repo evidence."
+    - "Section G of CHARRETTE_OUTPUT.md translates the frozen wireframe and telemetry map into a concrete component/state/data/test plan without treating contract gaps as already solved."
+    - "Section H of CHARRETTE_OUTPUT.md freezes a concrete acceptance bar derived from the frozen strategic direction and keeps section F contract gaps explicit."
+    - "Section I of CHARRETTE_OUTPUT.md consolidates the remaining missing backend, API, and data-contract facts that must be verified before implementation."
+    - "The first PR cut recommendation stays inside already-proven generic Control UI seams and explicitly defers unresolved contract expansion."
+    - "Glen's ratification of the data-contract / API plan and authorization for the next backend-development phase are recorded in the mission pack."
+    - "DATA_CONTRACTS_AND_APIS_PLAN.md exists and distinguishes VERIFIED generic sources, PROJECTED adapter paths, and NEW CONTRACT NEEDED Workforce contracts without inventing repo evidence."
+    - "The sibling sprytly-internal-dashboard backend now exposes authenticated `/api/mission-control/workforce/alpha/snapshot`, `/api/mission-control/workforce/alpha/execution`, and `/api/mission-control/workforce/alpha/inspector` routes with normalized DTOs and explicit trustState / missingFields handling."
+    - "Authenticated API proof for the execution and inspector routes, plus the already-landed snapshot route, is recorded in RECEIPTS_INDEX.md."
+    - "The sibling sprytly-internal-dashboard frontend now renders the first Workforce Alpha Command Cockpit slice against the landed backend routes and keeps `trustState`, `sourceKinds`, `updatedAt`, and `missingFields` explicit in the UI."
+    - "The live 127.0.0.1:18792 sibling sprytly instance no longer returns `<!doctype html>` for authenticated Workforce Alpha snapshot or execution calls, and unmatched authenticated `/api` requests now return JSON `404 api_route_not_found` instead of the SPA shell."
+    - "UI_VALIDATION_REPORT.md exists and records a proof-backed validation result for the live 127.0.0.1:18792 cockpit, including the responsive-collapse proof, current deployment-ratification recommendation, and any remaining non-blocking signal caveats."
+    - "NEXT_LANE_CONTRACT.md exists and matches mission.yaml, HANDOFF.md, RECEIPTS_INDEX.md, and SESSION_MAP.json for one bounded next lane."
+  stop_conditions:
+    - "The shared dev-pack-v1 template source is unavailable."
+    - "The requested critique would require product/runtime code changes to proceed."
+    - "The critique would require invented V1 page surfaces or data contracts instead of explicit TO VERIFY / UNCONFIRMED labeling."
+continuity:
+  trust_state: "VERIFIED"
+  surface_recon:
+    status: "TO_VERIFY"
+    last_assessed_at: "2026-03-21T23:58:51Z"
+  next_action: "Ratify Workforce Alpha V2 UI for Deployment by reviewing UI_VALIDATION_REPORT.md and authorizing or rejecting the final deployment process to main."
+  handoff_ready: true
+prompt_strategy:
+  enabled: true
+  guide_root: "PROMPT_GUIDE"
+  default_route: "plan_first"
+  current_route: "plan_first"
+  startup_prompt: "PROMPT_GUIDE/07_STARTUP_AND_REANCHOR_PROMPTS.md"
+  prompt_templates: "PROMPT_GUIDE/04_PROMPT_TEMPLATES.md"
+  decision_tree: "PROMPT_GUIDE/09_OPERATOR_DECISION_TREE.md"
+  subagent_standard: "PROMPT_GUIDE/05_SUBAGENT_OPERATING_STANDARD.md"
+artifacts:
+  mission_spec: "01_MISSION_SPEC.md"
+  receipts_index: "RECEIPTS_INDEX.md"
+  charrette_output: "CHARRETTE_OUTPUT.md"
+  v2_wireframe: "V2_WIREFRAME.md"
+  data_contracts_and_apis_plan: "DATA_CONTRACTS_AND_APIS_PLAN.md"
+  ui_validation_report: "UI_VALIDATION_REPORT.md"
+  build_progress_closeout: "BUILD_PROGRESS_CLOSEOUT.md"
+  rehydration_brief: "REHYDRATION_BRIEF.md"
+  next_lane_contract: "NEXT_LANE_CONTRACT.md"
+  session_map: "SESSION_MAP.json"
+  handoff: "07_HANDOVER_ADDENDUM.md"
+  daily_log: "08_DAILY_LOG.md"
+  closeout: "09_CLOSEOUT_CHECKLIST.md"
+  prompt_guide_root: "PROMPT_GUIDE"

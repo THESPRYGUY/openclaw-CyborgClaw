@@ -1,0 +1,48 @@
+{
+  "desktop": {
+    "viewportWidth": 1440,
+    "panels": {
+      "Chain of Command Tree": {
+        "x": 18,
+        "y": 3146,
+        "width": 609,
+        "height": 2210
+      },
+      "Execution Feed": {
+        "x": 641,
+        "y": 3146,
+        "width": 393,
+        "height": 5010
+      },
+      "Evidence + Governance Rail": {
+        "x": 1049,
+        "y": 3146,
+        "width": 373,
+        "height": 1807
+      }
+    }
+  },
+  "responsive720": {
+    "viewportWidth": 720,
+    "panels": {
+      "Chain of Command Tree": {
+        "x": 18,
+        "y": 4915,
+        "width": 684,
+        "height": 1962
+      },
+      "Execution Feed": {
+        "x": 18,
+        "y": 6891,
+        "width": 684,
+        "height": 3796
+      },
+      "Evidence + Governance Rail": {
+        "x": 18,
+        "y": 10701,
+        "width": 684,
+        "height": 1430
+      }
+    }
+  }
+}

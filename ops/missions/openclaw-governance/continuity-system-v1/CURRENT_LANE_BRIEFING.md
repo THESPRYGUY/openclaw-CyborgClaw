@@ -12,7 +12,7 @@
 ## Refresh metadata
 
 - Refresh mode: `operator-generated`
-- Refreshed at: `2026-03-21T19:05:25Z`
+- Refreshed at: `2026-03-22T19:26:32Z`
 - Trust posture: `VERIFIED for pack truth`, `OBSERVED for external workspace carry-through`, `PARTIAL only for the final archive-disposition gate`
 - Hard sync set:
   - `mission.yaml`
@@ -54,6 +54,7 @@
 - [VERIFIED] The hygiene pass separated active re-entry proof from historical baseline proof more clearly in `CURRENT_LANE_BRIEFING.md` and `RECEIPTS_INDEX.md`. [Source: `CURRENT_LANE_SUMMARY.md`, `RECEIPTS_INDEX.md`]
 - [VERIFIED] Final closeout ratification approved archive now instead of another follow-on iteration. [Source: `mission.yaml`, `FINAL_MISSION_COMPLETION_REPORT.md`]
 - [OBSERVED] A sibling governance mission, `team-collaboration-optimization-v1`, now uses this archived continuity pack as a reference baseline for live strategist/operator collaboration strategy monitoring, receipt capture, and readiness assessment. [Source: `ops/missions/openclaw-governance/team-collaboration-optimization-v1/mission.yaml`, `ops/missions/openclaw-governance/team-collaboration-optimization-v1/MONITORING_LOG.md`]
+- [OBSERVED] A sibling mission, `cnv-mission-2-workforce-alpha-v2`, still keeps `Command Cockpit` as the ratified direction and now carries a completed UI hardening pass on top of the finalized build-progress closeout: `BUILD_PROGRESS_CLOSEOUT.md`, `REHYDRATION_BRIEF.md`, and the refreshed `UI_VALIDATION_REPORT.md` are the current re-entry spine, the live 127.0.0.1:18792 cockpit proves responsive collapse plus normalized trust-state language, runtime DB state is explicitly excluded from the default preserved artifact set, and the next bounded phase is deployment ratification with one explicit execution-feed signal caveat under review. [Source: `ops/missions/cnv-mission-2-workforce-alpha-v2/mission.yaml`, `ops/missions/cnv-mission-2-workforce-alpha-v2/BUILD_PROGRESS_CLOSEOUT.md`, `ops/missions/cnv-mission-2-workforce-alpha-v2/UI_VALIDATION_REPORT.md`, `ops/missions/cnv-mission-2-workforce-alpha-v2/RECEIPTS_INDEX.md`]
 - [OBSERVED] Shared workspace Mission 2 baselines remain external carry-through references and enter continuity only through `LANDED_STATE_INDEX.md`. [Source: `LANDED_STATE_INDEX.md`]
 - [OBSERVED] The repo still depends on the shared workspace template source because `ops/templates/dev-pack-v1/` is not present locally. [Source: `RECEIPTS_INDEX.md`]
 

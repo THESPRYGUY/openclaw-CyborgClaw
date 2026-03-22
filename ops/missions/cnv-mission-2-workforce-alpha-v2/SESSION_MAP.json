@@ -1,0 +1,239 @@
+{
+  "templateVersion": "dev-pack-v1",
+  "missionId": "cnv-mission-2-workforce-alpha-v2",
+  "status": "ui-hardening-completed-ratification-ready",
+  "promptGuideRoot": "PROMPT_GUIDE",
+  "currentRoute": "plan_first",
+  "lead": {
+    "agent": "Voltaris V2",
+    "role": "governance-orchestrator"
+  },
+  "executor": {
+    "agent": "Codex",
+    "role": "implementation-verification"
+  },
+  "subagents": [
+    {
+      "name": "SurfaceLocator",
+      "role": "repo-reconnaissance",
+      "status": "completed"
+    },
+    {
+      "name": "V1CritiqueAnalyzer",
+      "role": "verified-current-state-critique",
+      "status": "completed"
+    },
+    {
+      "name": "CommanderVoice",
+      "role": "operator-voice-simulation",
+      "status": "completed"
+    },
+    {
+      "name": "SREVoice",
+      "role": "observability-voice-simulation",
+      "status": "completed"
+    },
+    {
+      "name": "GovernanceVoice",
+      "role": "audit-voice-simulation",
+      "status": "completed"
+    },
+    {
+      "name": "UXVoice",
+      "role": "ux-systems-voice-simulation",
+      "status": "completed"
+    },
+    {
+      "name": "ConceptGenerator",
+      "role": "competing-concept-generation",
+      "status": "completed"
+    },
+    {
+      "name": "ConceptSelector",
+      "role": "selected-direction-evaluation",
+      "status": "completed"
+    },
+    {
+      "name": "WireframeDesigner",
+      "role": "wireframe-design",
+      "status": "completed"
+    },
+    {
+      "name": "TelemetryMapper",
+      "role": "telemetry-contract-classification",
+      "status": "completed"
+    },
+    {
+      "name": "ImplPlanner",
+      "role": "component-implementation-planning",
+      "status": "completed"
+    },
+    {
+      "name": "GapIdentifier",
+      "role": "unresolved-contract-ledger-synthesis",
+      "status": "completed"
+    },
+    {
+      "name": "SourceExplorer",
+      "role": "repo-source-reconnaissance-for-contract-planning",
+      "status": "completed"
+    },
+    {
+      "name": "BackendEngineer",
+      "role": "bounded-backend-snapshot-implementation-guidance",
+      "status": "completed"
+    },
+    {
+      "name": "ExecutionFeedEngineer",
+      "role": "bounded-execution-feed-implementation-guidance",
+      "status": "completed"
+    },
+    {
+      "name": "InspectorEngineer",
+      "role": "bounded-inspector-implementation-guidance",
+      "status": "shutdown_without_report"
+    },
+    {
+      "name": "FrontendEngineer",
+      "role": "bounded-frontend-ui-implementation",
+      "status": "completed"
+    },
+    {
+      "name": "ApiDetective",
+      "role": "path-auth-root-cause-analysis",
+      "status": "completed"
+    },
+    {
+      "name": "ApiValidator",
+      "role": "post-fix-screenshot-origin-validation",
+      "status": "completed"
+    },
+    {
+      "name": "UIPerceptor",
+      "role": "ui-ux-review",
+      "status": "completed"
+    },
+    {
+      "name": "FunctionValidator",
+      "role": "acceptance-criteria-validation",
+      "status": "completed"
+    },
+    {
+      "name": "Ampere",
+      "role": "president-auto-team-builder-logic-design",
+      "status": "completed"
+    },
+    {
+      "name": "Ohm",
+      "role": "seat-level-auto-model-policy-sync-review",
+      "status": "completed"
+    },
+    {
+      "name": "Fermat",
+      "role": "ui-ux-optimization-pass-review",
+      "status": "completed"
+    }
+  ],
+  "activeArtifacts": {
+    "missionSpec": "01_MISSION_SPEC.md",
+    "receiptsIndex": "RECEIPTS_INDEX.md",
+    "nextLaneContract": "NEXT_LANE_CONTRACT.md",
+    "handoff": "07_HANDOVER_ADDENDUM.md",
+    "dailyLog": "08_DAILY_LOG.md",
+    "charretteOutput": "CHARRETTE_OUTPUT.md",
+    "v2Wireframe": "V2_WIREFRAME.md",
+    "dataContractsAndApisPlan": "DATA_CONTRACTS_AND_APIS_PLAN.md",
+    "buildProgressCloseout": "BUILD_PROGRESS_CLOSEOUT.md",
+    "rehydrationBrief": "REHYDRATION_BRIEF.md",
+    "promptTemplates": "PROMPT_GUIDE/04_PROMPT_TEMPLATES.md",
+    "decisionTree": "PROMPT_GUIDE/09_OPERATOR_DECISION_TREE.md"
+  },
+  "ratificationDecision": {
+    "decision": "ratified",
+    "authorizedBy": "Glen",
+    "authorizedAt": "2026-03-21T22:37:07Z"
+  },
+  "dataContractsAndApisPlan": {
+    "status": "ratified-backend-api-surface-implemented",
+    "artifact": "DATA_CONTRACTS_AND_APIS_PLAN.md",
+    "completedAt": "2026-03-21T22:50:57Z",
+    "sourceExplorerStatus": "completed",
+    "authorizedBy": "Glen",
+    "authorizedAt": "2026-03-21T23:41:49Z",
+    "nextPhase": "frontend-ui-components"
+  },
+  "backendSnapshotContract": {
+    "status": "implemented",
+    "sourceRepo": "../sprytly-internal-dashboard",
+    "implementedAt": "2026-03-21T23:58:51Z",
+    "validatedAt": "2026-03-21T23:57:48Z",
+    "legacyRoute": "/api/mission-control/workforce/alpha",
+    "snapshotRoute": "/api/mission-control/workforce/alpha/snapshot",
+    "validation": "node --check plus authenticated curl smoke tests"
+  },
+  "backendExecutionAndInspector": {
+    "status": "implemented",
+    "sourceRepo": "../sprytly-internal-dashboard",
+    "implementedAt": "2026-03-22T00:22:10Z",
+    "validatedAt": "2026-03-22T00:22:10Z",
+    "executionRoute": "/api/mission-control/workforce/alpha/execution",
+    "inspectorRoute": "/api/mission-control/workforce/alpha/inspector",
+    "validation": "node --check plus authenticated curl smoke tests, including node filter and inspector 404 handling"
+  },
+  "frontendUiComponents": {
+    "status": "implemented",
+    "sourceRepo": "../sprytly-internal-dashboard",
+    "implementedAt": "2026-03-22T00:48:05Z",
+    "validatedAt": "2026-03-22T00:48:05Z",
+    "route": "/mission-control/workforce/alpha",
+    "screenshot": "/tmp/workforce-alpha-v2-ui.png",
+    "validation": "pnpm web build, pnpm web lint with warnings only, and authenticated headless-browser hierarchy plus inspector-drawer smoke tests"
+  },
+  "backendApiHtmlRegression": {
+    "status": "fixed",
+    "sourceRepo": "../sprytly-internal-dashboard",
+    "affectedOrigin": "http://127.0.0.1:18792",
+    "reportedAt": "2026-03-22T01:01:00Z",
+    "fixedAt": "2026-03-22T01:06:23Z",
+    "validatedAt": "2026-03-22T01:07:02Z",
+    "rootCause": "A stale 18792 backend process lacked the current Workforce Alpha routes after auth, and unmatched authenticated /api requests fell through to the SPA shell because no JSON /api miss terminator existed.",
+    "validation": "authenticated curl repro on 18792 before/after restart, ApiValidator contract checks, and headless-browser request capture confirming snapshot/execution/inspector now return application/json"
+  },
+  "uiValidation": {
+    "status": "completed-ratification-ready",
+    "artifact": "UI_VALIDATION_REPORT.md",
+    "liveOrigin": "http://127.0.0.1:18792/mission-control/workforce/alpha",
+    "validatedAt": "2026-03-22T19:26:32Z",
+    "acceptanceSummary": {
+      "pass": 16,
+      "conditional": 1,
+      "fail": 0
+    },
+    "blockingFindings": [
+      "The execution feed is now framed honestly as projected cross-domain activity when node/outcome mapping is absent, but the live payload still does not admit richer Workforce actor/outcome signal for most rows."
+    ],
+    "recommendation": "Proceed to deployment ratification; responsive collapse and trust-language normalization are now proven, while the remaining execution-feed caveat should be explicitly reviewed during the ratification decision.",
+    "evidenceArtifacts": [
+      "evidence/ui-hardening-2026-03-22/desktop.png",
+      "evidence/ui-hardening-2026-03-22/responsive-720.png",
+      "evidence/ui-hardening-2026-03-22/validation.json",
+      "evidence/ui-hardening-2026-03-22/layout-positions.json"
+    ]
+  },
+  "buildCloseout": {
+    "status": "finalized",
+    "artifact": "BUILD_PROGRESS_CLOSEOUT.md",
+    "rehydrationArtifact": "REHYDRATION_BRIEF.md",
+    "consolidatedAt": "2026-03-22T18:35:40Z",
+    "finalizedAt": "2026-03-22T18:56:15Z",
+    "preservedSlices": [
+      "sibling sprytly-internal-dashboard product implementation",
+      "openclaw Control UI model-sync fix",
+      "Workforce Alpha V2 mission-pack memory trail"
+    ],
+    "defaultExclusions": ["data/sprytly.db"],
+    "optionalArchiveOnly": ["ops/missions/cnv-mission-2-mission-control-ui/"],
+    "packagingDecision": "Freeze the preserved closeout set to the sibling Sprytly product slice, the OpenClaw Control UI sync slice, and the Workforce Alpha V2 mission pack; exclude runtime DB state by default."
+  },
+  "currentNextAction": "Ratify Workforce Alpha V2 UI for Deployment by reviewing UI_VALIDATION_REPORT.md and authorizing or rejecting the final deployment process to main."
+}
