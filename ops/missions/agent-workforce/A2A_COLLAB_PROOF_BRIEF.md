@@ -182,6 +182,7 @@ The lane added or expanded proof for:
 
 ### Backend modules
 
+- `../sprytly-internal-dashboard/server/src/db.js`
 - `../sprytly-internal-dashboard/server/src/workforceJobDispatch.js`
 - `../sprytly-internal-dashboard/server/src/index.js`
 
@@ -219,6 +220,7 @@ Implementation proof was accepted against:
 - full sibling Sprytly test suite
 - sibling build
 - sibling lint with warnings only and no errors
+- sibling server startup against the existing `server/data/sprytly.db` runtime store
 - live dashboard availability on `127.0.0.1:18792`
 
 The API integration proof specifically covered:

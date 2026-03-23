@@ -64,6 +64,14 @@ Used to implement:
 - execution-feed event stamping for collaboration and proof review
 - new API routes for collaboration, proof submission, and proof review
 
+### `../sprytly-internal-dashboard/server/src/db.js`
+
+Used to preserve:
+
+- safe startup against older `server/data` workforce job stores
+- migration ordering for `workforce_job_cards` last-signal fields before index creation
+- truthful runtime handoff after the collaboration/proof lane landed
+
 ### `../sprytly-internal-dashboard/web/src/pages/MissionControlWorkforceAlphaPage.jsx`
 
 Used to land:
