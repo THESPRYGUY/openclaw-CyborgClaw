@@ -24,6 +24,7 @@ import type {
   AcpRuntimeSessionMode,
   AcpRuntimeStatus,
 } from "../runtime/types.js";
+import type { KinshipRouteLawBundle } from "./kinship-policy-engine.js";
 
 export type AcpSessionResolution =
   | {
@@ -49,10 +50,7 @@ export type AcpInitializeSessionInput = {
   resumeSessionId?: string;
   cwd?: string;
   backendId?: string;
-  routeLawBundle?: {
-    routeDecision: unknown;
-    cousinTicket?: unknown;
-  };
+  routeLawBundle?: KinshipRouteLawBundle;
 };
 
 export type AcpTurnAttachment = {

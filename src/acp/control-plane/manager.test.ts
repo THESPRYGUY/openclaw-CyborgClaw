@@ -2909,6 +2909,35 @@ describe("AcpSessionManager", () => {
       ticketId: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketId,
       requiresPresidentMediation: true,
       artifactReturnRequired: true,
+      policySnapshot: {
+        engineId: "kinship-policy-engine",
+        engineVersion: "2026.03.v1",
+        admissionBasis: "route_law_bundle",
+        decisionId: CLEAN_ROUTE_DECISION_JSON.decisionId,
+        classification: "cousin",
+        verdict: "allow",
+        source: {
+          sessionKey: sourceSessionKey,
+          agentId: "engineering-seat",
+        },
+        target: {
+          sessionKey: targetSessionKey,
+          agentId: "ops-seat",
+        },
+        obligations: {
+          cousinTicketRequired: true,
+          requiresPresidentMediation: true,
+          artifactReturnRequired: true,
+          ticketId: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketId,
+          ticketDigest: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketDigest,
+        },
+        namespaces: {
+          routeLawNamespace: CLEAN_ROUTE_DECISION_JSON.trace.routeLawNamespace,
+          receiptNamespace: CLEAN_ROUTE_DECISION_JSON.trace.receiptNamespace,
+          approvalNamespace: CLEAN_ROUTE_DECISION_JSON.trace.approvalNamespace,
+          correlationId: CLEAN_ROUTE_DECISION_JSON.trace.correlationId,
+        },
+      },
       publicReceipt: {
         classification: "cousin",
         correlationId: CLEAN_ROUTE_DECISION_JSON.trace.correlationId,
@@ -2972,6 +3001,7 @@ describe("AcpSessionManager", () => {
           acp: {
             ...readySessionMeta(),
             agent: "rogue-seat",
+            routeLaw,
           },
         };
       }

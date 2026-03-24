@@ -1,8 +1,5 @@
-import COUSIN_TICKET_SCHEMA from "../../../schemas/cousin-ticket.schema.json" with { type: "json" };
-import ROUTE_DECISION_SCHEMA from "../../../schemas/route-decision.schema.json" with { type: "json" };
 import type { OpenClawConfig } from "../../config/config.js";
 import { logVerbose } from "../../globals.js";
-import { validateJsonSchemaValue } from "../../plugins/schema-validator.js";
 import { normalizeAgentId } from "../../routing/session-key.js";
 import { isAcpSessionKey } from "../../sessions/session-key-utils.js";
 import {
@@ -24,6 +21,10 @@ import type {
   AcpRuntimeHandle,
   AcpRuntimeStatus,
 } from "../runtime/types.js";
+import {
+  resolveKinshipRouteLawEnvelopeFromBundle,
+  evaluateKinshipTransportAdmission,
+} from "./kinship-policy-engine.js";
 import { reconcileManagerRuntimeSessionIdentifiers } from "./manager.identity-reconcile.js";
 import {
   applyManagerRuntimeControls,
@@ -72,205 +73,6 @@ import {
   validateRuntimeOptionPatch,
 } from "./runtime-options.js";
 import { SessionActorQueue } from "./session-actor-queue.js";
-
-type M12RouteDecisionArtifact = {
-  decisionId: string;
-  requester: {
-    agentId: string;
-    role?: string;
-    seatId?: string;
-    lineageId?: string;
-    runtimeId?: string;
-    policyId?: string;
-  };
-  target: {
-    agentId: string;
-    role?: string;
-    seatId?: string;
-    lineageId?: string;
-    runtimeId?: string;
-    policyId?: string;
-  };
-  route: {
-    classification: SessionAcpRouteLawEnvelope["classification"];
-    requesterPresidentId?: string;
-    targetPresidentId?: string;
-    sharedPresident?: boolean;
-  };
-  decision: {
-    verdict: SessionAcpRouteLawEnvelope["verdict"];
-    requiresPresidentMediation?: boolean;
-    mediationState?: string;
-    cousinTicketRequired: boolean;
-    artifactReturnRequired?: boolean;
-    rejectReasons: string[];
-  };
-  cousinTicket?: {
-    ticketId: string;
-    ticketDigest: string;
-  };
-  trace: Pick<
-    SessionAcpRouteLawEnvelope,
-    | "traceNamespace"
-    | "receiptNamespace"
-    | "routeLawNamespace"
-    | "approvalNamespace"
-    | "correlationId"
-  >;
-};
-
-type M12CousinTicketArtifact = {
-  ticketId: string;
-  decisionId: string;
-  mediation?: {
-    required?: boolean;
-    state?: string;
-  };
-  artifactReturn?: {
-    required?: boolean;
-  };
-  receipts: {
-    ticketDigest: string;
-  };
-};
-
-const ROUTE_DECISION_SCHEMA_CACHE_KEY = "acp-control-plane:route-decision";
-const COUSIN_TICKET_SCHEMA_CACHE_KEY = "acp-control-plane:cousin-ticket";
-
-function formatSchemaValidationErrors(errors: { text: string }[]): string {
-  return errors.map((error) => error.text).join("; ");
-}
-
-function validateRouteLawArtifactOrThrow(params: {
-  label: string;
-  cacheKey: string;
-  schema: Record<string, unknown>;
-  value: unknown;
-}): void {
-  const result = validateJsonSchemaValue({
-    schema: params.schema,
-    cacheKey: params.cacheKey,
-    value: params.value,
-  });
-  if (result.ok) {
-    return;
-  }
-  throw new AcpRuntimeError(
-    "ACP_SESSION_INIT_FAILED",
-    `ACP ${params.label} failed frozen M12 schema validation: ${formatSchemaValidationErrors(result.errors)}`,
-  );
-}
-
-function resolveRouteLawEnvelopeFromBundle(
-  bundle: AcpInitializeSessionInput["routeLawBundle"],
-): SessionAcpRouteLawEnvelope | undefined {
-  if (!bundle) {
-    return undefined;
-  }
-
-  validateRouteLawArtifactOrThrow({
-    label: "route decision",
-    cacheKey: ROUTE_DECISION_SCHEMA_CACHE_KEY,
-    schema: ROUTE_DECISION_SCHEMA as Record<string, unknown>,
-    value: bundle.routeDecision,
-  });
-  if (bundle.cousinTicket !== undefined) {
-    validateRouteLawArtifactOrThrow({
-      label: "cousin ticket",
-      cacheKey: COUSIN_TICKET_SCHEMA_CACHE_KEY,
-      schema: COUSIN_TICKET_SCHEMA as Record<string, unknown>,
-      value: bundle.cousinTicket,
-    });
-  }
-
-  const routeDecision = bundle.routeDecision as M12RouteDecisionArtifact;
-  if (routeDecision.decision.verdict === "reject") {
-    const rejectSummary = routeDecision.decision.rejectReasons.join(", ");
-    throw new AcpRuntimeError(
-      "ACP_SESSION_INIT_FAILED",
-      `ACP session rejected by frozen M12 route decision ${routeDecision.decisionId}: ${rejectSummary}`,
-    );
-  }
-  if (routeDecision.decision.cousinTicketRequired && bundle.cousinTicket === undefined) {
-    throw new AcpRuntimeError(
-      "ACP_SESSION_INIT_FAILED",
-      `ACP session rejected by frozen M12 route decision ${routeDecision.decisionId}: reject-missing-cousin-ticket`,
-    );
-  }
-  if (routeDecision.decision.cousinTicketRequired && bundle.cousinTicket !== undefined) {
-    const cousinTicket = bundle.cousinTicket as M12CousinTicketArtifact;
-    const ticketBindingMismatched =
-      cousinTicket.decisionId !== routeDecision.decisionId ||
-      cousinTicket.ticketId !== routeDecision.cousinTicket?.ticketId ||
-      cousinTicket.receipts.ticketDigest !== routeDecision.cousinTicket?.ticketDigest;
-    if (ticketBindingMismatched) {
-      throw new AcpRuntimeError(
-        "ACP_SESSION_INIT_FAILED",
-        `ACP session rejected by frozen M12 route decision ${routeDecision.decisionId}: reject-cousin-ticket-binding-mismatch`,
-      );
-    }
-  }
-
-  return {
-    decisionId: routeDecision.decisionId,
-    classification: routeDecision.route.classification,
-    verdict: routeDecision.decision.verdict,
-    rejectReasons: [...routeDecision.decision.rejectReasons],
-    traceNamespace: routeDecision.trace.traceNamespace,
-    receiptNamespace: routeDecision.trace.receiptNamespace,
-    routeLawNamespace: routeDecision.trace.routeLawNamespace,
-    approvalNamespace: routeDecision.trace.approvalNamespace,
-    correlationId: routeDecision.trace.correlationId,
-    requesterAgentId: normalizeAgentId(routeDecision.requester.agentId),
-    requesterRole: normalizeText(routeDecision.requester.role),
-    requesterSeatId: normalizeText(routeDecision.requester.seatId),
-    requesterPresidentId: normalizeText(routeDecision.route.requesterPresidentId),
-    requesterLineageId: normalizeText(routeDecision.requester.lineageId),
-    requesterRuntimeId: normalizeText(routeDecision.requester.runtimeId),
-    requesterPolicyId: normalizeText(routeDecision.requester.policyId),
-    targetAgentId: normalizeAgentId(routeDecision.target.agentId),
-    targetRole: normalizeText(routeDecision.target.role),
-    targetSeatId: normalizeText(routeDecision.target.seatId),
-    targetPresidentId: normalizeText(routeDecision.route.targetPresidentId),
-    targetLineageId: normalizeText(routeDecision.target.lineageId),
-    targetRuntimeId: normalizeText(routeDecision.target.runtimeId),
-    targetPolicyId: normalizeText(routeDecision.target.policyId),
-    sharedPresident: routeDecision.route.sharedPresident === true,
-    requiresPresidentMediation:
-      routeDecision.decision.requiresPresidentMediation === true ||
-      (bundle.cousinTicket as M12CousinTicketArtifact | undefined)?.mediation?.required === true,
-    mediationState:
-      normalizeText(routeDecision.decision.mediationState) ??
-      normalizeText((bundle.cousinTicket as M12CousinTicketArtifact | undefined)?.mediation?.state),
-    cousinTicketRequired: routeDecision.decision.cousinTicketRequired,
-    artifactReturnRequired:
-      routeDecision.decision.artifactReturnRequired === true ||
-      (bundle.cousinTicket as M12CousinTicketArtifact | undefined)?.artifactReturn?.required ===
-        true,
-    ...(routeDecision.decision.cousinTicketRequired && routeDecision.cousinTicket
-      ? {
-          ticketId: routeDecision.cousinTicket.ticketId,
-          ticketDigest: routeDecision.cousinTicket.ticketDigest,
-        }
-      : {}),
-  };
-}
-
-function buildTransportPublicReceipt(routeLaw: SessionAcpRouteLawEnvelope) {
-  return {
-    classification: routeLaw.classification,
-    correlationId: routeLaw.correlationId,
-    ...(routeLaw.ticketId ? { ticketId: routeLaw.ticketId } : {}),
-    ...(routeLaw.requiresPresidentMediation !== undefined
-      ? { requiresPresidentMediation: routeLaw.requiresPresidentMediation }
-      : {}),
-    ...(routeLaw.artifactReturnRequired !== undefined
-      ? { artifactReturnRequired: routeLaw.artifactReturnRequired }
-      : {}),
-    routeLawNamespace: routeLaw.routeLawNamespace,
-    receiptNamespace: routeLaw.receiptNamespace,
-  };
-}
 
 function preserveKinshipState(meta: Pick<SessionAcpMeta, "routeLaw" | "transport">): {
   routeLaw?: SessionAcpRouteLawEnvelope;
@@ -442,7 +244,7 @@ export class AcpSessionManager {
     const agent = normalizeAgentId(input.agent);
     await this.evictIdleRuntimeHandles({ cfg: input.cfg });
     return await this.withSessionActor(sessionKey, async () => {
-      const routeLaw = resolveRouteLawEnvelopeFromBundle(input.routeLawBundle);
+      const routeLaw = resolveKinshipRouteLawEnvelopeFromBundle(input.routeLawBundle);
       const backend = this.deps.requireRuntimeBackend(input.backendId || input.cfg.acp?.backend);
       const runtime = backend.runtime;
       const initialRuntimeOptions = validateRuntimeOptionPatch({ cwd: input.cwd });
@@ -989,14 +791,6 @@ export class AcpSessionManager {
       );
     }
 
-    const routeLaw = params.meta.routeLaw;
-    if (!routeLaw) {
-      throw new AcpRuntimeError(
-        "ACP_TURN_FAILED",
-        `ACP native inter-agent transport requires admitted route law on ${params.sessionKey}.`,
-      );
-    }
-
     const sourceEntry = this.deps.readSessionEntry({
       cfg: params.cfg,
       sessionKey: sourceSessionKey,
@@ -1012,73 +806,15 @@ export class AcpSessionManager {
       normalizeText(sourceEntry.acp?.agent) ?? resolveAcpAgentFromSessionKey(sourceSessionKey),
     );
     const targetAgentId = normalizeAgentId(params.meta.agent);
-    const requesterAgentId = normalizeText(routeLaw.requesterAgentId)
-      ? normalizeAgentId(routeLaw.requesterAgentId)
-      : "";
-    const targetRouteAgentId = normalizeText(routeLaw.targetAgentId)
-      ? normalizeAgentId(routeLaw.targetAgentId)
-      : "";
-    if (!requesterAgentId || !targetRouteAgentId) {
-      throw new AcpRuntimeError(
-        "ACP_TURN_FAILED",
-        `ACP inter-agent transport rejected for ${params.sessionKey}: route-law participants are incomplete.`,
-      );
-    }
-    const isForwardRoute =
-      sourceAgentId === requesterAgentId && targetAgentId === targetRouteAgentId;
-    const isReturnRoute =
-      sourceAgentId === targetRouteAgentId && targetAgentId === requesterAgentId;
-    if (!isForwardRoute && !isReturnRoute) {
-      throw new AcpRuntimeError(
-        "ACP_TURN_FAILED",
-        `ACP inter-agent transport rejected for ${params.sessionKey}: ${sourceSessionKey} violates Kinship route participants.`,
-      );
-    }
-
-    const sourceDecisionId = sourceEntry.acp?.routeLaw?.decisionId;
-    if (sourceDecisionId && sourceDecisionId !== routeLaw.decisionId) {
-      throw new AcpRuntimeError(
-        "ACP_TURN_FAILED",
-        `ACP inter-agent transport rejected for ${params.sessionKey}: ${sourceSessionKey} route-law decision mismatch.`,
-      );
-    }
-
-    if (routeLaw.classification === "illegal" || routeLaw.verdict !== "allow") {
-      throw new AcpRuntimeError(
-        "ACP_TURN_FAILED",
-        `ACP inter-agent transport rejected for ${params.sessionKey}: route-law verdict is not allow.`,
-      );
-    }
-    if (routeLaw.classification === "cousin" && !routeLaw.ticketId) {
-      throw new AcpRuntimeError(
-        "ACP_TURN_FAILED",
-        `ACP inter-agent transport rejected for ${params.sessionKey}: cousin route requires a cousin ticket.`,
-      );
-    }
-
-    const nextTransport: NonNullable<SessionAcpMeta["transport"]> = {
-      contractVersion: "kinship-governed-acp-transport.v1",
-      transportLayer: "acp_native",
-      status: "admitted",
-      direction: isForwardRoute ? "request" : "return",
+    const nextTransport = evaluateKinshipTransportAdmission({
       requestId: params.input.requestId,
-      lastTurnAt: Date.now(),
       sourceSessionKey,
       sourceAgentId,
+      sourceRouteLaw: sourceEntry.acp?.routeLaw,
       targetSessionKey: params.sessionKey,
       targetAgentId,
-      classification: routeLaw.classification,
-      verdict: routeLaw.verdict,
-      correlationId: routeLaw.correlationId,
-      ...(routeLaw.ticketId ? { ticketId: routeLaw.ticketId } : {}),
-      ...(routeLaw.requiresPresidentMediation !== undefined
-        ? { requiresPresidentMediation: routeLaw.requiresPresidentMediation }
-        : {}),
-      ...(routeLaw.artifactReturnRequired !== undefined
-        ? { artifactReturnRequired: routeLaw.artifactReturnRequired }
-        : {}),
-      publicReceipt: buildTransportPublicReceipt(routeLaw),
-    };
+      targetRouteLaw: params.meta.routeLaw,
+    });
 
     await this.writeSessionMeta({
       cfg: params.cfg,

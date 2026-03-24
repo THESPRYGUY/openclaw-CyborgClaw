@@ -92,6 +92,50 @@ export type SessionAcpTransportEnvelope = {
   ticketId?: string;
   requiresPresidentMediation?: boolean;
   artifactReturnRequired?: boolean;
+  policySnapshot: {
+    engineId: "kinship-policy-engine";
+    engineVersion: "2026.03.v1";
+    admissionBasis: "route_law_bundle";
+    decisionId: string;
+    classification: SessionAcpRouteClassification;
+    verdict: "allow" | "reject";
+    source: {
+      sessionKey: string;
+      agentId: string;
+      role?: string;
+      seatId?: string;
+      presidentId?: string;
+      lineageId?: string;
+      runtimeId?: string;
+      policyId?: string;
+    };
+    target: {
+      sessionKey: string;
+      agentId: string;
+      role?: string;
+      seatId?: string;
+      presidentId?: string;
+      lineageId?: string;
+      runtimeId?: string;
+      policyId?: string;
+    };
+    obligations: {
+      sharedPresident: boolean;
+      cousinTicketRequired: boolean;
+      requiresPresidentMediation: boolean;
+      artifactReturnRequired: boolean;
+      mediationState?: string;
+      ticketId?: string;
+      ticketDigest?: string;
+    };
+    namespaces: {
+      traceNamespace: string;
+      receiptNamespace: string;
+      routeLawNamespace: string;
+      approvalNamespace: string;
+      correlationId: string;
+    };
+  };
   publicReceipt: {
     classification: SessionAcpRouteClassification;
     correlationId: string;
