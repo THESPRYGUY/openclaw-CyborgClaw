@@ -94,8 +94,13 @@ export type SessionAcpTransportEnvelope = {
   artifactReturnRequired?: boolean;
   policySnapshot: {
     engineId: "kinship-policy-engine";
-    engineVersion: "2026.03.v1";
+    engineVersion: "2026.03.v2";
     admissionBasis: "route_law_bundle";
+    policySource?: "default" | "file";
+    policySetId?: string;
+    policySetLabel?: string;
+    policyConfigPath?: string;
+    policyConfigDigest?: string;
     decisionId: string;
     classification: SessionAcpRouteClassification;
     verdict: "allow" | "reject";

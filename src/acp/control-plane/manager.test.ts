@@ -2911,8 +2911,9 @@ describe("AcpSessionManager", () => {
       artifactReturnRequired: true,
       policySnapshot: {
         engineId: "kinship-policy-engine",
-        engineVersion: "2026.03.v1",
+        engineVersion: "2026.03.v2",
         admissionBasis: "route_law_bundle",
+        policySetId: "workforce-alpha-default",
         decisionId: CLEAN_ROUTE_DECISION_JSON.decisionId,
         classification: "cousin",
         verdict: "allow",

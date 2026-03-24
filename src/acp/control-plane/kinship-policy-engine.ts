@@ -8,6 +8,11 @@ import type {
 import { validateJsonSchemaValue } from "../../plugins/schema-validator.js";
 import { normalizeAgentId } from "../../routing/session-key.js";
 import { AcpRuntimeError } from "../runtime/errors.js";
+import {
+  loadKinshipPolicyEngineState,
+  validateRouteLawAgainstActivePolicy,
+  routeRuleForClassification,
+} from "./kinship-policy-config.js";
 import { normalizeText } from "./runtime-options.js";
 
 type M12RouteDecisionArtifact = {
@@ -72,7 +77,7 @@ type M12CousinTicketArtifact = {
 };
 
 export const KINSHIP_POLICY_ENGINE_ID = "kinship-policy-engine";
-export const KINSHIP_POLICY_ENGINE_VERSION = "2026.03.v1";
+export const KINSHIP_POLICY_ENGINE_VERSION = "2026.03.v2";
 
 export type KinshipRouteLawBundle = {
   routeDecision: unknown;
@@ -197,7 +202,7 @@ export function resolveKinshipRouteLawEnvelopeFromBundle(
     }
   }
 
-  return {
+  const routeLaw: SessionAcpRouteLawEnvelope = {
     decisionId: routeDecision.decisionId,
     classification: routeDecision.route.classification,
     verdict: routeDecision.decision.verdict,
@@ -240,6 +245,16 @@ export function resolveKinshipRouteLawEnvelopeFromBundle(
         }
       : {}),
   };
+  const policyState = loadKinshipPolicyEngineState();
+  const policyIssues = validateRouteLawAgainstActivePolicy(routeLaw, policyState);
+  if (policyIssues.length > 0) {
+    throw new AcpRuntimeError(
+      "ACP_SESSION_INIT_FAILED",
+      `ACP session rejected by dynamic Kinship policy ${policyState.activePolicySet.policySetId}: ${policyIssues.join("; ")}`,
+    );
+  }
+
+  return routeLaw;
 }
 
 export function buildKinshipTransportPublicReceipt(routeLaw: SessionAcpRouteLawEnvelope) {
@@ -267,22 +282,35 @@ export function evaluateKinshipTransportAdmission(params: {
   targetAgentId: string;
   targetRouteLaw?: SessionAcpRouteLawEnvelope;
 }): SessionAcpTransportEnvelope {
+  const policyState = loadKinshipPolicyEngineState();
   const routeLaw = params.targetRouteLaw;
+  const routeRule = routeLaw
+    ? routeRuleForClassification(policyState, routeLaw.classification)
+    : null;
   if (!routeLaw) {
     throw new AcpRuntimeError(
       "ACP_TURN_FAILED",
       `ACP native inter-agent transport requires admitted route law on ${params.targetSessionKey}.`,
     );
   }
-  if (!params.sourceRouteLaw) {
+  if (routeRule?.requireTargetRouteLaw && !routeLaw) {
+    throw new AcpRuntimeError(
+      "ACP_TURN_FAILED",
+      `ACP inter-agent transport rejected for ${params.targetSessionKey}: target session is missing admitted route law.`,
+    );
+  }
+  if ((routeRule?.requireSourceRouteLaw ?? true) && !params.sourceRouteLaw) {
     throw new AcpRuntimeError(
       "ACP_TURN_FAILED",
       `ACP inter-agent transport rejected for ${params.targetSessionKey}: ${params.sourceSessionKey} is missing admitted route law.`,
     );
   }
+  const sourceRouteLaw = params.sourceRouteLaw;
   if (
+    (routeRule?.requireDecisionParity ?? true) &&
+    sourceRouteLaw &&
     !routeLawDecisionMatches({
-      sourceRouteLaw: params.sourceRouteLaw,
+      sourceRouteLaw,
       targetRouteLaw: routeLaw,
     })
   ) {
@@ -297,19 +325,34 @@ export function evaluateKinshipTransportAdmission(params: {
     sourceAgentId: params.sourceAgentId,
     targetAgentId: params.targetAgentId,
   });
-  if (!isForwardRoute && !isReturnRoute) {
+  if ((routeRule?.requireParticipantMatch ?? true) && !isForwardRoute && !isReturnRoute) {
     throw new AcpRuntimeError(
       "ACP_TURN_FAILED",
       `ACP inter-agent transport rejected for ${params.targetSessionKey}: ${params.sourceSessionKey} violates Kinship route participants.`,
     );
   }
-  if (routeLaw.classification === "illegal" || routeLaw.verdict !== "allow") {
+  if (!routeRule?.allow || routeLaw.classification === "illegal" || routeLaw.verdict !== "allow") {
     throw new AcpRuntimeError(
       "ACP_TURN_FAILED",
       `ACP inter-agent transport rejected for ${params.targetSessionKey}: route-law verdict is not allow.`,
     );
   }
-  if (routeLaw.classification === "cousin" && !routeLaw.ticketId) {
+  if (
+    (routeRule?.requirePresidentMediation ?? false) &&
+    routeLaw.requiresPresidentMediation !== true
+  ) {
+    throw new AcpRuntimeError(
+      "ACP_TURN_FAILED",
+      `ACP inter-agent transport rejected for ${params.targetSessionKey}: route class ${routeLaw.classification} requires President mediation.`,
+    );
+  }
+  if ((routeRule?.requireArtifactReturn ?? false) && routeLaw.artifactReturnRequired !== true) {
+    throw new AcpRuntimeError(
+      "ACP_TURN_FAILED",
+      `ACP inter-agent transport rejected for ${params.targetSessionKey}: route class ${routeLaw.classification} requires artifact return.`,
+    );
+  }
+  if ((routeRule?.requireCousinTicket ?? false) && !routeLaw.ticketId) {
     throw new AcpRuntimeError(
       "ACP_TURN_FAILED",
       `ACP inter-agent transport rejected for ${params.targetSessionKey}: cousin route requires a cousin ticket.`,
@@ -341,6 +384,11 @@ export function evaluateKinshipTransportAdmission(params: {
       engineId: KINSHIP_POLICY_ENGINE_ID,
       engineVersion: KINSHIP_POLICY_ENGINE_VERSION,
       admissionBasis: "route_law_bundle",
+      policySource: policyState.source,
+      policySetId: policyState.activePolicySet.policySetId,
+      policySetLabel: policyState.activePolicySet.label,
+      policyConfigPath: policyState.path,
+      policyConfigDigest: policyState.configDigest,
       decisionId: routeLaw.decisionId,
       classification: routeLaw.classification,
       verdict: routeLaw.verdict,
