@@ -3,9 +3,11 @@ import type {
   SessionAcpIdentity,
   AcpSessionRuntimeOptions,
   SessionAcpRouteLawEnvelope,
+  SessionAcpTransportEnvelope,
   SessionAcpMeta,
   SessionEntry,
 } from "../../config/sessions/types.js";
+import type { InputProvenance } from "../../sessions/input-provenance.js";
 import type { AcpRuntimeError } from "../runtime/errors.js";
 import { requireAcpRuntimeBackend } from "../runtime/registry.js";
 import {
@@ -65,6 +67,7 @@ export type AcpRunTurnInput = {
   attachments?: AcpTurnAttachment[];
   mode: AcpRuntimePromptMode;
   requestId: string;
+  inputProvenance?: InputProvenance;
   signal?: AbortSignal;
   onEvent?: (event: AcpRuntimeEvent) => Promise<void> | void;
 };
@@ -89,6 +92,8 @@ export type AcpSessionStatus = {
   backend: string;
   agent: string;
   identity?: SessionAcpIdentity;
+  routeLaw?: SessionAcpRouteLawEnvelope;
+  transport?: SessionAcpTransportEnvelope;
   state: SessionAcpMeta["state"];
   mode: AcpRuntimeSessionMode;
   runtimeOptions: AcpSessionRuntimeOptions;

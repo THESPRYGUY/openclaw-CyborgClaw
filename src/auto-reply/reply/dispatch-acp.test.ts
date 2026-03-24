@@ -390,6 +390,32 @@ describe("tryDispatchAcpReply", () => {
     }
   });
 
+  it("forwards inter-session provenance into ACP turns", async () => {
+    setReadyAcpResolution();
+    managerMocks.runTurn.mockResolvedValue(undefined);
+
+    await runDispatch({
+      bodyForAgent: "kinship handoff",
+      ctxOverrides: {
+        InputProvenance: {
+          kind: "inter_session",
+          sourceSessionKey: "agent:president-a:acp:source",
+          sourceTool: "sessions_send",
+        },
+      },
+    });
+
+    expect(managerMocks.runTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputProvenance: {
+          kind: "inter_session",
+          sourceSessionKey: "agent:president-a:acp:source",
+          sourceTool: "sessions_send",
+        },
+      }),
+    );
+  });
+
   it("skips ACP turns for non-image attachments when there is no text prompt", async () => {
     setReadyAcpResolution();
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "dispatch-acp-"));

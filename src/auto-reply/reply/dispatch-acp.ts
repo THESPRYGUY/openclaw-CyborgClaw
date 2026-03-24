@@ -308,6 +308,7 @@ export async function tryDispatchAcpReply(params: {
       attachments: attachments.length > 0 ? attachments : undefined,
       mode: "prompt",
       requestId: resolveAcpRequestId(params.ctx),
+      inputProvenance: params.ctx.InputProvenance,
       onEvent: async (event) => await projector.onEvent(event),
     });
 

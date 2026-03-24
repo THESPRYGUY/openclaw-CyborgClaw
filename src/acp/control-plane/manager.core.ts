@@ -75,12 +75,34 @@ import { SessionActorQueue } from "./session-actor-queue.js";
 
 type M12RouteDecisionArtifact = {
   decisionId: string;
+  requester: {
+    agentId: string;
+    role?: string;
+    seatId?: string;
+    lineageId?: string;
+    runtimeId?: string;
+    policyId?: string;
+  };
+  target: {
+    agentId: string;
+    role?: string;
+    seatId?: string;
+    lineageId?: string;
+    runtimeId?: string;
+    policyId?: string;
+  };
   route: {
     classification: SessionAcpRouteLawEnvelope["classification"];
+    requesterPresidentId?: string;
+    targetPresidentId?: string;
+    sharedPresident?: boolean;
   };
   decision: {
     verdict: SessionAcpRouteLawEnvelope["verdict"];
+    requiresPresidentMediation?: boolean;
+    mediationState?: string;
     cousinTicketRequired: boolean;
+    artifactReturnRequired?: boolean;
     rejectReasons: string[];
   };
   cousinTicket?: {
@@ -100,6 +122,13 @@ type M12RouteDecisionArtifact = {
 type M12CousinTicketArtifact = {
   ticketId: string;
   decisionId: string;
+  mediation?: {
+    required?: boolean;
+    state?: string;
+  };
+  artifactReturn?: {
+    required?: boolean;
+  };
   receipts: {
     ticketDigest: string;
   };
@@ -192,6 +221,32 @@ function resolveRouteLawEnvelopeFromBundle(
     routeLawNamespace: routeDecision.trace.routeLawNamespace,
     approvalNamespace: routeDecision.trace.approvalNamespace,
     correlationId: routeDecision.trace.correlationId,
+    requesterAgentId: normalizeAgentId(routeDecision.requester.agentId),
+    requesterRole: normalizeText(routeDecision.requester.role),
+    requesterSeatId: normalizeText(routeDecision.requester.seatId),
+    requesterPresidentId: normalizeText(routeDecision.route.requesterPresidentId),
+    requesterLineageId: normalizeText(routeDecision.requester.lineageId),
+    requesterRuntimeId: normalizeText(routeDecision.requester.runtimeId),
+    requesterPolicyId: normalizeText(routeDecision.requester.policyId),
+    targetAgentId: normalizeAgentId(routeDecision.target.agentId),
+    targetRole: normalizeText(routeDecision.target.role),
+    targetSeatId: normalizeText(routeDecision.target.seatId),
+    targetPresidentId: normalizeText(routeDecision.route.targetPresidentId),
+    targetLineageId: normalizeText(routeDecision.target.lineageId),
+    targetRuntimeId: normalizeText(routeDecision.target.runtimeId),
+    targetPolicyId: normalizeText(routeDecision.target.policyId),
+    sharedPresident: routeDecision.route.sharedPresident === true,
+    requiresPresidentMediation:
+      routeDecision.decision.requiresPresidentMediation === true ||
+      (bundle.cousinTicket as M12CousinTicketArtifact | undefined)?.mediation?.required === true,
+    mediationState:
+      normalizeText(routeDecision.decision.mediationState) ??
+      normalizeText((bundle.cousinTicket as M12CousinTicketArtifact | undefined)?.mediation?.state),
+    cousinTicketRequired: routeDecision.decision.cousinTicketRequired,
+    artifactReturnRequired:
+      routeDecision.decision.artifactReturnRequired === true ||
+      (bundle.cousinTicket as M12CousinTicketArtifact | undefined)?.artifactReturn?.required ===
+        true,
     ...(routeDecision.decision.cousinTicketRequired && routeDecision.cousinTicket
       ? {
           ticketId: routeDecision.cousinTicket.ticketId,
@@ -201,10 +256,30 @@ function resolveRouteLawEnvelopeFromBundle(
   };
 }
 
-function preserveRouteLawEnvelope(routeLaw: SessionAcpMeta["routeLaw"]): {
+function buildTransportPublicReceipt(routeLaw: SessionAcpRouteLawEnvelope) {
+  return {
+    classification: routeLaw.classification,
+    correlationId: routeLaw.correlationId,
+    ...(routeLaw.ticketId ? { ticketId: routeLaw.ticketId } : {}),
+    ...(routeLaw.requiresPresidentMediation !== undefined
+      ? { requiresPresidentMediation: routeLaw.requiresPresidentMediation }
+      : {}),
+    ...(routeLaw.artifactReturnRequired !== undefined
+      ? { artifactReturnRequired: routeLaw.artifactReturnRequired }
+      : {}),
+    routeLawNamespace: routeLaw.routeLawNamespace,
+    receiptNamespace: routeLaw.receiptNamespace,
+  };
+}
+
+function preserveKinshipState(meta: Pick<SessionAcpMeta, "routeLaw" | "transport">): {
   routeLaw?: SessionAcpRouteLawEnvelope;
+  transport?: SessionAcpMeta["transport"];
 } {
-  return routeLaw ? { routeLaw } : {};
+  return {
+    ...(meta.routeLaw ? { routeLaw: meta.routeLaw } : {}),
+    ...(meta.transport ? { transport: meta.transport } : {}),
+  };
 }
 
 export class AcpSessionManager {
@@ -528,6 +603,8 @@ export class AcpSessionManager {
           backend: handle.backend || meta.backend,
           agent: meta.agent,
           ...(identity ? { identity } : {}),
+          ...(meta.routeLaw ? { routeLaw: meta.routeLaw } : {}),
+          ...(meta.transport ? { transport: meta.transport } : {}),
           state: meta.state,
           mode: meta.mode,
           runtimeOptions: resolveRuntimeOptionsFromMeta(meta),
@@ -765,7 +842,12 @@ export class AcpSessionManager {
         meta: resolvedMeta,
       });
       let handle = ensuredHandle;
-      const meta = ensuredMeta;
+      const meta = await this.admitInterSessionTransport({
+        cfg: input.cfg,
+        sessionKey,
+        meta: ensuredMeta,
+        input,
+      });
       await this.applyRuntimeControls({
         sessionKey,
         runtime,
@@ -811,6 +893,7 @@ export class AcpSessionManager {
           attachments: input.attachments,
           mode: input.mode,
           requestId: input.requestId,
+          inputProvenance: input.inputProvenance,
           signal: combinedSignal,
         })) {
           if (event.type === "error") {
@@ -883,6 +966,154 @@ export class AcpSessionManager {
         }
       }
     });
+  }
+
+  private async admitInterSessionTransport(params: {
+    cfg: OpenClawConfig;
+    sessionKey: string;
+    meta: SessionAcpMeta;
+    input: AcpRunTurnInput;
+  }): Promise<SessionAcpMeta> {
+    if (params.input.inputProvenance?.kind !== "inter_session") {
+      return params.meta;
+    }
+
+    const sourceSessionKey = canonicalizeAcpSessionKey({
+      cfg: params.cfg,
+      sessionKey: params.input.inputProvenance.sourceSessionKey ?? "",
+    });
+    if (!sourceSessionKey) {
+      throw new AcpRuntimeError(
+        "ACP_TURN_FAILED",
+        `ACP native inter-agent transport requires a source session key for ${params.sessionKey}.`,
+      );
+    }
+
+    const routeLaw = params.meta.routeLaw;
+    if (!routeLaw) {
+      throw new AcpRuntimeError(
+        "ACP_TURN_FAILED",
+        `ACP native inter-agent transport requires admitted route law on ${params.sessionKey}.`,
+      );
+    }
+
+    const sourceEntry = this.deps.readSessionEntry({
+      cfg: params.cfg,
+      sessionKey: sourceSessionKey,
+    });
+    if (!sourceEntry) {
+      throw new AcpRuntimeError(
+        "ACP_TURN_FAILED",
+        `ACP native inter-agent transport source session is missing: ${sourceSessionKey}.`,
+      );
+    }
+
+    const sourceAgentId = normalizeAgentId(
+      normalizeText(sourceEntry.acp?.agent) ?? resolveAcpAgentFromSessionKey(sourceSessionKey),
+    );
+    const targetAgentId = normalizeAgentId(params.meta.agent);
+    const requesterAgentId = normalizeText(routeLaw.requesterAgentId)
+      ? normalizeAgentId(routeLaw.requesterAgentId)
+      : "";
+    const targetRouteAgentId = normalizeText(routeLaw.targetAgentId)
+      ? normalizeAgentId(routeLaw.targetAgentId)
+      : "";
+    if (!requesterAgentId || !targetRouteAgentId) {
+      throw new AcpRuntimeError(
+        "ACP_TURN_FAILED",
+        `ACP inter-agent transport rejected for ${params.sessionKey}: route-law participants are incomplete.`,
+      );
+    }
+    const isForwardRoute =
+      sourceAgentId === requesterAgentId && targetAgentId === targetRouteAgentId;
+    const isReturnRoute =
+      sourceAgentId === targetRouteAgentId && targetAgentId === requesterAgentId;
+    if (!isForwardRoute && !isReturnRoute) {
+      throw new AcpRuntimeError(
+        "ACP_TURN_FAILED",
+        `ACP inter-agent transport rejected for ${params.sessionKey}: ${sourceSessionKey} violates Kinship route participants.`,
+      );
+    }
+
+    const sourceDecisionId = sourceEntry.acp?.routeLaw?.decisionId;
+    if (sourceDecisionId && sourceDecisionId !== routeLaw.decisionId) {
+      throw new AcpRuntimeError(
+        "ACP_TURN_FAILED",
+        `ACP inter-agent transport rejected for ${params.sessionKey}: ${sourceSessionKey} route-law decision mismatch.`,
+      );
+    }
+
+    if (routeLaw.classification === "illegal" || routeLaw.verdict !== "allow") {
+      throw new AcpRuntimeError(
+        "ACP_TURN_FAILED",
+        `ACP inter-agent transport rejected for ${params.sessionKey}: route-law verdict is not allow.`,
+      );
+    }
+    if (routeLaw.classification === "cousin" && !routeLaw.ticketId) {
+      throw new AcpRuntimeError(
+        "ACP_TURN_FAILED",
+        `ACP inter-agent transport rejected for ${params.sessionKey}: cousin route requires a cousin ticket.`,
+      );
+    }
+
+    const nextTransport: NonNullable<SessionAcpMeta["transport"]> = {
+      contractVersion: "kinship-governed-acp-transport.v1",
+      transportLayer: "acp_native",
+      status: "admitted",
+      direction: isForwardRoute ? "request" : "return",
+      requestId: params.input.requestId,
+      lastTurnAt: Date.now(),
+      sourceSessionKey,
+      sourceAgentId,
+      targetSessionKey: params.sessionKey,
+      targetAgentId,
+      classification: routeLaw.classification,
+      verdict: routeLaw.verdict,
+      correlationId: routeLaw.correlationId,
+      ...(routeLaw.ticketId ? { ticketId: routeLaw.ticketId } : {}),
+      ...(routeLaw.requiresPresidentMediation !== undefined
+        ? { requiresPresidentMediation: routeLaw.requiresPresidentMediation }
+        : {}),
+      ...(routeLaw.artifactReturnRequired !== undefined
+        ? { artifactReturnRequired: routeLaw.artifactReturnRequired }
+        : {}),
+      publicReceipt: buildTransportPublicReceipt(routeLaw),
+    };
+
+    await this.writeSessionMeta({
+      cfg: params.cfg,
+      sessionKey: params.sessionKey,
+      mutate: (current, entry) => {
+        if (!entry) {
+          return null;
+        }
+        const base = current ?? entry.acp;
+        if (!base) {
+          return null;
+        }
+        return {
+          backend: base.backend,
+          agent: base.agent,
+          runtimeSessionName: base.runtimeSessionName,
+          ...(base.identity ? { identity: base.identity } : {}),
+          ...preserveKinshipState({
+            routeLaw: base.routeLaw,
+            transport: nextTransport,
+          }),
+          mode: base.mode,
+          ...(base.runtimeOptions ? { runtimeOptions: base.runtimeOptions } : {}),
+          ...(base.cwd ? { cwd: base.cwd } : {}),
+          state: base.state,
+          lastActivityAt: Date.now(),
+          ...(base.lastError ? { lastError: base.lastError } : {}),
+        };
+      },
+    });
+
+    return {
+      ...params.meta,
+      transport: nextTransport,
+    };
   }
 
   async cancelSession(params: {
@@ -1123,7 +1354,7 @@ export class AcpSessionManager {
       agent,
       runtimeSessionName: ensured.runtimeSessionName,
       ...(nextIdentity ? { identity: nextIdentity } : {}),
-      ...preserveRouteLawEnvelope(previousMeta.routeLaw),
+      ...preserveKinshipState(previousMeta),
       mode: params.meta.mode,
       ...(Object.keys(nextRuntimeOptions).length > 0 ? { runtimeOptions: nextRuntimeOptions } : {}),
       ...(effectiveCwd ? { cwd: effectiveCwd } : {}),
@@ -1190,7 +1421,7 @@ export class AcpSessionManager {
           agent: base.agent,
           runtimeSessionName: base.runtimeSessionName,
           ...(base.identity ? { identity: base.identity } : {}),
-          ...preserveRouteLawEnvelope(base.routeLaw),
+          ...preserveKinshipState(base),
           mode: base.mode,
           runtimeOptions: hasOptions ? normalized : undefined,
           cwd: normalized.cwd,
@@ -1337,7 +1568,7 @@ export class AcpSessionManager {
           agent: base.agent,
           runtimeSessionName: base.runtimeSessionName,
           ...(base.identity ? { identity: base.identity } : {}),
-          ...preserveRouteLawEnvelope(base.routeLaw),
+          ...preserveKinshipState(base),
           mode: base.mode,
           ...(base.runtimeOptions ? { runtimeOptions: base.runtimeOptions } : {}),
           ...(base.cwd ? { cwd: base.cwd } : {}),

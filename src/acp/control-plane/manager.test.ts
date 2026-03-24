@@ -534,6 +534,25 @@ describe("AcpSessionManager", () => {
       routeLawNamespace: CLEAN_ROUTE_DECISION_JSON.trace.routeLawNamespace,
       approvalNamespace: CLEAN_ROUTE_DECISION_JSON.trace.approvalNamespace,
       correlationId: CLEAN_ROUTE_DECISION_JSON.trace.correlationId,
+      requesterAgentId: CLEAN_ROUTE_DECISION_JSON.requester.agentId,
+      requesterRole: CLEAN_ROUTE_DECISION_JSON.requester.role,
+      requesterSeatId: CLEAN_ROUTE_DECISION_JSON.requester.seatId,
+      requesterPresidentId: CLEAN_ROUTE_DECISION_JSON.route.requesterPresidentId,
+      requesterLineageId: CLEAN_ROUTE_DECISION_JSON.requester.lineageId,
+      requesterRuntimeId: CLEAN_ROUTE_DECISION_JSON.requester.runtimeId,
+      requesterPolicyId: CLEAN_ROUTE_DECISION_JSON.requester.policyId,
+      targetAgentId: CLEAN_ROUTE_DECISION_JSON.target.agentId,
+      targetRole: CLEAN_ROUTE_DECISION_JSON.target.role,
+      targetSeatId: CLEAN_ROUTE_DECISION_JSON.target.seatId,
+      targetPresidentId: CLEAN_ROUTE_DECISION_JSON.route.targetPresidentId,
+      targetLineageId: CLEAN_ROUTE_DECISION_JSON.target.lineageId,
+      targetRuntimeId: CLEAN_ROUTE_DECISION_JSON.target.runtimeId,
+      targetPolicyId: CLEAN_ROUTE_DECISION_JSON.target.policyId,
+      sharedPresident: CLEAN_ROUTE_DECISION_JSON.route.sharedPresident,
+      requiresPresidentMediation: CLEAN_ROUTE_DECISION_JSON.decision.requiresPresidentMediation,
+      mediationState: CLEAN_ROUTE_DECISION_JSON.decision.mediationState,
+      cousinTicketRequired: CLEAN_ROUTE_DECISION_JSON.decision.cousinTicketRequired,
+      artifactReturnRequired: CLEAN_ROUTE_DECISION_JSON.decision.artifactReturnRequired,
       ticketId: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketId,
       ticketDigest: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketDigest,
     };
@@ -700,6 +719,7 @@ describe("AcpSessionManager", () => {
       acpxSessionId: "acpx-session-route-law",
       agentSessionId: "agent-session-route-law",
     });
+    expect(refreshedStatus.routeLaw).toEqual(expectedRouteLaw);
     expect(refreshedStatus.runtimeOptions).toMatchObject({
       runtimeMode: "plan",
       model: "openai-codex/gpt-5.3-codex",
@@ -2719,6 +2739,260 @@ describe("AcpSessionManager", () => {
     expect(hoisted.requireAcpRuntimeBackendMock).toHaveBeenCalledTimes(29);
     expect(hoisted.upsertAcpSessionMetaMock).toHaveBeenCalledTimes(28);
     expect(persistedMeta).toHaveLength(27);
+  });
+
+  it("admits Kinship-governed ACP native transport and exposes transport status", async () => {
+    const runtimeState = createRuntime();
+    hoisted.requireAcpRuntimeBackendMock.mockReturnValue({
+      id: "acpx",
+      runtime: runtimeState.runtime,
+    });
+
+    const persistedMeta: SessionAcpMeta[] = [];
+    const sessionEntries = new Map<string, AcpSessionStoreEntry>();
+    hoisted.readAcpSessionEntryMock.mockImplementation((paramsUnknown: unknown) => {
+      const sessionKey = (paramsUnknown as { sessionKey?: string }).sessionKey;
+      return sessionKey ? (sessionEntries.get(sessionKey) ?? null) : null;
+    });
+    hoisted.upsertAcpSessionMetaMock.mockImplementation(async (paramsUnknown: unknown) => {
+      const params = paramsUnknown as {
+        sessionKey: string;
+        mutate: (
+          current: SessionAcpMeta | undefined,
+          entry: SessionEntry | undefined,
+        ) => SessionAcpMeta | null | undefined;
+      };
+      const currentEntry = sessionEntries.get(params.sessionKey);
+      const next = params.mutate(currentEntry?.acp, currentEntry?.entry);
+      if (!next) {
+        sessionEntries.delete(params.sessionKey);
+        return null;
+      }
+      persistedMeta.push(next);
+      const persistedEntry: SessionEntry = {
+        ...currentEntry?.entry,
+        sessionId: currentEntry?.entry?.sessionId ?? `session-${sessionEntries.size + 1}`,
+        updatedAt: Date.now(),
+        acp: next,
+      };
+      const storeEntry: AcpSessionStoreEntry = {
+        cfg: baseCfg,
+        storePath: "memory://manager.transport.test.ts",
+        sessionKey: params.sessionKey,
+        storeSessionKey: params.sessionKey,
+        entry: persistedEntry,
+        acp: next,
+      };
+      sessionEntries.set(params.sessionKey, storeEntry);
+      return persistedEntry;
+    });
+
+    const routeLaw = {
+      decisionId: CLEAN_ROUTE_DECISION_JSON.decisionId,
+      classification: CLEAN_ROUTE_DECISION_JSON.route.classification,
+      verdict: CLEAN_ROUTE_DECISION_JSON.decision.verdict,
+      rejectReasons: CLEAN_ROUTE_DECISION_JSON.decision.rejectReasons,
+      traceNamespace: CLEAN_ROUTE_DECISION_JSON.trace.traceNamespace,
+      receiptNamespace: CLEAN_ROUTE_DECISION_JSON.trace.receiptNamespace,
+      routeLawNamespace: CLEAN_ROUTE_DECISION_JSON.trace.routeLawNamespace,
+      approvalNamespace: CLEAN_ROUTE_DECISION_JSON.trace.approvalNamespace,
+      correlationId: CLEAN_ROUTE_DECISION_JSON.trace.correlationId,
+      requesterAgentId: CLEAN_ROUTE_DECISION_JSON.requester.agentId,
+      requesterRole: CLEAN_ROUTE_DECISION_JSON.requester.role,
+      requesterSeatId: CLEAN_ROUTE_DECISION_JSON.requester.seatId,
+      requesterPresidentId: CLEAN_ROUTE_DECISION_JSON.route.requesterPresidentId,
+      requesterLineageId: CLEAN_ROUTE_DECISION_JSON.requester.lineageId,
+      requesterRuntimeId: CLEAN_ROUTE_DECISION_JSON.requester.runtimeId,
+      requesterPolicyId: CLEAN_ROUTE_DECISION_JSON.requester.policyId,
+      targetAgentId: CLEAN_ROUTE_DECISION_JSON.target.agentId,
+      targetRole: CLEAN_ROUTE_DECISION_JSON.target.role,
+      targetSeatId: CLEAN_ROUTE_DECISION_JSON.target.seatId,
+      targetPresidentId: CLEAN_ROUTE_DECISION_JSON.route.targetPresidentId,
+      targetLineageId: CLEAN_ROUTE_DECISION_JSON.target.lineageId,
+      targetRuntimeId: CLEAN_ROUTE_DECISION_JSON.target.runtimeId,
+      targetPolicyId: CLEAN_ROUTE_DECISION_JSON.target.policyId,
+      sharedPresident: CLEAN_ROUTE_DECISION_JSON.route.sharedPresident,
+      requiresPresidentMediation: CLEAN_ROUTE_DECISION_JSON.decision.requiresPresidentMediation,
+      mediationState: CLEAN_ROUTE_DECISION_JSON.decision.mediationState,
+      cousinTicketRequired: CLEAN_ROUTE_DECISION_JSON.decision.cousinTicketRequired,
+      artifactReturnRequired: CLEAN_ROUTE_DECISION_JSON.decision.artifactReturnRequired,
+      ticketId: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketId,
+      ticketDigest: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketDigest,
+    } as const;
+
+    const sourceSessionKey = "agent:engineering-seat:acp:source";
+    const targetSessionKey = "agent:ops-seat:acp:target";
+    sessionEntries.set(sourceSessionKey, {
+      cfg: baseCfg,
+      storePath: "memory://manager.transport.test.ts",
+      sessionKey: sourceSessionKey,
+      storeSessionKey: sourceSessionKey,
+      entry: {
+        sessionId: "source-session",
+        updatedAt: Date.now(),
+        acp: {
+          ...readySessionMeta(),
+          agent: "engineering-seat",
+          routeLaw,
+        },
+      },
+      acp: {
+        ...readySessionMeta(),
+        agent: "engineering-seat",
+        routeLaw,
+      },
+    });
+    sessionEntries.set(targetSessionKey, {
+      cfg: baseCfg,
+      storePath: "memory://manager.transport.test.ts",
+      sessionKey: targetSessionKey,
+      storeSessionKey: targetSessionKey,
+      entry: {
+        sessionId: "target-session",
+        updatedAt: Date.now(),
+        acp: {
+          ...readySessionMeta(),
+          agent: "ops-seat",
+          routeLaw,
+        },
+      },
+      acp: {
+        ...readySessionMeta(),
+        agent: "ops-seat",
+        routeLaw,
+      },
+    });
+
+    const manager = new AcpSessionManager();
+    await manager.runTurn({
+      cfg: baseCfg,
+      sessionKey: targetSessionKey,
+      text: "bounded cousin handoff",
+      mode: "prompt",
+      requestId: "transport-turn-1",
+      inputProvenance: {
+        kind: "inter_session",
+        sourceSessionKey,
+        sourceTool: "sessions_send",
+      },
+    });
+
+    expect(runtimeState.runTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestId: "transport-turn-1",
+        inputProvenance: {
+          kind: "inter_session",
+          sourceSessionKey,
+          sourceTool: "sessions_send",
+        },
+      }),
+    );
+
+    const status = await manager.getSessionStatus({
+      cfg: baseCfg,
+      sessionKey: targetSessionKey,
+    });
+    expect(status.routeLaw).toEqual(routeLaw);
+    expect(status.transport).toMatchObject({
+      contractVersion: "kinship-governed-acp-transport.v1",
+      transportLayer: "acp_native",
+      status: "admitted",
+      direction: "request",
+      requestId: "transport-turn-1",
+      sourceSessionKey,
+      sourceAgentId: "engineering-seat",
+      targetSessionKey,
+      targetAgentId: "ops-seat",
+      classification: "cousin",
+      verdict: "allow",
+      correlationId: CLEAN_ROUTE_DECISION_JSON.trace.correlationId,
+      ticketId: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketId,
+      requiresPresidentMediation: true,
+      artifactReturnRequired: true,
+      publicReceipt: {
+        classification: "cousin",
+        correlationId: CLEAN_ROUTE_DECISION_JSON.trace.correlationId,
+        ticketId: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketId,
+        requiresPresidentMediation: true,
+        artifactReturnRequired: true,
+        routeLawNamespace: CLEAN_ROUTE_DECISION_JSON.trace.routeLawNamespace,
+        receiptNamespace: CLEAN_ROUTE_DECISION_JSON.trace.receiptNamespace,
+      },
+    });
+    expect(persistedMeta[persistedMeta.length - 1]?.transport).toMatchObject({
+      sourceSessionKey,
+      targetSessionKey,
+      classification: "cousin",
+      direction: "request",
+    });
+  });
+
+  it("rejects ACP native transport when the source session violates Kinship participants", async () => {
+    const runtimeState = createRuntime();
+    hoisted.requireAcpRuntimeBackendMock.mockReturnValue({
+      id: "acpx",
+      runtime: runtimeState.runtime,
+    });
+
+    const routeLaw = {
+      decisionId: CLEAN_ROUTE_DECISION_JSON.decisionId,
+      classification: CLEAN_ROUTE_DECISION_JSON.route.classification,
+      verdict: CLEAN_ROUTE_DECISION_JSON.decision.verdict,
+      rejectReasons: CLEAN_ROUTE_DECISION_JSON.decision.rejectReasons,
+      traceNamespace: CLEAN_ROUTE_DECISION_JSON.trace.traceNamespace,
+      receiptNamespace: CLEAN_ROUTE_DECISION_JSON.trace.receiptNamespace,
+      routeLawNamespace: CLEAN_ROUTE_DECISION_JSON.trace.routeLawNamespace,
+      approvalNamespace: CLEAN_ROUTE_DECISION_JSON.trace.approvalNamespace,
+      correlationId: CLEAN_ROUTE_DECISION_JSON.trace.correlationId,
+      requesterAgentId: CLEAN_ROUTE_DECISION_JSON.requester.agentId,
+      requesterRole: CLEAN_ROUTE_DECISION_JSON.requester.role,
+      targetAgentId: CLEAN_ROUTE_DECISION_JSON.target.agentId,
+      targetRole: CLEAN_ROUTE_DECISION_JSON.target.role,
+      ticketId: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketId,
+      ticketDigest: CLEAN_ROUTE_DECISION_JSON.cousinTicket.ticketDigest,
+    };
+
+    hoisted.readAcpSessionEntryMock.mockImplementation((paramsUnknown: unknown) => {
+      const sessionKey = (paramsUnknown as { sessionKey?: string }).sessionKey;
+      if (sessionKey === "agent:ops-seat:acp:target") {
+        return {
+          sessionKey,
+          storeSessionKey: sessionKey,
+          acp: {
+            ...readySessionMeta(),
+            agent: "ops-seat",
+            routeLaw,
+          },
+        };
+      }
+      if (sessionKey === "agent:rogue-seat:acp:source") {
+        return {
+          sessionKey,
+          storeSessionKey: sessionKey,
+          acp: {
+            ...readySessionMeta(),
+            agent: "rogue-seat",
+          },
+        };
+      }
+      return null;
+    });
+
+    const manager = new AcpSessionManager();
+    await expect(
+      manager.runTurn({
+        cfg: baseCfg,
+        sessionKey: "agent:ops-seat:acp:target",
+        text: "illegal route participant",
+        mode: "prompt",
+        requestId: "transport-turn-illegal",
+        inputProvenance: {
+          kind: "inter_session",
+          sourceSessionKey: "agent:rogue-seat:acp:source",
+        },
+      }),
+    ).rejects.toThrow(/violates Kinship route participants/i);
+    expect(runtimeState.runTurn).not.toHaveBeenCalled();
   });
 
   it("drops cached runtime handles when close tolerates backend-unavailable errors", async () => {

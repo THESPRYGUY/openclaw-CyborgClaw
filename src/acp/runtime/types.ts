@@ -1,3 +1,5 @@
+import type { InputProvenance } from "../../sessions/input-provenance.js";
+
 export type AcpRuntimePromptMode = "prompt" | "steer";
 
 export type AcpRuntimeSessionMode = "persistent" | "oneshot";
@@ -51,6 +53,7 @@ export type AcpRuntimeTurnInput = {
   attachments?: AcpRuntimeTurnAttachment[];
   mode: AcpRuntimePromptMode;
   requestId: string;
+  inputProvenance?: InputProvenance;
   signal?: AbortSignal;
 };
 

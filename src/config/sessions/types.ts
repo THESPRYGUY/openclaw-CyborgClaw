@@ -35,9 +35,16 @@ export type SessionAcpIdentity = {
   lastUpdatedAt: number;
 };
 
+export type SessionAcpRouteClassification =
+  | "child"
+  | "sibling"
+  | "escalation"
+  | "cousin"
+  | "illegal";
+
 export type SessionAcpRouteLawEnvelope = {
   decisionId: string;
-  classification: "child" | "sibling" | "escalation" | "cousin" | "illegal";
+  classification: SessionAcpRouteClassification;
   verdict: "allow" | "reject";
   rejectReasons: string[];
   traceNamespace: string;
@@ -45,8 +52,55 @@ export type SessionAcpRouteLawEnvelope = {
   routeLawNamespace: string;
   approvalNamespace: string;
   correlationId: string;
+  requesterAgentId?: string;
+  requesterRole?: string;
+  requesterSeatId?: string;
+  requesterPresidentId?: string;
+  requesterLineageId?: string;
+  requesterRuntimeId?: string;
+  requesterPolicyId?: string;
+  targetAgentId?: string;
+  targetRole?: string;
+  targetSeatId?: string;
+  targetPresidentId?: string;
+  targetLineageId?: string;
+  targetRuntimeId?: string;
+  targetPolicyId?: string;
+  sharedPresident?: boolean;
+  requiresPresidentMediation?: boolean;
+  mediationState?: string;
+  cousinTicketRequired?: boolean;
+  artifactReturnRequired?: boolean;
   ticketId?: string;
   ticketDigest?: string;
+};
+
+export type SessionAcpTransportEnvelope = {
+  contractVersion: "kinship-governed-acp-transport.v1";
+  transportLayer: "acp_native";
+  status: "admitted";
+  direction: "request" | "return";
+  requestId: string;
+  lastTurnAt: number;
+  sourceSessionKey: string;
+  sourceAgentId: string;
+  targetSessionKey: string;
+  targetAgentId: string;
+  classification: SessionAcpRouteClassification;
+  verdict: "allow" | "reject";
+  correlationId: string;
+  ticketId?: string;
+  requiresPresidentMediation?: boolean;
+  artifactReturnRequired?: boolean;
+  publicReceipt: {
+    classification: SessionAcpRouteClassification;
+    correlationId: string;
+    ticketId?: string;
+    requiresPresidentMediation?: boolean;
+    artifactReturnRequired?: boolean;
+    routeLawNamespace: string;
+    receiptNamespace: string;
+  };
 };
 
 export type SessionAcpMeta = {
@@ -55,6 +109,7 @@ export type SessionAcpMeta = {
   runtimeSessionName: string;
   identity?: SessionAcpIdentity;
   routeLaw?: SessionAcpRouteLawEnvelope;
+  transport?: SessionAcpTransportEnvelope;
   mode: "persistent" | "oneshot";
   runtimeOptions?: AcpSessionRuntimeOptions;
   cwd?: string;

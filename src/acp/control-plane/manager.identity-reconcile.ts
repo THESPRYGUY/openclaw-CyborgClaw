@@ -131,6 +131,7 @@ export async function reconcileManagerRuntimeSessionIdentifiers(params: {
         runtimeSessionName: base.runtimeSessionName,
         ...(nextIdentity ? { identity: nextIdentity } : {}),
         ...(base.routeLaw ? { routeLaw: base.routeLaw } : {}),
+        ...(base.transport ? { transport: base.transport } : {}),
         mode: base.mode,
         ...(base.runtimeOptions ? { runtimeOptions: base.runtimeOptions } : {}),
         ...(base.cwd ? { cwd: base.cwd } : {}),
