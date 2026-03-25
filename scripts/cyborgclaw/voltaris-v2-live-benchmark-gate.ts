@@ -6,7 +6,11 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { listProfilesForProvider } from "../../src/agents/auth-profiles/profiles.js";
-import type { AuthProfileStore } from "../../src/agents/auth-profiles/types.js";
+import type {
+  AuthProfileCredential,
+  AuthProfileStore,
+} from "../../src/agents/auth-profiles/types.js";
+import { readCodexCliCredentialsCached } from "../../src/agents/cli-credentials.js";
 import { splitModelRef } from "../../src/agents/subagent-spawn.js";
 
 const execFileAsync = promisify(execFile);
@@ -15,6 +19,7 @@ const DEFAULT_PACK_REF = "examples/voltaris-v2-pack";
 const DEFAULT_PROFILE = "voltaris-proof";
 const DEFAULT_MODEL = "openai-codex/gpt-5.3-codex";
 const DEFAULT_REPORT_SUBDIR = "live-runtime-benchmark";
+const OPENAI_CODEX_DEFAULT_PROFILE_ID = "openai-codex:default";
 const SMOKE_SCRIPT_PATH = path.join(
   REPO_ROOT,
   "scripts",
@@ -51,6 +56,10 @@ export type BenchmarkPreflight = {
 export type BenchmarkVerdict = {
   ok: boolean;
   failedAssertions: string[];
+  assertionCount: number;
+  passedAssertionCount: number;
+  failedAssertionCount: number;
+  smokeError: string | null;
   status: "pass" | "fail";
   failureReasons: string[];
 };
@@ -60,6 +69,49 @@ type SmokeProof = {
   proofRoot?: string;
   reportPath?: string;
   assertions?: Record<string, unknown>;
+  error?: {
+    message?: string;
+    stack?: string;
+  };
+};
+
+export type BenchmarkSmokeReport = {
+  ok: boolean;
+  command: string[];
+  stdoutPath: string | null;
+  stderrPath: string | null;
+  reportCopyPath: string | null;
+  proofRootCopyPath: string | null;
+  proof?: SmokeProof | null;
+};
+
+export type BenchmarkReadiness = {
+  preflight: {
+    ok: boolean;
+    status: "ready" | "blocked";
+    summary: string;
+    providerId: string | null;
+    readyProfileCount: number;
+    readyProfileIds: string[];
+    failureReasons: string[];
+  };
+  proof: {
+    ok: boolean;
+    status: "ready" | "blocked" | "not_run";
+    summary: string;
+    assertionCount: number;
+    passedAssertionCount: number;
+    failedAssertionCount: number;
+    failedAssertions: string[];
+    smokeError: string | null;
+    failureReasons: string[];
+  };
+  promotion: {
+    ok: boolean;
+    status: "green" | "blocked" | "not_run";
+    summary: string;
+    failureReasons: string[];
+  };
 };
 
 type GateReport = {
@@ -70,15 +122,8 @@ type GateReport = {
   profile: string;
   modelRef: string;
   preflight: BenchmarkPreflight;
-  smoke?: {
-    ok: boolean;
-    command: string[];
-    stdoutPath: string | null;
-    stderrPath: string | null;
-    reportCopyPath: string | null;
-    proofRootCopyPath: string | null;
-    proof?: SmokeProof | null;
-  };
+  readiness: BenchmarkReadiness;
+  smoke?: BenchmarkSmokeReport;
   verdict: BenchmarkVerdict;
 };
 
@@ -162,6 +207,10 @@ async function writeJsonFile(filePath: string, value: unknown): Promise<void> {
   await fs.writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+function cloneAuthProfileStore(store: AuthProfileStore): AuthProfileStore {
+  return structuredClone(store);
+}
+
 function extractJsonObject(raw: string): Record<string, unknown> {
   const trimmed = raw.trim();
   if (!trimmed) {
@@ -187,21 +236,39 @@ async function resolveAuthSourceStateDir(args: Args): Promise<{
   store: AuthProfileStore | null;
   error: string | null;
 }> {
+  const benchmarkProviderId = splitModelRef(args.model).provider?.trim() || null;
   const explicitStateDir = args.authSourceStateDir ? path.resolve(args.authSourceStateDir) : null;
   if (explicitStateDir) {
-    const authStorePath = path.join(
+    const sourceAuthStorePath = path.join(
       explicitStateDir,
       "agents",
       "main",
       "agent",
       "auth-profiles.json",
     );
-    const authStorePresent = await pathExists(authStorePath);
+    const authStorePresent = await pathExists(sourceAuthStorePath);
+    const store = authStorePresent
+      ? await readJsonFile<AuthProfileStore>(sourceAuthStorePath)
+      : null;
+    if (!authStorePresent || !store) {
+      return {
+        stateDir: explicitStateDir,
+        authStorePath: sourceAuthStorePath,
+        authStorePresent,
+        store,
+        error: null,
+      };
+    }
+    const seededStore = cloneAuthProfileStore(store);
+    if (benchmarkProviderId === "openai-codex") {
+      seedBenchmarkOpenaiCodexProfile(seededStore);
+    }
+    const seeded = await writeSeededAuthStore(args, seededStore);
     return {
-      stateDir: explicitStateDir,
-      authStorePath,
-      authStorePresent,
-      store: authStorePresent ? await readJsonFile<AuthProfileStore>(authStorePath) : null,
+      stateDir: seeded.stateDir,
+      authStorePath: seeded.authStorePath,
+      authStorePresent: true,
+      store: seededStore,
       error: null,
     };
   }
@@ -233,25 +300,121 @@ async function resolveAuthSourceStateDir(args: Args): Promise<{
     };
   }
 
-  const seededStateDir = path.join(args.reportDir, "preflight", "auth-source-state");
-  const authStorePath = path.join(seededStateDir, "agents", "main", "agent", "auth-profiles.json");
-  await ensureDir(path.dirname(authStorePath));
-  await fs.writeFile(authStorePath, rawStore, "utf8");
+  const seeded = await writeSeededAuthStore(args, rawStore);
   return {
-    stateDir: seededStateDir,
-    authStorePath,
+    stateDir: seeded.stateDir,
+    authStorePath: seeded.authStorePath,
     authStorePresent: true,
-    store: await readJsonFile<AuthProfileStore>(authStorePath),
+    store: await readJsonFile<AuthProfileStore>(seeded.authStorePath),
     error: null,
   };
 }
 
+function resolveProfileExpiry(credential: AuthProfileCredential | undefined): number | null {
+  if (!credential) {
+    return null;
+  }
+  if (credential.type !== "oauth" && credential.type !== "token") {
+    return null;
+  }
+  return typeof credential.expires === "number" && Number.isFinite(credential.expires)
+    ? credential.expires
+    : null;
+}
+
+function isProfileReady(store: AuthProfileStore, profileId: string, now: number): boolean {
+  const credential = store.profiles[profileId];
+  if (!credential) {
+    return false;
+  }
+  const disabledUntil = Number(store.usageStats?.[profileId]?.disabledUntil || 0);
+  if (Number.isFinite(disabledUntil) && disabledUntil > now) {
+    return false;
+  }
+  const expires = resolveProfileExpiry(credential);
+  if (expires != null && expires <= now) {
+    return false;
+  }
+  return true;
+}
+
 function listReadyProfileIds(store: AuthProfileStore, providerId: string): string[] {
   const now = Date.now();
-  return listProfilesForProvider(store, providerId).filter((profileId) => {
-    const disabledUntil = Number(store.usageStats?.[profileId]?.disabledUntil || 0);
-    return !Number.isFinite(disabledUntil) || disabledUntil <= now;
-  });
+  return listProfilesForProvider(store, providerId).filter((profileId) =>
+    isProfileReady(store, profileId, now),
+  );
+}
+
+function resolveOpenaiCodexSeedProfileId(store: AuthProfileStore, accountId?: string): string {
+  const providerProfileIds = listProfilesForProvider(store, "openai-codex");
+  if (providerProfileIds.includes(OPENAI_CODEX_DEFAULT_PROFILE_ID)) {
+    return OPENAI_CODEX_DEFAULT_PROFILE_ID;
+  }
+  if (accountId) {
+    const matchingProfileId = providerProfileIds.find((profileId) => {
+      const credential = store.profiles[profileId];
+      return credential?.type === "oauth" && credential.accountId === accountId;
+    });
+    if (matchingProfileId) {
+      return matchingProfileId;
+    }
+  }
+  if (providerProfileIds.length === 1) {
+    return providerProfileIds[0];
+  }
+  return OPENAI_CODEX_DEFAULT_PROFILE_ID;
+}
+
+function seedBenchmarkOpenaiCodexProfile(store: AuthProfileStore): boolean {
+  const credential = readCodexCliCredentialsCached({ ttlMs: 60_000 });
+  if (!credential) {
+    return false;
+  }
+  const profileId = resolveOpenaiCodexSeedProfileId(store, credential.accountId);
+  const existing = store.profiles[profileId];
+  const existingExpiry = resolveProfileExpiry(existing);
+  const shouldReplace =
+    !existing ||
+    existing.provider !== "openai-codex" ||
+    existing.type !== "oauth" ||
+    existingExpiry == null ||
+    existingExpiry <= Date.now() ||
+    credential.expires > existingExpiry ||
+    (credential.accountId != null && existing.accountId !== credential.accountId);
+  if (!shouldReplace) {
+    return false;
+  }
+  store.profiles[profileId] = {
+    ...(existing?.type === "oauth" && existing.email ? { email: existing.email } : {}),
+    ...(existing?.type === "oauth" && existing.clientId ? { clientId: existing.clientId } : {}),
+    type: "oauth",
+    provider: "openai-codex",
+    access: credential.access,
+    refresh: credential.refresh,
+    expires: credential.expires,
+    ...(credential.accountId ? { accountId: credential.accountId } : {}),
+  };
+  return true;
+}
+
+async function writeSeededAuthStore(
+  args: Args,
+  storeOrRawJson: AuthProfileStore | string,
+): Promise<{ stateDir: string; authStorePath: string }> {
+  const seededStateDir = path.join(args.reportDir, "preflight", "auth-source-state");
+  const authStorePath = path.join(seededStateDir, "agents", "main", "agent", "auth-profiles.json");
+  await ensureDir(path.dirname(authStorePath));
+  await fs.writeFile(
+    authStorePath,
+    typeof storeOrRawJson === "string"
+      ? storeOrRawJson
+      : `${JSON.stringify(storeOrRawJson, null, 2)}\n`,
+    "utf8",
+  );
+  return {
+    stateDir: seededStateDir,
+    authStorePath,
+  };
 }
 
 export function buildLiveBenchmarkPreflight(params: {
@@ -331,18 +494,32 @@ export function buildLiveBenchmarkPreflight(params: {
 export function evaluateLiveBenchmarkProof(proof: SmokeProof | null): BenchmarkVerdict {
   const failureReasons: string[] = [];
   const failedAssertions: string[] = [];
+  const smokeError =
+    proof?.error && typeof proof.error.message === "string" && proof.error.message.trim()
+      ? proof.error.message.trim()
+      : null;
 
   if (!proof || proof.ok !== true) {
-    failureReasons.push("The live smoke executor did not report ok=true.");
+    failureReasons.push(
+      smokeError
+        ? `The live smoke executor failed: ${smokeError}`
+        : "The live smoke executor did not report ok=true.",
+    );
   }
 
   const assertions =
     proof && proof.assertions && typeof proof.assertions === "object" ? proof.assertions : {};
+  const assertionCount = Object.keys(assertions).length;
+  if (assertionCount === 0) {
+    failureReasons.push("The live smoke executor did not report any proof assertions.");
+  }
   for (const [key, value] of Object.entries(assertions)) {
     if (value !== true) {
       failedAssertions.push(key);
     }
   }
+  const failedAssertionCount = failedAssertions.length;
+  const passedAssertionCount = Math.max(0, assertionCount - failedAssertionCount);
 
   if (failedAssertions.length > 0) {
     failureReasons.push(`Failed smoke assertions: ${failedAssertions.join(", ")}`);
@@ -351,8 +528,91 @@ export function evaluateLiveBenchmarkProof(proof: SmokeProof | null): BenchmarkV
   return {
     ok: failureReasons.length === 0,
     failedAssertions,
+    assertionCount,
+    passedAssertionCount,
+    failedAssertionCount,
+    smokeError,
     status: failureReasons.length === 0 ? "pass" : "fail",
     failureReasons,
+  };
+}
+
+export function buildBenchmarkReadiness(params: {
+  phase: "preflight" | "run";
+  preflight: BenchmarkPreflight;
+  verdict: BenchmarkVerdict;
+  smoke?: BenchmarkSmokeReport;
+}): BenchmarkReadiness {
+  const preflightReady = params.preflight.ok;
+  const preflightFailureReasons = [...params.preflight.failureReasons];
+  const preflightSummary = preflightReady
+    ? `Provider "${params.preflight.providerId ?? "unknown"}" has ${params.preflight.readyProfileCount} ready auth profile(s).`
+    : (preflightFailureReasons[0] ?? "Preflight readiness is blocked.");
+
+  const proofNotRun =
+    params.phase === "preflight" ||
+    (params.phase === "run" && !params.preflight.ok && !params.smoke);
+  const proofReady = !proofNotRun && params.verdict.ok;
+  const proofFailureReasons = [...params.verdict.failureReasons];
+  const smokeArtifactsCaptured = Boolean(
+    params.smoke?.reportCopyPath || params.smoke?.proofRootCopyPath,
+  );
+  const proofSummary = proofNotRun
+    ? params.phase === "preflight"
+      ? "Proof gate was not executed, so the lane is not promotable yet."
+      : "Proof gate did not run because preflight readiness failed."
+    : proofReady
+      ? `${params.verdict.passedAssertionCount}/${params.verdict.assertionCount} proof assertions passed${smokeArtifactsCaptured ? "; proof artifacts captured." : "."}`
+      : params.verdict.failedAssertionCount > 0
+        ? `${params.verdict.failedAssertionCount}/${params.verdict.assertionCount} proof assertions failed.`
+        : (proofFailureReasons[0] ?? "Proof readiness is blocked.");
+
+  let promotionStatus: BenchmarkReadiness["promotion"]["status"];
+  let promotionSummary: string;
+  const promotionFailureReasons: string[] = [];
+  if (params.phase === "preflight") {
+    promotionStatus = "not_run";
+    promotionSummary = "Preflight-only mode cannot promote the live benchmark lane to green.";
+  } else if (!preflightReady) {
+    promotionStatus = "blocked";
+    promotionSummary = "Promotion is blocked by preflight readiness.";
+    promotionFailureReasons.push(...preflightFailureReasons);
+  } else if (!proofReady) {
+    promotionStatus = "blocked";
+    promotionSummary = "Promotion is blocked by proof readiness.";
+    promotionFailureReasons.push(...proofFailureReasons);
+  } else {
+    promotionStatus = "green";
+    promotionSummary = "Auth/provider readiness and proof readiness both passed.";
+  }
+
+  return {
+    preflight: {
+      ok: preflightReady,
+      status: preflightReady ? "ready" : "blocked",
+      summary: preflightSummary,
+      providerId: params.preflight.providerId,
+      readyProfileCount: params.preflight.readyProfileCount,
+      readyProfileIds: params.preflight.readyProfileIds,
+      failureReasons: preflightFailureReasons,
+    },
+    proof: {
+      ok: proofReady,
+      status: proofNotRun ? "not_run" : proofReady ? "ready" : "blocked",
+      summary: proofSummary,
+      assertionCount: params.verdict.assertionCount,
+      passedAssertionCount: params.verdict.passedAssertionCount,
+      failedAssertionCount: params.verdict.failedAssertionCount,
+      failedAssertions: params.verdict.failedAssertions,
+      smokeError: params.verdict.smokeError,
+      failureReasons: proofFailureReasons,
+    },
+    promotion: {
+      ok: promotionStatus === "green",
+      status: promotionStatus,
+      summary: promotionSummary,
+      failureReasons: promotionFailureReasons,
+    },
   };
 }
 
@@ -458,6 +718,35 @@ async function summarizeAndExit(
   process.exit(exitCode);
 }
 
+function buildGateReport(params: {
+  ok: boolean;
+  phase: "preflight" | "run";
+  packRef: string;
+  profile: string;
+  modelRef: string;
+  preflight: BenchmarkPreflight;
+  verdict: BenchmarkVerdict;
+  smoke?: BenchmarkSmokeReport;
+}): GateReport {
+  return {
+    ok: params.ok,
+    phase: params.phase,
+    generatedAt: new Date().toISOString(),
+    packRef: params.packRef,
+    profile: params.profile,
+    modelRef: params.modelRef,
+    preflight: params.preflight,
+    readiness: buildBenchmarkReadiness({
+      phase: params.phase,
+      preflight: params.preflight,
+      verdict: params.verdict,
+      smoke: params.smoke,
+    }),
+    smoke: params.smoke,
+    verdict: params.verdict,
+  };
+}
+
 async function main(): Promise<void> {
   const args = parseArgs();
   const reportDir = path.resolve(args.reportDir);
@@ -476,10 +765,9 @@ async function main(): Promise<void> {
   });
 
   if (args.preflightOnly) {
-    const report: GateReport = {
+    const report = buildGateReport({
       ok: preflight.ok,
       phase: "preflight",
-      generatedAt: new Date().toISOString(),
       packRef: args.packRef,
       profile: args.profile,
       modelRef: args.model,
@@ -487,18 +775,21 @@ async function main(): Promise<void> {
       verdict: {
         ok: preflight.ok,
         failedAssertions: [],
+        assertionCount: 0,
+        passedAssertionCount: 0,
+        failedAssertionCount: 0,
+        smokeError: null,
         status: preflight.ok ? "pass" : "fail",
         failureReasons: preflight.failureReasons,
       },
-    };
+    });
     await summarizeAndExit(reportPath, report, preflight.ok ? 0 : 1);
   }
 
   if (!preflight.ok || !authSource.stateDir) {
-    const report: GateReport = {
+    const report = buildGateReport({
       ok: false,
       phase: "run",
-      generatedAt: new Date().toISOString(),
       packRef: args.packRef,
       profile: args.profile,
       modelRef: args.model,
@@ -506,20 +797,23 @@ async function main(): Promise<void> {
       verdict: {
         ok: false,
         failedAssertions: [],
+        assertionCount: 0,
+        passedAssertionCount: 0,
+        failedAssertionCount: 0,
+        smokeError: null,
         status: "fail",
         failureReasons: preflight.failureReasons,
       },
-    };
+    });
     await summarizeAndExit(reportPath, report, 1);
   }
 
   try {
     const smoke = await runSmoke(args, authSource.stateDir, reportDir);
     const verdict = evaluateLiveBenchmarkProof(smoke.proof);
-    const report: GateReport = {
+    const report = buildGateReport({
       ok: verdict.ok,
       phase: "run",
-      generatedAt: new Date().toISOString(),
       packRef: args.packRef,
       profile: args.profile,
       modelRef: args.model,
@@ -534,7 +828,7 @@ async function main(): Promise<void> {
         proof: smoke.proof,
       },
       verdict,
-    };
+    });
     await summarizeAndExit(reportPath, report, verdict.ok ? 0 : 1);
   } catch (error) {
     const smokeCommand = authSource.stateDir
@@ -542,10 +836,9 @@ async function main(): Promise<void> {
       : ["node", "--import", "tsx", SMOKE_SCRIPT_PATH];
     const stdoutPath = path.join(reportDir, "smoke.stdout.log");
     const stderrPath = path.join(reportDir, "smoke.stderr.log");
-    const report: GateReport = {
+    const report = buildGateReport({
       ok: false,
       phase: "run",
-      generatedAt: new Date().toISOString(),
       packRef: args.packRef,
       profile: args.profile,
       modelRef: args.model,
@@ -562,10 +855,14 @@ async function main(): Promise<void> {
       verdict: {
         ok: false,
         failedAssertions: [],
+        assertionCount: 0,
+        passedAssertionCount: 0,
+        failedAssertionCount: 0,
+        smokeError: String((error as Error).message || error),
         status: "fail",
         failureReasons: [String((error as Error).message || error)],
       },
-    };
+    });
     await summarizeAndExit(reportPath, report, 1);
   }
 }

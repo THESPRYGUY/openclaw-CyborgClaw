@@ -28,6 +28,13 @@ type TranscriptAssistantEvidence = {
   };
 };
 
+type CorrelationTokenEvidence = {
+  value: string | null;
+  userObserved: boolean | null;
+  latestAssistantObserved: boolean | null;
+  payloadObserved: boolean | null;
+};
+
 export type LiveAgentTranscriptProof = {
   ok: boolean;
   transcriptPath: string;
@@ -51,7 +58,7 @@ export type LiveAgentTranscriptProof = {
   transcript: {
     userMessageCount: number;
     assistantMessageCount: number;
-    userPromptObserved: boolean;
+    correlationToken: CorrelationTokenEvidence;
     payloadMatch: PayloadTextMatch;
     latestAssistant: TranscriptAssistantEvidence;
     previewLines: string[];
@@ -63,7 +70,7 @@ export type CollectLiveAgentTranscriptProofParams = {
   sessionKey: string;
   expectedSessionId: string;
   transcriptPath: string;
-  expectedUserText?: string;
+  correlationToken?: string;
   payloads?: Array<{ text?: string | null }>;
   agentMeta?: {
     sessionId?: string;
@@ -85,6 +92,13 @@ function asString(value: unknown): string | null {
 
 function asNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function containsExactToken(text: string | null, token: string | null): boolean {
+  if (!text || !token) {
+    return false;
+  }
+  return text.includes(token);
 }
 
 function asTimestampMs(value: unknown): number | null {
@@ -207,7 +221,12 @@ function buildMissingTranscriptProof(
     transcript: {
       userMessageCount: 0,
       assistantMessageCount: 0,
-      userPromptObserved: false,
+      correlationToken: {
+        value: asString(params.correlationToken),
+        userObserved: null,
+        latestAssistantObserved: null,
+        payloadObserved: null,
+      },
       payloadMatch: {
         matched: false,
         matchType: "none",
@@ -288,17 +307,20 @@ export async function collectLiveAgentTranscriptProof(
   const latestAssistantProvider = latestAssistant ? asString(latestAssistant.provider) : null;
   const latestAssistantModel = latestAssistant ? asString(latestAssistant.model) : null;
   const latestAssistantUsage = latestAssistant ? normalizeUsage(latestAssistant.usage) : null;
-  const payloadMatch = matchExpectedText(
-    latestAssistantText,
-    normalizeExpectedTexts(params.payloads),
-  );
-  const expectedUserText = params.expectedUserText?.trim();
-  const userPromptObserved = expectedUserText
-    ? userMessages.some((message) => {
-        const text = extractMessageText(message);
-        return Boolean(text && (text === expectedUserText || text.includes(expectedUserText)));
-      })
-    : userMessages.length > 0;
+  const payloadTexts = normalizeExpectedTexts(params.payloads);
+  const payloadMatch = matchExpectedText(latestAssistantText, payloadTexts);
+  const correlationToken = asString(params.correlationToken);
+  const userCorrelationTokenObserved = correlationToken
+    ? userMessages.some((message) =>
+        containsExactToken(extractMessageText(message), correlationToken),
+      )
+    : null;
+  const latestAssistantCorrelationTokenObserved = correlationToken
+    ? containsExactToken(latestAssistantText, correlationToken)
+    : null;
+  const payloadCorrelationTokenObserved = correlationToken
+    ? payloadTexts.some((text) => containsExactToken(text, correlationToken))
+    : null;
   const assistantTimestampAfterCommand =
     typeof params.commandStartedAt === "number" && latestAssistantTimestamp != null
       ? latestAssistantTimestamp >= params.commandStartedAt
@@ -325,8 +347,8 @@ export async function collectLiveAgentTranscriptProof(
       `session store updatedAt did not advance past command start (${params.sessionUpdatedAt} < ${params.commandStartedAt})`,
     );
   }
-  if (expectedUserText && !userPromptObserved) {
-    failures.push("expected prompt text was not observed in the transcript");
+  if (correlationToken && userCorrelationTokenObserved !== true) {
+    failures.push("correlation token was not observed in any user transcript message");
   }
   if (assistantMessages.length === 0) {
     failures.push("transcript did not contain any assistant messages");
@@ -338,6 +360,9 @@ export async function collectLiveAgentTranscriptProof(
     failures.push(
       `latest assistant transcript timestamp did not advance past command start (${latestAssistantTimestamp} < ${params.commandStartedAt})`,
     );
+  }
+  if (correlationToken && latestAssistantCorrelationTokenObserved !== true) {
+    failures.push("correlation token was not observed in the latest assistant transcript message");
   }
   if (params.agentMeta?.provider && latestAssistantProvider !== params.agentMeta.provider) {
     failures.push(
@@ -351,6 +376,9 @@ export async function collectLiveAgentTranscriptProof(
   }
   if (!hasPositiveUsage(latestAssistantUsage)) {
     failures.push("latest assistant transcript message did not record positive token usage");
+  }
+  if (correlationToken && payloadCorrelationTokenObserved !== true) {
+    failures.push("correlation token was not observed in the returned payload text");
   }
   if (!payloadMatch.matched && payloadMatch.expectedTexts.length > 0) {
     failures.push("latest assistant transcript text did not match the returned payload text");
@@ -379,7 +407,12 @@ export async function collectLiveAgentTranscriptProof(
     transcript: {
       userMessageCount: userMessages.length,
       assistantMessageCount: assistantMessages.length,
-      userPromptObserved,
+      correlationToken: {
+        value: correlationToken,
+        userObserved: userCorrelationTokenObserved,
+        latestAssistantObserved: latestAssistantCorrelationTokenObserved,
+        payloadObserved: payloadCorrelationTokenObserved,
+      },
       payloadMatch,
       latestAssistant: {
         text: latestAssistantText,

@@ -138,6 +138,30 @@ function resolveCodexHomePath() {
   }
 }
 
+function decodeJwtExpiryMs(token: string): number | null {
+  const trimmed = token.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const [, payload = ""] = trimmed.split(".");
+  if (!payload) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as Record<
+      string,
+      unknown
+    >;
+    const exp = parsed.exp;
+    if (typeof exp !== "number" || !Number.isFinite(exp) || exp <= 0) {
+      return null;
+    }
+    return exp * 1000;
+  } catch {
+    return null;
+  }
+}
+
 function resolveQwenCliCredentialsPath(homeDir?: string) {
   const baseDir = homeDir ?? resolveUserPath("~");
   return path.join(baseDir, QWEN_CLI_CREDENTIALS_RELATIVE_PATH);
@@ -187,15 +211,17 @@ function readCodexKeychainCredentials(options?: {
       return null;
     }
 
-    // No explicit expiry stored; treat as fresh for an hour from last_refresh or now.
+    // Prefer the bearer token's own expiry when present. The Codex auth file can
+    // outlive refresh-token churn, so JWT expiry is a better readiness signal than
+    // a coarse "last refresh + 1h" guess.
     const lastRefreshRaw = parsed.last_refresh;
     const lastRefresh =
       typeof lastRefreshRaw === "string" || typeof lastRefreshRaw === "number"
         ? new Date(lastRefreshRaw).getTime()
         : Date.now();
-    const expires = Number.isFinite(lastRefresh)
-      ? lastRefresh + 60 * 60 * 1000
-      : Date.now() + 60 * 60 * 1000;
+    const expires =
+      decodeJwtExpiryMs(accessToken) ??
+      (Number.isFinite(lastRefresh) ? lastRefresh + 60 * 60 * 1000 : Date.now() + 60 * 60 * 1000);
     const accountId = typeof tokens?.account_id === "string" ? tokens.account_id : undefined;
 
     log.info("read codex credentials from keychain", {
@@ -486,9 +512,9 @@ export function readCodexCliCredentials(options?: {
   let expires: number;
   try {
     const stat = fs.statSync(authPath);
-    expires = stat.mtimeMs + 60 * 60 * 1000;
+    expires = decodeJwtExpiryMs(accessToken) ?? stat.mtimeMs + 60 * 60 * 1000;
   } catch {
-    expires = Date.now() + 60 * 60 * 1000;
+    expires = decodeJwtExpiryMs(accessToken) ?? Date.now() + 60 * 60 * 1000;
   }
 
   return {

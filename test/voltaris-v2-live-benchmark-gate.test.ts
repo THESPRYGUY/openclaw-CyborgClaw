@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  buildBenchmarkReadiness,
   buildLiveBenchmarkPreflight,
   evaluateLiveBenchmarkProof,
 } from "../scripts/cyborgclaw/voltaris-v2-live-benchmark-gate.ts";
@@ -101,6 +102,33 @@ describe("buildLiveBenchmarkPreflight", () => {
     );
   });
 
+  it("treats expired oauth profiles as not ready", () => {
+    const result = buildLiveBenchmarkPreflight({
+      enabled: true,
+      modelRef: "openai-codex/gpt-5.3-codex",
+      authSourceStateDir: "/tmp/openclaw-state",
+      authStorePath: "/tmp/openclaw-state/agents/main/agent/auth-profiles.json",
+      authStorePresent: true,
+      authStore: makeStore({
+        profiles: {
+          expired: {
+            type: "oauth",
+            provider: "openai-codex",
+            access: "expired-access",
+            refresh: "expired-refresh",
+            expires: Date.now() - 10_000,
+          },
+        },
+      }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.readyProfileCount).toBe(0);
+    expect(result.failureReasons).toContain(
+      'No ready auth profiles were found for provider "openai-codex" in the auth store.',
+    );
+  });
+
   it("surfaces explicit auth store read errors", () => {
     const result = buildLiveBenchmarkPreflight({
       enabled: true,
@@ -139,9 +167,31 @@ describe("evaluateLiveBenchmarkProof", () => {
       "runtimeCreatedNormalSession",
       "workspaceBootstrapLoaded",
     ]);
+    expect(result.assertionCount).toBe(3);
+    expect(result.passedAssertionCount).toBe(1);
+    expect(result.failedAssertionCount).toBe(2);
     expect(result.failureReasons).toContain("The live smoke executor did not report ok=true.");
     expect(result.failureReasons).toContain(
       "Failed smoke assertions: runtimeCreatedNormalSession, workspaceBootstrapLoaded",
+    );
+  });
+
+  it("surfaces a structured smoke error message and fails closed when assertions are missing", () => {
+    const result = evaluateLiveBenchmarkProof({
+      ok: false,
+      error: {
+        message: "live transcript proof failed",
+      },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.smokeError).toBe("live transcript proof failed");
+    expect(result.assertionCount).toBe(0);
+    expect(result.failureReasons).toContain(
+      "The live smoke executor failed: live transcript proof failed",
+    );
+    expect(result.failureReasons).toContain(
+      "The live smoke executor did not report any proof assertions.",
     );
   });
 
@@ -157,9 +207,116 @@ describe("evaluateLiveBenchmarkProof", () => {
     expect(result).toEqual({
       ok: true,
       failedAssertions: [],
+      assertionCount: 2,
+      passedAssertionCount: 2,
+      failedAssertionCount: 0,
+      smokeError: null,
       status: "pass",
       failureReasons: [],
     });
+  });
+});
+
+describe("buildBenchmarkReadiness", () => {
+  it("keeps preflight-only runs out of green promotion", () => {
+    const preflight = buildLiveBenchmarkPreflight({
+      enabled: true,
+      modelRef: "openai-codex/gpt-5.3-codex",
+      authSourceStateDir: "/tmp/openclaw-state",
+      authStorePath: "/tmp/openclaw-state/agents/main/agent/auth-profiles.json",
+      authStorePresent: true,
+      authStore: makeStore({
+        profiles: {
+          ready: { type: "api_key", provider: "openai-codex", key: "sk-ready" },
+        },
+      }),
+    });
+
+    const readiness = buildBenchmarkReadiness({
+      phase: "preflight",
+      preflight,
+      verdict: {
+        ok: true,
+        failedAssertions: [],
+        assertionCount: 0,
+        passedAssertionCount: 0,
+        failedAssertionCount: 0,
+        smokeError: null,
+        status: "pass",
+        failureReasons: [],
+      },
+    });
+
+    expect(readiness.preflight.status).toBe("ready");
+    expect(readiness.proof.status).toBe("not_run");
+    expect(readiness.promotion.status).toBe("not_run");
+  });
+
+  it("blocks promotion cleanly when proof readiness fails", () => {
+    const preflight = buildLiveBenchmarkPreflight({
+      enabled: true,
+      modelRef: "openai-codex/gpt-5.3-codex",
+      authSourceStateDir: "/tmp/openclaw-state",
+      authStorePath: "/tmp/openclaw-state/agents/main/agent/auth-profiles.json",
+      authStorePresent: true,
+      authStore: makeStore({
+        profiles: {
+          ready: { type: "api_key", provider: "openai-codex", key: "sk-ready" },
+        },
+      }),
+    });
+    const verdict = evaluateLiveBenchmarkProof({
+      ok: false,
+      assertions: {
+        validateStatus: true,
+        transcriptReplyMatchedPayload: false,
+      },
+      error: {
+        message: "live transcript proof failed",
+      },
+    });
+
+    const readiness = buildBenchmarkReadiness({
+      phase: "run",
+      preflight,
+      verdict,
+    });
+
+    expect(readiness.preflight.status).toBe("ready");
+    expect(readiness.proof.status).toBe("blocked");
+    expect(readiness.proof.failedAssertionCount).toBe(1);
+    expect(readiness.proof.smokeError).toBe("live transcript proof failed");
+    expect(readiness.promotion.status).toBe("blocked");
+  });
+
+  it("reports proof as not-run when the run is blocked at preflight", () => {
+    const preflight = buildLiveBenchmarkPreflight({
+      enabled: false,
+      modelRef: "openai-codex/gpt-5.3-codex",
+      authSourceStateDir: null,
+      authStorePath: null,
+      authStorePresent: false,
+      authStore: null,
+    });
+
+    const readiness = buildBenchmarkReadiness({
+      phase: "run",
+      preflight,
+      verdict: {
+        ok: false,
+        failedAssertions: [],
+        assertionCount: 0,
+        passedAssertionCount: 0,
+        failedAssertionCount: 0,
+        smokeError: null,
+        status: "fail",
+        failureReasons: preflight.failureReasons,
+      },
+    });
+
+    expect(readiness.preflight.status).toBe("blocked");
+    expect(readiness.proof.status).toBe("not_run");
+    expect(readiness.promotion.status).toBe("blocked");
   });
 });
 
@@ -200,6 +357,17 @@ describe("voltaris-v2-live-benchmark-gate CLI", () => {
     ) as {
       ok: boolean;
       phase: string;
+      readiness: {
+        preflight: {
+          status: string;
+        };
+        proof: {
+          status: string;
+        };
+        promotion: {
+          status: string;
+        };
+      };
       preflight: {
         readyProfileIds: string[];
       };
@@ -207,6 +375,9 @@ describe("voltaris-v2-live-benchmark-gate CLI", () => {
 
     expect(report.ok).toBe(true);
     expect(report.phase).toBe("preflight");
+    expect(report.readiness.preflight.status).toBe("ready");
+    expect(report.readiness.proof.status).toBe("not_run");
+    expect(report.readiness.promotion.status).toBe("not_run");
     expect(report.preflight.readyProfileIds).toEqual(["proof"]);
     expect(
       await fs.readFile(
@@ -222,5 +393,91 @@ describe("voltaris-v2-live-benchmark-gate CLI", () => {
         "utf8",
       ),
     ).toContain('"proof"');
+  });
+
+  it("seeds an explicit auth source copy from local Codex CLI credentials", async () => {
+    const reportDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-live-benchmark-gate-"));
+    const sourceStateDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-live-benchmark-src-"));
+    const codexHome = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-live-benchmark-codex-"));
+    tempDirs.push(reportDir, sourceStateDir, codexHome);
+
+    const authStorePath = path.join(
+      sourceStateDir,
+      "agents",
+      "main",
+      "agent",
+      "auth-profiles.json",
+    );
+    await fs.mkdir(path.dirname(authStorePath), { recursive: true });
+    await fs.writeFile(
+      authStorePath,
+      JSON.stringify({
+        version: 1,
+        profiles: {
+          "openai-codex:default": {
+            type: "oauth",
+            provider: "openai-codex",
+            access: "expired-access",
+            refresh: "expired-refresh",
+            expires: Date.now() - 60_000,
+          },
+        },
+      }),
+      "utf8",
+    );
+
+    await fs.writeFile(
+      path.join(codexHome, "auth.json"),
+      JSON.stringify({
+        tokens: {
+          access_token: "fresh-access",
+          refresh_token: "fresh-refresh",
+          account_id: "acct-live-proof",
+        },
+      }),
+      "utf8",
+    );
+
+    execFileSync(
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        "scripts/cyborgclaw/voltaris-v2-live-benchmark-gate.ts",
+        "--preflight-only",
+        `--report-dir=${reportDir}`,
+        `--auth-source-state-dir=${sourceStateDir}`,
+      ],
+      {
+        cwd: REPO_ROOT,
+        env: {
+          ...process.env,
+          CODEX_HOME: codexHome,
+          OPENCLAW_LIVE_BENCHMARK_ENABLED: "true",
+          OPENCLAW_LIVE_BENCHMARK_MODEL: "openai-codex/gpt-5.3-codex",
+        },
+        stdio: "pipe",
+      },
+    );
+
+    const seededAuthStorePath = path.join(
+      reportDir,
+      "preflight",
+      "auth-source-state",
+      "agents",
+      "main",
+      "agent",
+      "auth-profiles.json",
+    );
+    const seededStore = JSON.parse(
+      await fs.readFile(seededAuthStorePath, "utf8"),
+    ) as AuthProfileStore;
+
+    expect(seededStore.profiles["openai-codex:default"]).toMatchObject({
+      provider: "openai-codex",
+      access: "fresh-access",
+      refresh: "fresh-refresh",
+      accountId: "acct-live-proof",
+    });
   });
 });

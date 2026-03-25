@@ -115,17 +115,29 @@ jobs:
 
           report = json.loads(report_path.read_text(encoding="utf-8"))
           preflight = report.get("preflight") or {}
+          readiness = report.get("readiness") or {}
+          readiness_preflight = readiness.get("preflight") or {}
+          readiness_proof = readiness.get("proof") or {}
+          readiness_promotion = readiness.get("promotion") or {}
           verdict = report.get("verdict") or {}
           smoke = report.get("smoke") or {}
 
           lines.extend(
             [
-              f"- Phase: `{report.get('phase', 'unknown')}`",
-              f"- Result: `{'pass' if report.get('ok') else 'fail'}`",
+              f"- Gate phase: `{report.get('phase', 'unknown')}`",
+              f"- Gate result: `{'pass' if report.get('ok') else 'fail'}`",
+              f"- Preflight readiness: `{readiness_preflight.get('status') or ('ready' if preflight.get('ok') else 'blocked')}`",
+              f"- Preflight summary: {readiness_preflight.get('summary') or 'n/a'}",
+              f"- Proof readiness: `{readiness_proof.get('status') or ('ready' if verdict.get('ok') else 'blocked')}`",
+              f"- Proof summary: {readiness_proof.get('summary') or 'n/a'}",
+              f"- Promotion readiness: `{readiness_promotion.get('status') or ('green' if report.get('ok') and report.get('phase') == 'run' else 'blocked')}`",
+              f"- Promotion summary: {readiness_promotion.get('summary') or 'n/a'}",
               f"- Model: `{report.get('modelRef') or 'n/a'}`",
               f"- Provider: `{preflight.get('providerId') or 'n/a'}`",
               f"- Ready auth profiles: `{preflight.get('readyProfileCount', 0)}`",
               f"- Auth store path: `{preflight.get('authStorePath') or 'n/a'}`",
+              f"- Proof assertions passed: `{readiness_proof.get('passedAssertionCount', verdict.get('passedAssertionCount', 0))}`",
+              f"- Proof assertions failed: `{readiness_proof.get('failedAssertionCount', verdict.get('failedAssertionCount', 0))}`",
               f"- Smoke stdout log: `{smoke.get('stdoutPath') or 'n/a'}`",
               f"- Smoke stderr log: `{smoke.get('stderrPath') or 'n/a'}`",
               f"- Smoke report copy: `{smoke.get('reportCopyPath') or 'n/a'}`",
@@ -140,6 +152,10 @@ jobs:
           failed_assertions = verdict.get("failedAssertions") or []
           if failed_assertions:
             lines.append(f"- Failed assertions: `{', '.join(failed_assertions)}`")
+
+          smoke_error = readiness_proof.get("smokeError") or verdict.get("smokeError")
+          if smoke_error:
+            lines.append(f"- Smoke error: `{smoke_error}`")
 
           failure_reasons = verdict.get("failureReasons") or []
           if failure_reasons:

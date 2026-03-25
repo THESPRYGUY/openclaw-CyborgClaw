@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { execFile, spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import fs from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
@@ -14,7 +15,7 @@ const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const DEFAULT_PACK_REF = "examples/voltaris-v2-pack";
 const DEFAULT_PROFILE = "voltaris-proof";
 const DEFAULT_PROBE_MESSAGE =
-  "Reply with exactly: VOLTARIS-LIVE-OK | Name=<your name> | Role=<your role>";
+  "Reply in one line using this exact format: VOLTARIS-LIVE-OK | ProofToken=<token> | Name=<your name> | Role=<your role>";
 const GATEWAY_UNTOUCHED_SURFACES = [
   "sessions",
   "routing",
@@ -43,8 +44,32 @@ type CommandRun = {
   stderr: string;
 };
 
+const CORRELATION_TOKEN_PLACEHOLDERS = ["<token>", "{correlationToken}", "${token}"] as const;
+
 function asStringValue(value: unknown): string {
   return typeof value === "string" ? value : "";
+}
+
+function createCorrelationToken(): string {
+  return `voltaris-proof-${randomBytes(8).toString("hex")}`;
+}
+
+function buildProbeMessage(baseMessage: string, correlationToken: string): string {
+  const trimmed = baseMessage.trim();
+  const normalizedBase = trimmed || DEFAULT_PROBE_MESSAGE;
+  let substituted = normalizedBase;
+  for (const placeholder of CORRELATION_TOKEN_PLACEHOLDERS) {
+    substituted = substituted.replaceAll(placeholder, correlationToken);
+  }
+  if (substituted !== normalizedBase) {
+    return substituted;
+  }
+  return [
+    normalizedBase,
+    "",
+    `Correlation token: ${correlationToken}`,
+    `Include the exact field ProofToken=${correlationToken} in your final reply.`,
+  ].join("\n");
 }
 
 function resolveArg(flag: string): string | undefined {
@@ -312,6 +337,8 @@ async function main(): Promise<number> {
   let port: number | undefined;
   let sourceStateDir: string | undefined;
   let copiedAuthProfiles = false;
+  let correlationToken: string | null = null;
+  let probeMessage: string | null = null;
 
   try {
     await ensureDir(tmpHome);
@@ -438,10 +465,12 @@ async function main(): Promise<number> {
     );
     await waitForGatewayReady(gatewayProcess, gatewayStdout, gatewayStderr);
 
+    correlationToken = createCorrelationToken();
+    probeMessage = buildProbeMessage(args.message, correlationToken);
     const commandStartedAt = Date.now();
     const agentResult = await runJsonCommand(
       env,
-      ["agent", "--agent", "voltaris-v2", "--message", args.message, "--json"],
+      ["agent", "--agent", "voltaris-v2", "--message", probeMessage, "--json"],
       commandRuns,
     );
 
@@ -462,7 +491,7 @@ async function main(): Promise<number> {
       sessionKey: "agent:voltaris-v2:main",
       expectedSessionId: sessionId,
       transcriptPath: sessionTranscriptPath,
-      expectedUserText: args.message,
+      correlationToken,
       payloads:
         ((agentResult.result as JsonRecord | undefined)?.payloads as Array<{
           text?: string | null;
@@ -512,6 +541,9 @@ async function main(): Promise<number> {
       runtimeSmoke: {
         agentCommand: commandRuns.at(-1)?.command ?? null,
         agentResult,
+        requestedMessage: args.message,
+        probeMessage,
+        correlationToken,
         sessionKey: "agent:voltaris-v2:main",
         sessionId,
         sessionTranscriptPath,
@@ -548,6 +580,12 @@ async function main(): Promise<number> {
         transcriptFreshAfterCommand:
           transcriptProof.correlation.assistantTimestampAfterCommand === true &&
           transcriptProof.correlation.sessionUpdatedAfterCommand === true,
+        transcriptCorrelationTokenObservedInUser:
+          transcriptProof.transcript.correlationToken.userObserved === true,
+        transcriptCorrelationTokenObservedInAssistant:
+          transcriptProof.transcript.correlationToken.latestAssistantObserved === true,
+        transcriptCorrelationTokenObservedInPayload:
+          transcriptProof.transcript.correlationToken.payloadObserved === true,
         transcriptReplyMatchedPayload: transcriptProof.transcript.payloadMatch.matched,
         transcriptRecordedPositiveUsage:
           transcriptProof.transcript.latestAssistant.usage !== null &&
@@ -601,6 +639,11 @@ async function main(): Promise<number> {
         port: port ?? null,
         authSourceStateDir: sourceStateDir ?? null,
         copiedAuthProfiles,
+      },
+      runtimeSmoke: {
+        requestedMessage: args.message,
+        probeMessage,
+        correlationToken,
       },
       commands: commandRuns.map((entry) => entry.command),
       gatewayProof: {

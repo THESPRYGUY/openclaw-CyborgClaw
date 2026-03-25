@@ -29,6 +29,7 @@ afterEach(async () => {
 describe("collectLiveAgentTranscriptProof", () => {
   it("verifies transcript-grade correlation for a fresh live assistant reply", async () => {
     const commandStartedAt = Date.now();
+    const correlationToken = "voltaris-proof-abc123";
     const transcriptPath = await writeTranscript([
       {
         type: "session",
@@ -38,7 +39,7 @@ describe("collectLiveAgentTranscriptProof", () => {
       {
         message: {
           role: "user",
-          content: "Reply with exactly: VOLTARIS-LIVE-OK",
+          content: `Probe request. ProofToken=${correlationToken}`,
           timestamp: commandStartedAt + 5,
         },
       },
@@ -48,7 +49,7 @@ describe("collectLiveAgentTranscriptProof", () => {
           content: [
             {
               type: "text",
-              text: "VOLTARIS-LIVE-OK | Name=Voltaris V2 | Role=Master Genome Executive",
+              text: `VOLTARIS-LIVE-OK | ProofToken=${correlationToken} | Name=Voltaris V2 | Role=Master Genome Executive`,
             },
             { type: "tool_use", name: "read" },
             { type: "tool_result", is_error: false },
@@ -65,8 +66,12 @@ describe("collectLiveAgentTranscriptProof", () => {
       sessionKey: "agent:voltaris-v2:main",
       expectedSessionId: "sess-1",
       transcriptPath,
-      expectedUserText: "Reply with exactly: VOLTARIS-LIVE-OK",
-      payloads: [{ text: "VOLTARIS-LIVE-OK | Name=Voltaris V2 | Role=Master Genome Executive" }],
+      correlationToken,
+      payloads: [
+        {
+          text: `VOLTARIS-LIVE-OK | ProofToken=${correlationToken} | Name=Voltaris V2 | Role=Master Genome Executive`,
+        },
+      ],
       agentMeta: {
         sessionId: "sess-1",
         provider: "openai",
@@ -81,7 +86,12 @@ describe("collectLiveAgentTranscriptProof", () => {
     expect(proof.header.matchesExpectedSessionId).toBe(true);
     expect(proof.correlation.sessionUpdatedAfterCommand).toBe(true);
     expect(proof.correlation.assistantTimestampAfterCommand).toBe(true);
-    expect(proof.transcript.userPromptObserved).toBe(true);
+    expect(proof.transcript.correlationToken).toEqual({
+      value: correlationToken,
+      userObserved: true,
+      latestAssistantObserved: true,
+      payloadObserved: true,
+    });
     expect(proof.transcript.payloadMatch).toMatchObject({
       matched: true,
       matchType: "exact",
@@ -97,6 +107,7 @@ describe("collectLiveAgentTranscriptProof", () => {
 
   it("returns structured failures when transcript correlation is stale or mismatched", async () => {
     const commandStartedAt = Date.now();
+    const correlationToken = "voltaris-proof-xyz987";
     const transcriptPath = await writeTranscript([
       {
         type: "session",
@@ -106,7 +117,7 @@ describe("collectLiveAgentTranscriptProof", () => {
       {
         message: {
           role: "user",
-          content: "Different prompt",
+          content: "Different prompt with no proof token",
           timestamp: commandStartedAt - 500,
         },
       },
@@ -126,8 +137,12 @@ describe("collectLiveAgentTranscriptProof", () => {
       sessionKey: "agent:voltaris-v2:main",
       expectedSessionId: "sess-1",
       transcriptPath,
-      expectedUserText: "Reply with exactly: VOLTARIS-LIVE-OK",
-      payloads: [{ text: "VOLTARIS-LIVE-OK | Name=Voltaris V2 | Role=Master Genome Executive" }],
+      correlationToken,
+      payloads: [
+        {
+          text: "VOLTARIS-LIVE-OK | Name=Voltaris V2 | Role=Master Genome Executive",
+        },
+      ],
       agentMeta: {
         sessionId: "sess-2",
         provider: "openai",
@@ -144,7 +159,15 @@ describe("collectLiveAgentTranscriptProof", () => {
     expect(proof.failures).toContain(
       "agent meta sessionId mismatch: expected sess-1, found sess-2",
     );
-    expect(proof.failures).toContain("expected prompt text was not observed in the transcript");
+    expect(proof.failures).toContain(
+      "correlation token was not observed in any user transcript message",
+    );
+    expect(proof.failures).toContain(
+      "correlation token was not observed in the latest assistant transcript message",
+    );
+    expect(proof.failures).toContain(
+      "correlation token was not observed in the returned payload text",
+    );
     expect(proof.failures).toContain(
       "latest assistant transcript text did not match the returned payload text",
     );
@@ -159,6 +182,12 @@ describe("collectLiveAgentTranscriptProof", () => {
     );
     expect(proof.correlation.sessionUpdatedAfterCommand).toBe(false);
     expect(proof.correlation.assistantTimestampAfterCommand).toBe(false);
+    expect(proof.transcript.correlationToken).toEqual({
+      value: correlationToken,
+      userObserved: false,
+      latestAssistantObserved: false,
+      payloadObserved: false,
+    });
   });
 
   it("fails cleanly when the transcript file is missing", async () => {

@@ -12,6 +12,12 @@ let writeClaudeCliKeychainCredentials: typeof import("./cli-credentials.js").wri
 let writeClaudeCliCredentials: typeof import("./cli-credentials.js").writeClaudeCliCredentials;
 let readCodexCliCredentials: typeof import("./cli-credentials.js").readCodexCliCredentials;
 
+function buildJwtWithExp(expSeconds: number): string {
+  const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ exp: expSeconds })).toString("base64url");
+  return `${header}.${payload}.signature`;
+}
+
 function mockExistingClaudeKeychainItem() {
   execFileSyncMock.mockImplementation((file: unknown, args: unknown) => {
     const argv = Array.isArray(args) ? args.map(String) : [];
@@ -231,6 +237,8 @@ describe("cli credentials", () => {
     process.env.CODEX_HOME = tempHome;
 
     const accountHash = "cli|";
+    const expSeconds = 1_777_777_777;
+    const accessToken = buildJwtWithExp(expSeconds);
 
     execSyncMock.mockImplementation((command: unknown) => {
       const cmd = String(command);
@@ -238,7 +246,7 @@ describe("cli credentials", () => {
       expect(cmd).toContain(accountHash);
       return JSON.stringify({
         tokens: {
-          access_token: "keychain-access",
+          access_token: accessToken,
           refresh_token: "keychain-refresh",
         },
         last_refresh: "2026-01-01T00:00:00Z",
@@ -248,13 +256,14 @@ describe("cli credentials", () => {
     const creds = readCodexCliCredentials({ platform: "darwin", execSync: execSyncMock });
 
     expect(creds).toMatchObject({
-      access: "keychain-access",
+      access: accessToken,
       refresh: "keychain-refresh",
       provider: "openai-codex",
+      expires: expSeconds * 1000,
     });
   });
 
-  it("falls back to Codex auth.json when keychain is unavailable", async () => {
+  it("falls back to Codex auth.json and honors JWT expiry when keychain is unavailable", async () => {
     const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "openclaw-codex-"));
     process.env.CODEX_HOME = tempHome;
     execSyncMock.mockImplementation(() => {
@@ -262,12 +271,14 @@ describe("cli credentials", () => {
     });
 
     const authPath = path.join(tempHome, "auth.json");
+    const expSeconds = 1_888_888_888;
+    const accessToken = buildJwtWithExp(expSeconds);
     fs.mkdirSync(tempHome, { recursive: true, mode: 0o700 });
     fs.writeFileSync(
       authPath,
       JSON.stringify({
         tokens: {
-          access_token: "file-access",
+          access_token: accessToken,
           refresh_token: "file-refresh",
         },
       }),
@@ -277,9 +288,10 @@ describe("cli credentials", () => {
     const creds = readCodexCliCredentials({ execSync: execSyncMock });
 
     expect(creds).toMatchObject({
-      access: "file-access",
+      access: accessToken,
       refresh: "file-refresh",
       provider: "openai-codex",
+      expires: expSeconds * 1000,
     });
   });
 });
