@@ -107,6 +107,20 @@ describe("agentCliCommand", () => {
     });
   });
 
+  it("forwards model overrides through the gateway request", async () => {
+    await withTempStore(async () => {
+      mockGatewaySuccessReply();
+
+      await agentCliCommand({ message: "hi", to: "+1555", model: "openai/gpt-5.4" }, runtime);
+
+      expect(callGateway).toHaveBeenCalledTimes(1);
+      const request = vi.mocked(callGateway).mock.calls[0]?.[0] as {
+        params?: { model?: string };
+      };
+      expect(request.params?.model).toBe("openai/gpt-5.4");
+    });
+  });
+
   it("falls back to embedded agent when gateway fails", async () => {
     await withTempStore(async () => {
       vi.mocked(callGateway).mockRejectedValue(new Error("gateway not connected"));
@@ -117,6 +131,24 @@ describe("agentCliCommand", () => {
       expect(callGateway).toHaveBeenCalledTimes(1);
       expect(agentCommand).toHaveBeenCalledTimes(1);
       expect(runtime.log).toHaveBeenCalledWith("local");
+    });
+  });
+
+  it("preserves model overrides when gateway falls back to embedded", async () => {
+    await withTempStore(async () => {
+      vi.mocked(callGateway).mockRejectedValue(new Error("gateway not connected"));
+      mockLocalAgentReply();
+
+      await agentCliCommand({ message: "hi", to: "+1555", model: "openai/gpt-5.4" }, runtime);
+
+      expect(agentCommand).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "hi",
+          model: "openai/gpt-5.4",
+        }),
+        runtime,
+        undefined,
+      );
     });
   });
 

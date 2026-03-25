@@ -11,7 +11,7 @@ import { runEmbeddedPiAgent } from "../agents/pi-embedded.js";
 import * as commandSecretGatewayModule from "../cli/command-secret-gateway.js";
 import type { OpenClawConfig } from "../config/config.js";
 import * as configModule from "../config/config.js";
-import * as sessionsModule from "../config/sessions.js";
+import * as sessionPathsModule from "../config/sessions/paths.js";
 import { emitAgentEvent, onAgentEvent } from "../infra/agent-events.js";
 import { setActivePluginRegistry } from "../plugins/runtime.js";
 import type { RuntimeEnv } from "../runtime.js";
@@ -465,7 +465,7 @@ describe("agentCommand", () => {
       const store = path.join(customStoreDir, "sessions.json");
       writeSessionStoreSeed(store, {});
       mockConfig(home, store);
-      const resolveSessionFilePathSpy = vi.spyOn(sessionsModule, "resolveSessionFilePath");
+      const resolveSessionFilePathSpy = vi.spyOn(sessionPathsModule, "resolveSessionFilePath");
 
       await agentCommand({ message: "resume me", sessionId: "session-custom-123" }, runtime);
 
@@ -534,6 +534,51 @@ describe("agentCommand", () => {
       await agentCommand({ message: "hi", to: "+1555" }, runtime);
 
       expectLastRunProviderModel("openai", "gpt-4.1-mini");
+    });
+  });
+
+  it("uses a per-run model override without persisting it to the session entry", async () => {
+    await withTempHome(async (home) => {
+      const store = path.join(home, "sessions.json");
+      writeSessionStoreSeed(store, {
+        "agent:main:main": {
+          sessionId: "existing-session-id",
+          updatedAt: Date.now(),
+          providerOverride: "anthropic",
+          modelOverride: "claude-opus-4-5",
+        },
+      });
+
+      mockConfig(home, store, {
+        model: { primary: "anthropic/claude-opus-4-5" },
+        models: {
+          "anthropic/claude-opus-4-5": {},
+          "openai/gpt-5.4": {},
+        },
+      });
+
+      vi.mocked(loadModelCatalog).mockResolvedValueOnce([
+        { id: "claude-opus-4-5", name: "Opus", provider: "anthropic" },
+        { id: "gpt-5.4", name: "GPT-5.4", provider: "openai" },
+      ]);
+
+      await agentCommand(
+        {
+          message: "hi",
+          sessionKey: "agent:main:main",
+          model: "openai/gpt-5.4",
+        },
+        runtime,
+      );
+
+      expectLastRunProviderModel("openai", "gpt-5.4");
+
+      const entry = readSessionStore<{
+        providerOverride?: string;
+        modelOverride?: string;
+      }>(store)["agent:main:main"];
+      expect(entry?.providerOverride).toBe("anthropic");
+      expect(entry?.modelOverride).toBe("claude-opus-4-5");
     });
   });
 

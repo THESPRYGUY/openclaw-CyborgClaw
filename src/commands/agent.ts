@@ -33,6 +33,7 @@ import {
   normalizeModelRef,
   normalizeProviderId,
   resolveConfiguredModelRef,
+  resolveAllowedModelRef,
   resolveDefaultModelForAgent,
   resolveThinkingDefault,
 } from "../agents/model-selection.js";
@@ -931,13 +932,14 @@ async function agentCommandInternal(
       configuredDefaultRef.provider,
       configuredDefaultRef.model,
     );
+    const requestedModelOverride = opts.model?.trim() || "";
     let provider = defaultProvider;
     let model = defaultModel;
     const hasAllowlist = agentCfg?.models && Object.keys(agentCfg.models).length > 0;
     const hasStoredOverride = Boolean(
       sessionEntry?.modelOverride || sessionEntry?.providerOverride,
     );
-    const needsModelCatalog = hasAllowlist || hasStoredOverride;
+    const needsModelCatalog = hasAllowlist || hasStoredOverride || Boolean(requestedModelOverride);
     let allowedModelKeys = new Set<string>();
     let allowedModelCatalog: Awaited<ReturnType<typeof loadModelCatalog>> = [];
     let modelCatalog: Awaited<ReturnType<typeof loadModelCatalog>> | null = null;
@@ -957,7 +959,29 @@ async function agentCommandInternal(
       allowAnyModel = allowed.allowAny ?? false;
     }
 
-    if (sessionEntry && sessionStore && sessionKey && hasStoredOverride) {
+    if (requestedModelOverride) {
+      modelCatalog = modelCatalog ?? (await loadModelCatalog({ config: cfg }));
+      const resolvedRequestedModel = resolveAllowedModelRef({
+        cfg,
+        catalog: modelCatalog,
+        raw: requestedModelOverride,
+        defaultProvider,
+        defaultModel,
+      });
+      if ("error" in resolvedRequestedModel) {
+        throw new Error(resolvedRequestedModel.error);
+      }
+      provider = resolvedRequestedModel.ref.provider;
+      model = resolvedRequestedModel.ref.model;
+    }
+
+    if (
+      !requestedModelOverride &&
+      sessionEntry &&
+      sessionStore &&
+      sessionKey &&
+      hasStoredOverride
+    ) {
       const entry = sessionEntry;
       const overrideProvider = sessionEntry.providerOverride?.trim() || defaultProvider;
       const overrideModel = sessionEntry.modelOverride?.trim();
@@ -987,7 +1011,7 @@ async function agentCommandInternal(
 
     const storedProviderOverride = sessionEntry?.providerOverride?.trim();
     const storedModelOverride = sessionEntry?.modelOverride?.trim();
-    if (storedModelOverride) {
+    if (!requestedModelOverride && storedModelOverride) {
       const candidateProvider = storedProviderOverride || defaultProvider;
       const normalizedStored = normalizeModelRef(candidateProvider, storedModelOverride);
       const key = modelKey(normalizedStored.provider, normalizedStored.model);
@@ -1069,6 +1093,8 @@ async function agentCommandInternal(
         sessionId,
         sessionKey: sessionKey ?? sessionId,
         sessionEntry,
+        sessionStore,
+        storePath,
         agentId: sessionAgentId,
         threadId: opts.threadId,
       });

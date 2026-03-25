@@ -191,11 +191,12 @@ async function runMainAgent(message: string, idempotencyKey: string) {
 function readLastAgentCommandCall():
   | {
       message?: string;
+      model?: string;
       sessionId?: string;
     }
   | undefined {
   return mocks.agentCommand.mock.calls.at(-1)?.[0] as
-    | { message?: string; sessionId?: string }
+    | { message?: string; model?: string; sessionId?: string }
     | undefined;
 }
 
@@ -610,6 +611,24 @@ describe("gateway agent handler", () => {
     expect(call?.sessionId).toBe("reset-session-id");
 
     resetTimeConfig();
+  });
+
+  it("forwards request model overrides to ingress agent runs", async () => {
+    primeMainAgentRun();
+
+    await invokeAgent(
+      {
+        message: "test",
+        agentId: "main",
+        sessionKey: "agent:main:main",
+        model: "openai/gpt-5.4",
+        idempotencyKey: "test-idem-model-override",
+      },
+      { reqId: "4c" },
+    );
+
+    await vi.waitFor(() => expect(mocks.agentCommand).toHaveBeenCalled());
+    expect(readLastAgentCommandCall()?.model).toBe("openai/gpt-5.4");
   });
 
   it("rejects malformed agent session keys early in agent handler", async () => {

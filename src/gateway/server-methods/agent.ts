@@ -163,6 +163,7 @@ export const agentHandlers: GatewayRequestHandlers = {
     const request = p as {
       message: string;
       agentId?: string;
+      model?: string;
       to?: string;
       replyTo?: string;
       sessionId?: string;
@@ -590,6 +591,7 @@ export const agentHandlers: GatewayRequestHandlers = {
       ingressOpts: {
         message,
         images,
+        model: request.model,
         to: resolvedTo,
         sessionId: resolvedSessionId,
         sessionKey: resolvedSessionKey,
