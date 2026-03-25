@@ -17,7 +17,7 @@
     },
     {
       "path": "../../../schemas/agent.genome.v1.schema.json",
-      "fileDigest": "sha256:d2172cc1deb247ccd1d5f12b67f34389b68eccfff4a7e8384eca33f57a5c50cf"
+      "fileDigest": "sha256:7fbcefd9154998dc1332f8e4409a11b5a3d7daed695a49f6abbb54dd5b0d5505"
     },
     {
       "path": "../../../schemas/agent.lineage.schema.json",
@@ -33,7 +33,7 @@
     },
     {
       "path": "package.manifest.json",
-      "fileDigest": "sha256:1f1ec5973f07b3d8059e6fb15fcf45661c6b2811ec2259def1dbfcc706929c89"
+      "fileDigest": "sha256:1d207e5f11de4bc63e6847bf176ae90536c4e43475c41855ef11903e5e672019"
     }
   ],
   "artifacts": [
@@ -65,28 +65,28 @@
     {
       "path": "manifests/agent.lineage.json",
       "kind": "manifest",
-      "fileDigest": "sha256:f5ac854b4e9c735906095fc9e0885472f16183a1bfa2754c535925989977aedf",
+      "fileDigest": "sha256:ee8eec6a2c7240d41ebd1973ebf520c93cb2d9c1ecac54229f519ec2f699b969",
       "canonicalDigest": "sha256:8eb12a3f6af1115f9de1cbe7ad24af10a90fb383c1f03ff2d23a7af29dc87ddd",
       "selfDigestField": "receipts.lineageDigest"
     },
     {
       "path": "manifests/agent.runtime.json",
       "kind": "manifest",
-      "fileDigest": "sha256:d95dae7d409996f4e6e9735ecf3151f9192cdfc1205bf0f96048d9fc0a065512",
+      "fileDigest": "sha256:496612232e1aceff7fcc7f008d5bc5aad5a97413b1b885a9fce65326ab67c9c5",
       "canonicalDigest": "sha256:134b76112b07777887e58f36bdf865a3d16b7199b1d4d3ae0300680ffca4f76f",
       "selfDigestField": "receipts.runtimeDigest"
     },
     {
       "path": "manifests/agent.policy.json",
       "kind": "manifest",
-      "fileDigest": "sha256:ce205c668d23ad1c44c01325be013bc126c383cd2c3566e0c593ae3fe9ef0850",
+      "fileDigest": "sha256:7d5603473cd14ee5d4f91663d81aaf0335c499f507aae86da487ded2923774b5",
       "canonicalDigest": "sha256:68a8e7adaf417e605f378f406473a15e978fcf8848a44129b9b43d83d313b9d7",
       "selfDigestField": "receipts.policyDigest"
     },
     {
       "path": "manifests/deployment.manifest.json",
       "kind": "deployment-manifest",
-      "fileDigest": "sha256:27127befb0bd5a751beb72befea5cda0863dd26f515246d7f44c17d72915d1f2"
+      "fileDigest": "sha256:fb760204172174b13787b99c8020b3a2ed346d7725833a5a6600eb1ddcb62d94"
     }
   ],
   "parityChecks": [

@@ -26,7 +26,7 @@
     "sourceOfTruth": "runtime-manifest",
     "authoredAt": "2026-03-15T00:00:00Z",
     "authoredBy": "codex",
-    "designStudioOutputDigest": "sha256:1f1ec5973f07b3d8059e6fb15fcf45661c6b2811ec2259def1dbfcc706929c89",
+    "designStudioOutputDigest": "sha256:1d207e5f11de4bc63e6847bf176ae90536c4e43475c41855ef11903e5e672019",
     "lineageDigest": "sha256:8eb12a3f6af1115f9de1cbe7ad24af10a90fb383c1f03ff2d23a7af29dc87ddd"
   },
   "trace": {

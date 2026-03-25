@@ -18,6 +18,10 @@ This source map anchors the Iteration 5 self-recursive improvement packet to the
 - `scripts/cyborgclaw/voltaris-v2-live-benchmark-gate.ts`
 - `test/voltaris-v2-live-benchmark-gate.test.ts`
 - `.github/workflows/live-runtime-benchmark.yml`
+- `examples/voltaris-v2-pack/compiled/build.receipt.json`
+- `examples/voltaris-v2-pack/compiled/manifests/agent.lineage.json`
+- `examples/voltaris-v2-pack/compiled/manifests/agent.runtime.json`
+- `examples/voltaris-v2-pack/compiled/manifests/agent.policy.json`
 
 ## Runtime-recovery hardening lane
 

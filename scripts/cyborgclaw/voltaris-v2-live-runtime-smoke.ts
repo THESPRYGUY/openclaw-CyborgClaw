@@ -272,11 +272,21 @@ async function stopGateway(child: ReturnType<typeof spawn>): Promise<void> {
   if (child.killed || child.exitCode !== null) {
     return;
   }
-  child.kill("SIGINT");
+  const killGatewayGroup = (signal: NodeJS.Signals) => {
+    if (typeof child.pid === "number" && child.pid > 0) {
+      try {
+        process.kill(-child.pid, signal);
+        return;
+      } catch {}
+    }
+    child.kill(signal);
+  };
+
+  killGatewayGroup("SIGINT");
   await new Promise<void>((resolve) => {
     const timer = setTimeout(() => {
       if (child.exitCode === null) {
-        child.kill("SIGKILL");
+        killGatewayGroup("SIGKILL");
       }
       resolve();
     }, 5_000);
@@ -287,7 +297,7 @@ async function stopGateway(child: ReturnType<typeof spawn>): Promise<void> {
   });
 }
 
-async function main() {
+async function main(): Promise<number> {
   const args = parseArgs();
   const proofRoot = await fs.mkdtemp(path.join(os.tmpdir(), "voltaris-v2-live-smoke."));
   const tmpHome = path.join(proofRoot, "home");
@@ -421,6 +431,7 @@ async function main() {
       ["--silent", "openclaw", "gateway", "run", "--bind", "loopback", "--verbose"],
       {
         cwd: REPO_ROOT,
+        detached: true,
         env,
         stdio: ["ignore", "pipe", "pipe"],
       },
@@ -574,6 +585,7 @@ async function main() {
         `Agent reply: ${String((agentResult.result as JsonRecord | undefined)?.payloads ? JSON.stringify((agentResult.result as JsonRecord).payloads) : "")}`,
       );
     }
+    return 0;
   } catch (error) {
     keepArtifacts = true;
     const failure = {
@@ -609,7 +621,7 @@ async function main() {
       console.error(`Report: ${reportPath}`);
       console.error(failure.error.message);
     }
-    process.exitCode = 1;
+    return 1;
   } finally {
     if (gatewayProcess) {
       await stopGateway(gatewayProcess);
@@ -621,5 +633,6 @@ async function main() {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  await main();
+  const exitCode = await main();
+  process.exit(exitCode);
 }

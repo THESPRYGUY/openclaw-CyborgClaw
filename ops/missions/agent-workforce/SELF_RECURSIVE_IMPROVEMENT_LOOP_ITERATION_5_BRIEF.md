@@ -21,7 +21,8 @@ This iteration is accepted when it:
 2. upgrades live summon proof from session-store-only correlation to transcript-grade evidence
 3. hard-bans silent live summon recovery to literal `main` when the system would otherwise mask a real failure
 4. turns the live overnight pack into a stricter gate with explicit benchmark preflight and failure artifacts
-5. strengthens notary identity and propagates `active` versus `freshest` Memory Vault semantics across the operator surfaces that inspect live-run evidence
+5. repairs the frozen Voltaris V2 benchmark pack so the hard gate fails on live-runtime truth instead of stale receipt drift
+6. strengthens notary identity and propagates `active` versus `freshest` Memory Vault semantics across the operator surfaces that inspect live-run evidence
 
 ## Iteration 5 focus
 
@@ -77,6 +78,20 @@ Iteration 5 adds:
 - persistent failure artifacts and report copies when the live smoke proof fails
 - explicit gate verdict logic that treats missing proof or failed assertions as a hard failure
 
+### 3b. The golden Voltaris benchmark pack is valid again
+
+While hardening the gate, Iteration 5 exposed that `examples/voltaris-v2-pack`
+had drifted from its frozen receipt and manifest digests. The lane now repairs
+that pack by:
+
+- refreshing the frozen manifest `designStudioOutputDigest` references
+- refreshing build-receipt input and artifact digests against the current repo
+  schema and compiled artifact bytes
+- restoring the golden pack so genome validation and pack-proof tests pass again
+
+This matters because the live benchmark gate should now fail on real runtime or
+provider conditions, not on stale benchmark-pack metadata.
+
 ### 4. Operator surfaces now show more honest evidence posture
 
 Iteration 4 broadened some Memory Vault semantics and signer visibility. Iteration 5 continues that by:
@@ -122,7 +137,22 @@ Iteration 5 keeps the existing signed and notarized review proof model but impro
 - Improved signal:
   - inconclusive and failed live runs now clearly stop the gate instead of blending into “mostly healthy” receipts
 - New risk introduced:
-  - the gate now depends on live credentials and provider readiness, so environment drift becomes more visible
+- the gate now depends on live credentials and provider readiness, so environment drift becomes more visible
+
+### Golden pack repair lane
+
+- Weak before:
+  - the live benchmark lane failed early because the frozen Voltaris pack digest
+    metadata had drifted
+- What changed:
+  - the benchmark pack receipt and manifest digest links were refreshed to match
+    the current compiled bytes
+- Improved signal:
+  - the gate now reaches real live-runtime execution instead of stopping on stale
+    pack metadata
+- New risk introduced:
+  - any manual mutation to the frozen pack will now surface immediately through
+    both the pack-proof test and the benchmark lane
 
 ### Operator-surface semantics lane
 
@@ -160,6 +190,10 @@ Iteration 5 keeps the existing signed and notarized review proof model but impro
 - `src/cyborgclaw/live-agent-proof.ts`
 - `src/cyborgclaw/live-agent-proof.test.ts`
 - `.github/workflows/live-runtime-benchmark.yml`
+- `examples/voltaris-v2-pack/compiled/build.receipt.json`
+- `examples/voltaris-v2-pack/compiled/manifests/agent.lineage.json`
+- `examples/voltaris-v2-pack/compiled/manifests/agent.runtime.json`
+- `examples/voltaris-v2-pack/compiled/manifests/agent.policy.json`
 
 ## Validation proof
 
@@ -171,6 +205,8 @@ Iteration 5 proof is expected against:
 - `npm -w server run lint`
 - `npm -w web run build`
 - `pnpm vitest test/voltaris-v2-live-benchmark-gate.test.ts src/cyborgclaw/live-agent-proof.test.ts`
+- `pnpm vitest test/voltaris-v2-pack-proof.test.ts test/voltaris-v2-live-benchmark-gate.test.ts src/cyborgclaw/live-agent-proof.test.ts`
+- `pnpm --silent openclaw genome validate examples/voltaris-v2-pack --json`
 - `pnpm build`
 
 ## Risks carried forward
