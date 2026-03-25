@@ -1,0 +1,160 @@
+name: Live Runtime Benchmark
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/live-runtime-benchmark.yml"
+      - "scripts/cyborgclaw/voltaris-v2-live-benchmark-gate.ts"
+      - "scripts/cyborgclaw/voltaris-v2-live-runtime-smoke.ts"
+      - "test/voltaris-v2-live-benchmark-gate.test.ts"
+      - "src/cyborgclaw/live-agent-proof.ts"
+      - "src/cyborgclaw/live-agent-proof.test.ts"
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+    inputs:
+      pack:
+        description: "Pack reference to prove during the live benchmark run"
+        required: false
+        default: "examples/voltaris-v2-pack"
+      profile:
+        description: "Auth profile lane to use for the benchmark run"
+        required: false
+        default: "voltaris-proof"
+      model:
+        description: "Model ref for the live benchmark run"
+        required: false
+      preflight_only:
+        description: "Run only the hard preflight checks"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: live-runtime-benchmark-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  live-runtime-benchmark:
+    runs-on: blacksmith-16vcpu-ubuntu-2404
+    timeout-minutes: 45
+    env:
+      REPORT_DIR: ${{ runner.temp }}/live-runtime-benchmark
+      LIVE_BENCHMARK_PACK_REF: ${{ github.event.inputs.pack || 'examples/voltaris-v2-pack' }}
+      LIVE_BENCHMARK_PROFILE: ${{ github.event.inputs.profile || 'voltaris-proof' }}
+      OPENCLAW_LIVE_BENCHMARK_ENABLED: ${{ vars.OPENCLAW_LIVE_BENCHMARK_ENABLED }}
+      OPENCLAW_LIVE_BENCHMARK_MODEL: ${{ github.event.inputs.model || vars.OPENCLAW_LIVE_BENCHMARK_MODEL }}
+      OPENCLAW_LIVE_BENCHMARK_AUTH_PROFILES_JSON: ${{ secrets.OPENCLAW_LIVE_BENCHMARK_AUTH_PROFILES_JSON }}
+      LIVE_BENCHMARK_PREFLIGHT_ONLY: ${{ github.event.inputs.preflight_only || 'false' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup Node environment
+        uses: ./.github/actions/setup-node-env
+        with:
+          install-bun: "false"
+          use-sticky-disk: "true"
+
+      - name: Run live benchmark preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$REPORT_DIR"
+          node --import tsx scripts/cyborgclaw/voltaris-v2-live-benchmark-gate.ts \
+            --preflight-only \
+            --report-dir "$REPORT_DIR" \
+            --pack "$LIVE_BENCHMARK_PACK_REF" \
+            --profile "$LIVE_BENCHMARK_PROFILE"
+
+      - name: Run strict live runtime benchmark
+        if: env.LIVE_BENCHMARK_PREFLIGHT_ONLY != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(
+            --report-dir "$REPORT_DIR"
+            --pack "$LIVE_BENCHMARK_PACK_REF"
+            --profile "$LIVE_BENCHMARK_PROFILE"
+          )
+          if [ -n "${OPENCLAW_LIVE_BENCHMARK_MODEL:-}" ]; then
+            args+=(--model "$OPENCLAW_LIVE_BENCHMARK_MODEL")
+          fi
+          node --import tsx scripts/cyborgclaw/voltaris-v2-live-benchmark-gate.ts "${args[@]}"
+
+      - name: Write benchmark summary
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import os
+          import pathlib
+
+          report_path = pathlib.Path(os.environ["REPORT_DIR"]) / "gate-report.json"
+          summary_path = pathlib.Path(os.environ["GITHUB_STEP_SUMMARY"])
+          lines: list[str] = ["## Live runtime benchmark", ""]
+
+          if not report_path.exists():
+            lines.extend(
+              [
+                "- Result: `missing report`",
+                f"- Expected report path: `{report_path}`",
+              ]
+            )
+            summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            raise SystemExit(0)
+
+          report = json.loads(report_path.read_text(encoding="utf-8"))
+          preflight = report.get("preflight") or {}
+          verdict = report.get("verdict") or {}
+          smoke = report.get("smoke") or {}
+
+          lines.extend(
+            [
+              f"- Phase: `{report.get('phase', 'unknown')}`",
+              f"- Result: `{'pass' if report.get('ok') else 'fail'}`",
+              f"- Model: `{report.get('modelRef') or 'n/a'}`",
+              f"- Provider: `{preflight.get('providerId') or 'n/a'}`",
+              f"- Ready auth profiles: `{preflight.get('readyProfileCount', 0)}`",
+              f"- Auth store path: `{preflight.get('authStorePath') or 'n/a'}`",
+              f"- Smoke stdout log: `{smoke.get('stdoutPath') or 'n/a'}`",
+              f"- Smoke stderr log: `{smoke.get('stderrPath') or 'n/a'}`",
+              f"- Smoke report copy: `{smoke.get('reportCopyPath') or 'n/a'}`",
+              f"- Smoke proof copy: `{smoke.get('proofRootCopyPath') or 'n/a'}`",
+            ]
+          )
+
+          ready_profile_ids = preflight.get("readyProfileIds") or []
+          if ready_profile_ids:
+            lines.append(f"- Ready auth profile IDs: `{', '.join(ready_profile_ids)}`")
+
+          failed_assertions = verdict.get("failedAssertions") or []
+          if failed_assertions:
+            lines.append(f"- Failed assertions: `{', '.join(failed_assertions)}`")
+
+          failure_reasons = verdict.get("failureReasons") or []
+          if failure_reasons:
+            lines.append("")
+            lines.append("### Failure reasons")
+            lines.extend(f"- {reason}" for reason in failure_reasons)
+
+          summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-runtime-benchmark-${{ github.run_id }}
+          path: ${{ env.REPORT_DIR }}
+          if-no-files-found: warn
+          retention-days: 14

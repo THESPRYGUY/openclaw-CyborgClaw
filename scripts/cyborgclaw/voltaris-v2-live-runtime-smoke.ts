@@ -7,6 +7,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { loadConfig, resolveStateDir } from "../../src/config/config.js";
+import { collectLiveAgentTranscriptProof } from "../../src/cyborgclaw/live-agent-proof.js";
 
 const execFileAsync = promisify(execFile);
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
@@ -297,12 +298,16 @@ async function main() {
   const gatewayStdout: string[] = [];
   const gatewayStderr: string[] = [];
   let gatewayProcess: ReturnType<typeof spawn> | null = null;
+  let keepArtifacts = args.keepState;
+  let port: number | undefined;
+  let sourceStateDir: string | undefined;
+  let copiedAuthProfiles = false;
 
   try {
     await ensureDir(tmpHome);
     await ensureDir(stateDir);
 
-    const sourceStateDir = args.authSourceStateDir
+    sourceStateDir = args.authSourceStateDir
       ? path.resolve(args.authSourceStateDir)
       : resolveStateDir(process.env);
     const sourceAuthProfiles = path.join(
@@ -312,7 +317,7 @@ async function main() {
       "agent",
       "auth-profiles.json",
     );
-    const copiedAuthProfiles = await copyFileIfPresent(
+    copiedAuthProfiles = await copyFileIfPresent(
       sourceAuthProfiles,
       path.join(stateDir, "agents", "main", "agent", "auth-profiles.json"),
     );
@@ -326,7 +331,7 @@ async function main() {
     const primaryModel =
       args.model ?? sourceConfig.agents?.defaults?.model?.primary ?? "openai-codex/gpt-5.3-codex";
     const modelFallbacks = sourceConfig.agents?.defaults?.model?.fallbacks ?? [];
-    const port = args.port ?? (await findFreePort());
+    port = args.port ?? (await findFreePort());
 
     const env: NodeJS.ProcessEnv = {
       ...process.env,
@@ -422,6 +427,7 @@ async function main() {
     );
     await waitForGatewayReady(gatewayProcess, gatewayStdout, gatewayStderr);
 
+    const commandStartedAt = Date.now();
     const agentResult = await runJsonCommand(
       env,
       ["agent", "--agent", "voltaris-v2", "--message", args.message, "--json"],
@@ -441,6 +447,31 @@ async function main() {
     }
     const sessionTranscriptPath = path.join(sessionsDir, `${sessionId}.jsonl`);
     const sessionTranscript = await fs.readFile(sessionTranscriptPath, "utf8");
+    const transcriptProof = await collectLiveAgentTranscriptProof({
+      sessionKey: "agent:voltaris-v2:main",
+      expectedSessionId: sessionId,
+      transcriptPath: sessionTranscriptPath,
+      expectedUserText: args.message,
+      payloads:
+        ((agentResult.result as JsonRecord | undefined)?.payloads as Array<{
+          text?: string | null;
+        }>) ?? [],
+      agentMeta: ((agentResult.meta as JsonRecord | undefined)?.agentMeta ??
+        (agentResult.result as JsonRecord | undefined)?.meta?.agentMeta ??
+        undefined) as {
+        sessionId?: string;
+        provider?: string;
+        model?: string;
+      },
+      commandStartedAt,
+      sessionUpdatedAt:
+        typeof sessionEntry.updatedAt === "number" && Number.isFinite(sessionEntry.updatedAt)
+          ? sessionEntry.updatedAt
+          : undefined,
+    });
+    if (!transcriptProof.ok) {
+      throw new Error(`live transcript proof failed:\n- ${transcriptProof.failures.join("\n- ")}`);
+    }
     const workspaceDir = asStringValue(
       (sessionEntry.systemPromptReport as JsonRecord | undefined)?.workspaceDir,
     );
@@ -474,6 +505,7 @@ async function main() {
         sessionId,
         sessionTranscriptPath,
         sessionTranscriptPreview: sessionTranscript.trim().split("\n").slice(0, 6),
+        transcriptProof,
         systemPromptReport: sessionEntry.systemPromptReport ?? null,
         identityText,
       },
@@ -501,6 +533,18 @@ async function main() {
         gatewaySessionLaneObserved: gatewayStdout
           .join("")
           .includes("lane=session:agent:voltaris-v2:main"),
+        transcriptHeaderMatchedSessionId: transcriptProof.header.matchesExpectedSessionId,
+        transcriptFreshAfterCommand:
+          transcriptProof.correlation.assistantTimestampAfterCommand === true &&
+          transcriptProof.correlation.sessionUpdatedAfterCommand === true,
+        transcriptReplyMatchedPayload: transcriptProof.transcript.payloadMatch.matched,
+        transcriptRecordedPositiveUsage:
+          transcriptProof.transcript.latestAssistant.usage !== null &&
+          [
+            transcriptProof.transcript.latestAssistant.usage.input,
+            transcriptProof.transcript.latestAssistant.usage.output,
+            transcriptProof.transcript.latestAssistant.usage.totalTokens,
+          ].some((value) => typeof value === "number" && value > 0),
         identityMatches:
           identityText.includes("Name: Voltaris V2") &&
           identityText.includes("Role: Master Genome Executive"),
@@ -530,11 +574,47 @@ async function main() {
         `Agent reply: ${String((agentResult.result as JsonRecord | undefined)?.payloads ? JSON.stringify((agentResult.result as JsonRecord).payloads) : "")}`,
       );
     }
+  } catch (error) {
+    keepArtifacts = true;
+    const failure = {
+      ok: false,
+      packRef: args.packRef,
+      proofRoot,
+      reportPath,
+      tempRuntime: {
+        profile: args.profile,
+        home: tmpHome,
+        stateDir,
+        configPath,
+        port: port ?? null,
+        authSourceStateDir: sourceStateDir ?? null,
+        copiedAuthProfiles,
+      },
+      commands: commandRuns.map((entry) => entry.command),
+      gatewayProof: {
+        startupLog: gatewayStdout.join(""),
+        startupError: gatewayStderr.join(""),
+      },
+      error: {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+    };
+    await fs.writeFile(reportPath, JSON.stringify(failure, null, 2));
+    if (args.json) {
+      console.log(JSON.stringify(failure, null, 2));
+    } else {
+      console.error("Voltaris V2 live smoke failed.");
+      console.error(`Proof root: ${proofRoot}`);
+      console.error(`Report: ${reportPath}`);
+      console.error(failure.error.message);
+    }
+    process.exitCode = 1;
   } finally {
     if (gatewayProcess) {
       await stopGateway(gatewayProcess);
     }
-    if (!args.keepState) {
+    if (!keepArtifacts) {
       await fs.rm(proofRoot, { recursive: true, force: true });
     }
   }
