@@ -5,6 +5,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   buildBenchmarkReadiness,
+  buildPersistedBenchmarkHistorySummary,
   buildPersistedBenchmarkReceipt,
   buildLiveBenchmarkPreflight,
   evaluateLiveBenchmarkProof,
@@ -560,12 +561,122 @@ describe("persisted benchmark receipt artifacts", () => {
     const historyLines = (await fs.readFile(path.join(persistDir, "history.jsonl"), "utf8"))
       .trim()
       .split("\n");
+    const historySummary = JSON.parse(
+      await fs.readFile(path.join(persistDir, "history-summary.json"), "utf8"),
+    ) as {
+      retainedHistoryCount: number;
+      greenReceiptCount: number;
+      blockedReceiptCount: number;
+      consecutiveGreenCount: number;
+      longestGreenStreak: number;
+    };
 
     expect(latestGreen.generatedAt).toBe("2026-03-25T00:00:00.000Z");
     expect(latestGreen.promotionStatus).toBe("green");
     expect(latestReceipt.generatedAt).toBe("2026-03-25T01:00:00.000Z");
     expect(latestReceipt.promotionStatus).toBe("blocked");
     expect(historyLines).toHaveLength(2);
+    expect(historySummary.retainedHistoryCount).toBe(2);
+    expect(historySummary.greenReceiptCount).toBe(1);
+    expect(historySummary.blockedReceiptCount).toBe(1);
+    expect(historySummary.consecutiveGreenCount).toBe(0);
+    expect(historySummary.longestGreenStreak).toBe(1);
+  });
+
+  it("trims retained history and reports the current green streak window", async () => {
+    const persistDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-live-benchmark-persist-"));
+    tempDirs.push(persistDir);
+
+    const makeReport = (generatedAt: string, promotionStatus: "green" | "blocked") => ({
+      ok: promotionStatus === "green",
+      phase: "run",
+      generatedAt,
+      packRef: "examples/voltaris-v2-pack",
+      profile: "voltaris-proof",
+      modelRef: "openai-codex/gpt-5.3-codex",
+      repeatRuns: 1,
+      repeatDelayMs: 0,
+      greenRunCount: promotionStatus === "green" ? 1 : 0,
+      preflight: {
+        ok: true,
+        modelRef: "openai-codex/gpt-5.3-codex",
+        providerId: "openai-codex",
+        enabled: true,
+        authSourceStateDir: null,
+        authStorePath: null,
+        authStorePresent: true,
+        authProfileCount: 1,
+        readyProfileCount: 1,
+        readyProfileIds: ["proof"],
+        failureReasons: [],
+      },
+      readiness: {
+        preflight: {
+          ok: true,
+          status: "ready",
+          summary: "ready",
+          providerId: "openai-codex",
+          readyProfileCount: 1,
+          readyProfileIds: ["proof"],
+          failureReasons: [],
+        },
+        proof: {
+          ok: promotionStatus === "green",
+          status: promotionStatus === "green" ? "ready" : "blocked",
+          summary: promotionStatus,
+          assertionCount: 4,
+          passedAssertionCount: promotionStatus === "green" ? 4 : 3,
+          failedAssertionCount: promotionStatus === "green" ? 0 : 1,
+          failedAssertions: promotionStatus === "green" ? [] : ["proofStatus"],
+          smokeError: promotionStatus === "green" ? null : "proofStatus",
+          failureReasons: promotionStatus === "green" ? [] : ["proofStatus"],
+        },
+        promotion: {
+          ok: promotionStatus === "green",
+          status: promotionStatus,
+          summary: promotionStatus,
+          failureReasons: promotionStatus === "green" ? [] : ["proofStatus"],
+        },
+      },
+      verdict: {
+        ok: promotionStatus === "green",
+        failedAssertions: promotionStatus === "green" ? [] : ["proofStatus"],
+        assertionCount: 4,
+        passedAssertionCount: promotionStatus === "green" ? 4 : 3,
+        failedAssertionCount: promotionStatus === "green" ? 0 : 1,
+        smokeError: promotionStatus === "green" ? null : "proofStatus",
+        status: promotionStatus === "green" ? "pass" : "fail",
+        failureReasons: promotionStatus === "green" ? [] : ["proofStatus"],
+      },
+    });
+
+    const history: Parameters<typeof buildPersistedBenchmarkReceipt>[0][] = [
+      makeReport("2026-03-25T00:00:00.000Z", "blocked"),
+      makeReport("2026-03-25T01:00:00.000Z", "green"),
+      makeReport("2026-03-25T02:00:00.000Z", "green"),
+    ];
+
+    for (const report of history) {
+      await persistBenchmarkReceiptArtifacts(report, persistDir, 2);
+    }
+
+    const historyLines = (await fs.readFile(path.join(persistDir, "history.jsonl"), "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line) as { generatedAt: string; promotionStatus: string });
+    const historySummary = JSON.parse(
+      await fs.readFile(path.join(persistDir, "history-summary.json"), "utf8"),
+    ) as ReturnType<typeof buildPersistedBenchmarkHistorySummary>;
+
+    expect(historyLines).toHaveLength(2);
+    expect(historyLines[0].generatedAt).toBe("2026-03-25T01:00:00.000Z");
+    expect(historyLines[1].generatedAt).toBe("2026-03-25T02:00:00.000Z");
+    expect(historySummary.retainedHistoryCount).toBe(2);
+    expect(historySummary.retainedHistoryMax).toBe(2);
+    expect(historySummary.greenReceiptCount).toBe(2);
+    expect(historySummary.blockedReceiptCount).toBe(0);
+    expect(historySummary.consecutiveGreenCount).toBe(2);
+    expect(historySummary.longestGreenStreak).toBe(2);
   });
 });
 

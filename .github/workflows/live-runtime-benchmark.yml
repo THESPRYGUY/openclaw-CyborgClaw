@@ -12,6 +12,7 @@ on:
       - "src/cyborgclaw/live-agent-proof.test.ts"
   schedule:
     - cron: "0 9 * * *"
+    - cron: "0 21 * * *"
   workflow_dispatch:
     inputs:
       pack:
@@ -60,6 +61,7 @@ jobs:
       OPENCLAW_LIVE_BENCHMARK_AUTH_PROFILES_JSON: ${{ secrets.OPENCLAW_LIVE_BENCHMARK_AUTH_PROFILES_JSON }}
       OPENCLAW_LIVE_BENCHMARK_REPEAT_RUNS: ${{ github.event.inputs.repeat_runs || '1' }}
       OPENCLAW_LIVE_BENCHMARK_REPEAT_DELAY_MS: ${{ github.event.inputs.repeat_delay_ms || '0' }}
+      OPENCLAW_LIVE_BENCHMARK_HISTORY_MAX: "90"
       LIVE_BENCHMARK_PREFLIGHT_ONLY: ${{ github.event.inputs.preflight_only || 'false' }}
     steps:
       - name: Checkout

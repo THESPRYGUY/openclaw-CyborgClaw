@@ -20,6 +20,7 @@ const DEFAULT_PROFILE = "voltaris-proof";
 const DEFAULT_MODEL = "openai-codex/gpt-5.3-codex";
 const DEFAULT_REPORT_SUBDIR = "live-runtime-benchmark";
 const DEFAULT_PERSIST_SUBDIR = "live-runtime-benchmark";
+const DEFAULT_HISTORY_MAX_ENTRIES = 60;
 const OPENAI_CODEX_DEFAULT_PROFILE_ID = "openai-codex:default";
 const SMOKE_SCRIPT_PATH = path.join(
   REPO_ROOT,
@@ -183,6 +184,24 @@ export type PersistedBenchmarkReceipt = {
   };
 };
 
+export type PersistedBenchmarkHistorySummary = {
+  contractVersion: "openclaw.live-runtime-benchmark-history.v1";
+  generatedAt: string;
+  retainedHistoryCount: number;
+  retainedHistoryMax: number;
+  greenReceiptCount: number;
+  blockedReceiptCount: number;
+  preflightReceiptCount: number;
+  latestGeneratedAt: string | null;
+  oldestGeneratedAt: string | null;
+  latestGreenGeneratedAt: string | null;
+  consecutiveGreenCount: number;
+  longestGreenStreak: number;
+  runwayWindowHours: number;
+  providerIds: string[];
+  modelRefs: string[];
+};
+
 function resolveArg(flag: string): string | undefined {
   const argv = process.argv.slice(2);
   const eq = argv.find((entry) => entry.startsWith(`${flag}=`));
@@ -218,6 +237,13 @@ function parsePositiveInteger(value: string | undefined, fallback: number): numb
     return fallback;
   }
   return parsed;
+}
+
+function resolveHistoryMaxEntries(): number {
+  return parsePositiveInteger(
+    resolveArg("--history-max") ?? process.env.OPENCLAW_LIVE_BENCHMARK_HISTORY_MAX,
+    DEFAULT_HISTORY_MAX_ENTRIES,
+  );
 }
 
 function resolveNonEmptyEnv(name: string): string | undefined {
@@ -943,19 +969,121 @@ export function buildPersistedBenchmarkReceipt(report: GateReport): PersistedBen
   };
 }
 
+function isGreenBenchmarkReceipt(receipt: PersistedBenchmarkReceipt | null | undefined): boolean {
+  if (!receipt) {
+    return false;
+  }
+  return receipt.phase === "run" && receipt.ok && receipt.promotionStatus === "green";
+}
+
+async function readPersistedBenchmarkHistory(
+  persistDir: string,
+): Promise<PersistedBenchmarkReceipt[]> {
+  const historyPath = path.join(path.resolve(persistDir), "history.jsonl");
+  try {
+    const raw = await fs.readFile(historyPath, "utf8");
+    return raw
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        try {
+          return JSON.parse(line) as PersistedBenchmarkReceipt;
+        } catch {
+          return null;
+        }
+      })
+      .filter((entry): entry is PersistedBenchmarkReceipt => Boolean(entry));
+  } catch {
+    return [];
+  }
+}
+
+export function buildPersistedBenchmarkHistorySummary(
+  history: PersistedBenchmarkReceipt[],
+  retainedHistoryMax: number,
+): PersistedBenchmarkHistorySummary {
+  const receipts = Array.isArray(history) ? history : [];
+  let consecutiveGreenCount = 0;
+  let longestGreenStreak = 0;
+  let currentGreenStreak = 0;
+
+  for (const receipt of receipts) {
+    if (isGreenBenchmarkReceipt(receipt)) {
+      currentGreenStreak += 1;
+      longestGreenStreak = Math.max(longestGreenStreak, currentGreenStreak);
+    } else {
+      currentGreenStreak = 0;
+    }
+  }
+
+  for (let index = receipts.length - 1; index >= 0; index -= 1) {
+    if (isGreenBenchmarkReceipt(receipts[index])) {
+      consecutiveGreenCount += 1;
+    } else {
+      break;
+    }
+  }
+
+  const latestReceipt = receipts.at(-1) ?? null;
+  const oldestReceipt = receipts[0] ?? null;
+  const latestGreenReceipt =
+    [...receipts].toReversed().find((receipt) => isGreenBenchmarkReceipt(receipt)) ?? null;
+  const latestTimestamp = latestReceipt?.generatedAt
+    ? Date.parse(latestReceipt.generatedAt)
+    : Number.NaN;
+  const oldestTimestamp = oldestReceipt?.generatedAt
+    ? Date.parse(oldestReceipt.generatedAt)
+    : Number.NaN;
+  const runwayWindowHours =
+    Number.isFinite(latestTimestamp) && Number.isFinite(oldestTimestamp)
+      ? Math.max(0, (latestTimestamp - oldestTimestamp) / (60 * 60 * 1000))
+      : 0;
+
+  return {
+    contractVersion: "openclaw.live-runtime-benchmark-history.v1",
+    generatedAt: new Date().toISOString(),
+    retainedHistoryCount: receipts.length,
+    retainedHistoryMax,
+    greenReceiptCount: receipts.filter((receipt) => isGreenBenchmarkReceipt(receipt)).length,
+    blockedReceiptCount: receipts.filter(
+      (receipt) => receipt.phase === "run" && !isGreenBenchmarkReceipt(receipt),
+    ).length,
+    preflightReceiptCount: receipts.filter((receipt) => receipt.phase === "preflight").length,
+    latestGeneratedAt: latestReceipt?.generatedAt || null,
+    oldestGeneratedAt: oldestReceipt?.generatedAt || null,
+    latestGreenGeneratedAt: latestGreenReceipt?.generatedAt || null,
+    consecutiveGreenCount,
+    longestGreenStreak,
+    runwayWindowHours: Number(runwayWindowHours.toFixed(2)),
+    providerIds: [
+      ...new Set(receipts.map((receipt) => asStringValue(receipt.providerId)).filter(Boolean)),
+    ],
+    modelRefs: [
+      ...new Set(receipts.map((receipt) => asStringValue(receipt.modelRef)).filter(Boolean)),
+    ],
+  };
+}
+
 export async function persistBenchmarkReceiptArtifacts(
   report: GateReport,
   persistDir: string,
+  historyMaxEntries = resolveHistoryMaxEntries(),
 ): Promise<PersistedBenchmarkReceipt> {
   const receipt = buildPersistedBenchmarkReceipt(report);
   const resolvedPersistDir = path.resolve(persistDir);
   await ensureDir(resolvedPersistDir);
+  const retainedHistoryMax = Math.max(1, historyMaxEntries);
+  const existingHistory = await readPersistedBenchmarkHistory(resolvedPersistDir);
+  const nextHistory = [...existingHistory, receipt].slice(-retainedHistoryMax);
+  const historySummary = buildPersistedBenchmarkHistorySummary(nextHistory, retainedHistoryMax);
   await writeJsonFile(path.join(resolvedPersistDir, "latest-receipt.json"), receipt);
-  await fs.appendFile(
+  await fs.writeFile(
     path.join(resolvedPersistDir, "history.jsonl"),
-    `${JSON.stringify(receipt)}\n`,
+    `${nextHistory.map((entry) => JSON.stringify(entry)).join("\n")}\n`,
     "utf8",
   );
+  await writeJsonFile(path.join(resolvedPersistDir, "history-summary.json"), historySummary);
   if (receipt.phase === "run" && receipt.promotionStatus === "green" && receipt.ok) {
     await writeJsonFile(path.join(resolvedPersistDir, "latest-green-receipt.json"), receipt);
   }
