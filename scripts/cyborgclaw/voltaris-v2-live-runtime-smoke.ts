@@ -7,6 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
+import { splitModelRef } from "../../src/agents/subagent-spawn.js";
 import { loadConfig, resolveStateDir } from "../../src/config/config.js";
 import { collectLiveAgentTranscriptProof } from "../../src/cyborgclaw/live-agent-proof.js";
 
@@ -260,7 +261,7 @@ async function waitForGatewayReady(
       }
       settled = true;
       reject(new Error(`gateway did not become ready in time\n${startupLog.join("")}`));
-    }, 20_000);
+    }, 45_000);
 
     const handleChunk = (buffer: Buffer | string, target: string[]) => {
       const text = buffer.toString();
@@ -367,7 +368,8 @@ async function main(): Promise<number> {
     const sourceConfig = loadConfig();
     const primaryModel =
       args.model ?? sourceConfig.agents?.defaults?.model?.primary ?? "openai-codex/gpt-5.3-codex";
-    const modelFallbacks = sourceConfig.agents?.defaults?.model?.fallbacks ?? [];
+    const modelFallbacks: string[] = [];
+    const requestedTarget = splitModelRef(primaryModel);
     port = args.port ?? (await findFreePort());
 
     const env: NodeJS.ProcessEnv = {
@@ -473,6 +475,15 @@ async function main(): Promise<number> {
       ["agent", "--agent", "voltaris-v2", "--message", probeMessage, "--json"],
       commandRuns,
     );
+    const agentMeta = ((agentResult.meta as JsonRecord | undefined)?.agentMeta ??
+      (agentResult.result as JsonRecord | undefined)?.meta?.agentMeta ??
+      undefined) as
+      | {
+          sessionId?: string;
+          provider?: string;
+          model?: string;
+        }
+      | undefined;
 
     const sessionsDir = path.join(stateDir, "agents", "voltaris-v2", "sessions");
     const sessionsIndexPath = path.join(sessionsDir, "sessions.json");
@@ -496,13 +507,9 @@ async function main(): Promise<number> {
         ((agentResult.result as JsonRecord | undefined)?.payloads as Array<{
           text?: string | null;
         }>) ?? [],
-      agentMeta: ((agentResult.meta as JsonRecord | undefined)?.agentMeta ??
-        (agentResult.result as JsonRecord | undefined)?.meta?.agentMeta ??
-        undefined) as {
-        sessionId?: string;
-        provider?: string;
-        model?: string;
-      },
+      agentMeta,
+      expectedProvider: asStringValue(requestedTarget.provider),
+      expectedModel: asStringValue(requestedTarget.model),
       commandStartedAt,
       sessionUpdatedAt:
         typeof sessionEntry.updatedAt === "number" && Number.isFinite(sessionEntry.updatedAt)
@@ -546,6 +553,15 @@ async function main(): Promise<number> {
         correlationToken,
         sessionKey: "agent:voltaris-v2:main",
         sessionId,
+        evidenceSummary: {
+          requestedProvider: asStringValue(requestedTarget.provider),
+          requestedModel: asStringValue(requestedTarget.model),
+          resolvedProvider: asStringValue(agentMeta?.provider),
+          resolvedModel: asStringValue(agentMeta?.model),
+          transcriptProvider: transcriptProof.transcript.latestAssistant.provider,
+          transcriptModel: transcriptProof.transcript.latestAssistant.model,
+          proofStatus: transcriptProof.ok ? "ready" : "blocked",
+        },
         sessionTranscriptPath,
         sessionTranscriptPreview: sessionTranscript.trim().split("\n").slice(0, 6),
         transcriptProof,
@@ -594,6 +610,15 @@ async function main(): Promise<number> {
             transcriptProof.transcript.latestAssistant.usage.output,
             transcriptProof.transcript.latestAssistant.usage.totalTokens,
           ].some((value) => typeof value === "number" && value > 0),
+        requestedProviderMatchedResolved:
+          transcriptProof.target.requestedProviderMatchedResolved === true,
+        requestedModelMatchedResolved:
+          transcriptProof.target.requestedModelMatchedResolved === true,
+        transcriptMatchedRequestedProvider:
+          transcriptProof.target.transcriptProviderMatchedRequested === true,
+        transcriptMatchedRequestedModel:
+          transcriptProof.target.transcriptModelMatchedRequested === true,
+        benchmarkFallbacksDisabled: modelFallbacks.length === 0,
         identityMatches:
           identityText.includes("Name: Voltaris V2") &&
           identityText.includes("Role: Master Genome Executive"),

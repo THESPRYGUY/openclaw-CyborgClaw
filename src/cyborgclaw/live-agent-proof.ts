@@ -35,6 +35,17 @@ type CorrelationTokenEvidence = {
   payloadObserved: boolean | null;
 };
 
+type TranscriptTargetEvidence = {
+  expectedProvider: string | null;
+  expectedModel: string | null;
+  resolvedProvider: string | null;
+  resolvedModel: string | null;
+  requestedProviderMatchedResolved: boolean | null;
+  requestedModelMatchedResolved: boolean | null;
+  transcriptProviderMatchedRequested: boolean | null;
+  transcriptModelMatchedRequested: boolean | null;
+};
+
 export type LiveAgentTranscriptProof = {
   ok: boolean;
   transcriptPath: string;
@@ -55,6 +66,7 @@ export type LiveAgentTranscriptProof = {
     sessionUpdatedAfterCommand: boolean | null;
     assistantTimestampAfterCommand: boolean | null;
   };
+  target: TranscriptTargetEvidence;
   transcript: {
     userMessageCount: number;
     assistantMessageCount: number;
@@ -77,6 +89,8 @@ export type CollectLiveAgentTranscriptProofParams = {
     provider?: string;
     model?: string;
   };
+  expectedProvider?: string;
+  expectedModel?: string;
   commandStartedAt?: number;
   sessionUpdatedAt?: number;
   previewLineCount?: number;
@@ -195,6 +209,10 @@ function buildMissingTranscriptProof(
   params: CollectLiveAgentTranscriptProofParams,
   reason: string,
 ): LiveAgentTranscriptProof {
+  const resolvedProvider = asString(params.agentMeta?.provider);
+  const resolvedModel = asString(params.agentMeta?.model);
+  const expectedProvider = asString(params.expectedProvider);
+  const expectedModel = asString(params.expectedModel);
   return {
     ok: false,
     transcriptPath: params.transcriptPath,
@@ -217,6 +235,18 @@ function buildMissingTranscriptProof(
           ? params.sessionUpdatedAt >= params.commandStartedAt
           : null,
       assistantTimestampAfterCommand: null,
+    },
+    target: {
+      expectedProvider,
+      expectedModel,
+      resolvedProvider,
+      resolvedModel,
+      requestedProviderMatchedResolved:
+        expectedProvider && resolvedProvider ? expectedProvider === resolvedProvider : null,
+      requestedModelMatchedResolved:
+        expectedModel && resolvedModel ? expectedModel === resolvedModel : null,
+      transcriptProviderMatchedRequested: null,
+      transcriptModelMatchedRequested: null,
     },
     transcript: {
       userMessageCount: 0,
@@ -310,6 +340,11 @@ export async function collectLiveAgentTranscriptProof(
   const payloadTexts = normalizeExpectedTexts(params.payloads);
   const payloadMatch = matchExpectedText(latestAssistantText, payloadTexts);
   const correlationToken = asString(params.correlationToken);
+  const expectedProvider =
+    asString(params.expectedProvider) ?? asString(params.agentMeta?.provider);
+  const expectedModel = asString(params.expectedModel) ?? asString(params.agentMeta?.model);
+  const resolvedProvider = asString(params.agentMeta?.provider);
+  const resolvedModel = asString(params.agentMeta?.model);
   const userCorrelationTokenObserved = correlationToken
     ? userMessages.some((message) =>
         containsExactToken(extractMessageText(message), correlationToken),
@@ -364,14 +399,24 @@ export async function collectLiveAgentTranscriptProof(
   if (correlationToken && latestAssistantCorrelationTokenObserved !== true) {
     failures.push("correlation token was not observed in the latest assistant transcript message");
   }
-  if (params.agentMeta?.provider && latestAssistantProvider !== params.agentMeta.provider) {
+  if (params.expectedProvider && resolvedProvider && resolvedProvider !== params.expectedProvider) {
     failures.push(
-      `assistant transcript provider mismatch: expected ${params.agentMeta.provider}, found ${latestAssistantProvider ?? "missing"}`,
+      `agent meta provider mismatch: expected ${params.expectedProvider}, found ${resolvedProvider}`,
     );
   }
-  if (params.agentMeta?.model && latestAssistantModel !== params.agentMeta.model) {
+  if (expectedProvider && latestAssistantProvider !== expectedProvider) {
     failures.push(
-      `assistant transcript model mismatch: expected ${params.agentMeta.model}, found ${latestAssistantModel ?? "missing"}`,
+      `assistant transcript provider mismatch: expected ${expectedProvider}, found ${latestAssistantProvider ?? "missing"}`,
+    );
+  }
+  if (params.expectedModel && resolvedModel && resolvedModel !== params.expectedModel) {
+    failures.push(
+      `agent meta model mismatch: expected ${params.expectedModel}, found ${resolvedModel}`,
+    );
+  }
+  if (expectedModel && latestAssistantModel !== expectedModel) {
+    failures.push(
+      `assistant transcript model mismatch: expected ${expectedModel}, found ${latestAssistantModel ?? "missing"}`,
     );
   }
   if (!hasPositiveUsage(latestAssistantUsage)) {
@@ -403,6 +448,20 @@ export async function collectLiveAgentTranscriptProof(
       sessionUpdatedAt: params.sessionUpdatedAt ?? null,
       sessionUpdatedAfterCommand,
       assistantTimestampAfterCommand,
+    },
+    target: {
+      expectedProvider,
+      expectedModel,
+      resolvedProvider,
+      resolvedModel,
+      requestedProviderMatchedResolved:
+        expectedProvider && resolvedProvider ? expectedProvider === resolvedProvider : null,
+      requestedModelMatchedResolved:
+        expectedModel && resolvedModel ? expectedModel === resolvedModel : null,
+      transcriptProviderMatchedRequested:
+        expectedProvider != null ? latestAssistantProvider === expectedProvider : null,
+      transcriptModelMatchedRequested:
+        expectedModel != null ? latestAssistantModel === expectedModel : null,
     },
     transcript: {
       userMessageCount: userMessages.length,

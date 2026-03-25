@@ -25,6 +25,14 @@ on:
       model:
         description: "Model ref for the live benchmark run"
         required: false
+      repeat_runs:
+        description: "How many strict live runs to require in sequence"
+        required: false
+        default: "1"
+      repeat_delay_ms:
+        description: "Delay between repeated strict live runs in milliseconds"
+        required: false
+        default: "0"
       preflight_only:
         description: "Run only the hard preflight checks"
         required: false
@@ -49,6 +57,8 @@ jobs:
       OPENCLAW_LIVE_BENCHMARK_ENABLED: ${{ vars.OPENCLAW_LIVE_BENCHMARK_ENABLED }}
       OPENCLAW_LIVE_BENCHMARK_MODEL: ${{ github.event.inputs.model || vars.OPENCLAW_LIVE_BENCHMARK_MODEL }}
       OPENCLAW_LIVE_BENCHMARK_AUTH_PROFILES_JSON: ${{ secrets.OPENCLAW_LIVE_BENCHMARK_AUTH_PROFILES_JSON }}
+      OPENCLAW_LIVE_BENCHMARK_REPEAT_RUNS: ${{ github.event.inputs.repeat_runs || '1' }}
+      OPENCLAW_LIVE_BENCHMARK_REPEAT_DELAY_MS: ${{ github.event.inputs.repeat_delay_ms || '0' }}
       LIVE_BENCHMARK_PREFLIGHT_ONLY: ${{ github.event.inputs.preflight_only || 'false' }}
     steps:
       - name: Checkout
@@ -83,6 +93,20 @@ jobs:
             --pack "$LIVE_BENCHMARK_PACK_REF"
             --profile "$LIVE_BENCHMARK_PROFILE"
           )
+          repeat_runs="${OPENCLAW_LIVE_BENCHMARK_REPEAT_RUNS:-}"
+          repeat_delay_ms="${OPENCLAW_LIVE_BENCHMARK_REPEAT_DELAY_MS:-}"
+          if [ "${GITHUB_EVENT_NAME:-}" = "schedule" ] && [ -z "$repeat_runs" -o "$repeat_runs" = "1" ]; then
+            repeat_runs=3
+          fi
+          if [ "${GITHUB_EVENT_NAME:-}" = "schedule" ] && [ -z "$repeat_delay_ms" -o "$repeat_delay_ms" = "0" ]; then
+            repeat_delay_ms=30000
+          fi
+          if [ -n "${repeat_runs:-}" ]; then
+            args+=(--repeat-runs "$repeat_runs")
+          fi
+          if [ -n "${repeat_delay_ms:-}" ]; then
+            args+=(--repeat-delay-ms "$repeat_delay_ms")
+          fi
           if [ -n "${OPENCLAW_LIVE_BENCHMARK_MODEL:-}" ]; then
             args+=(--model "$OPENCLAW_LIVE_BENCHMARK_MODEL")
           fi
@@ -133,6 +157,9 @@ jobs:
               f"- Promotion readiness: `{readiness_promotion.get('status') or ('green' if report.get('ok') and report.get('phase') == 'run' else 'blocked')}`",
               f"- Promotion summary: {readiness_promotion.get('summary') or 'n/a'}",
               f"- Model: `{report.get('modelRef') or 'n/a'}`",
+              f"- Repeat runs requested: `{report.get('repeatRuns', 1)}`",
+              f"- Green runs observed: `{report.get('greenRunCount', 0)}`",
+              f"- Repeat delay (ms): `{report.get('repeatDelayMs', 0)}`",
               f"- Provider: `{preflight.get('providerId') or 'n/a'}`",
               f"- Ready auth profiles: `{preflight.get('readyProfileCount', 0)}`",
               f"- Auth store path: `{preflight.get('authStorePath') or 'n/a'}`",
@@ -162,6 +189,18 @@ jobs:
             lines.append("")
             lines.append("### Failure reasons")
             lines.extend(f"- {reason}" for reason in failure_reasons)
+
+          smoke_runs = report.get("smokeRuns") or []
+          if smoke_runs:
+            lines.append("")
+            lines.append("### Repeated run results")
+            for smoke_run in smoke_runs:
+              proof = smoke_run.get("proof") or {}
+              run_index = smoke_run.get("runIndex")
+              proof_summary = (proof.get("runtimeSmoke") or {}).get("evidenceSummary") or {}
+              lines.append(
+                f"- Run {run_index}: `{'pass' if smoke_run.get('ok') else 'fail'}` • requested `{proof_summary.get('requestedProvider') or 'n/a'} / {proof_summary.get('requestedModel') or 'n/a'}` • transcript `{proof_summary.get('transcriptProvider') or 'n/a'} / {proof_summary.get('transcriptModel') or 'n/a'}`"
+              )
 
           summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY

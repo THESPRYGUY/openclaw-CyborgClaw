@@ -77,6 +77,8 @@ describe("collectLiveAgentTranscriptProof", () => {
         provider: "openai",
         model: "gpt-5.3-codex",
       },
+      expectedProvider: "openai",
+      expectedModel: "gpt-5.3-codex",
       commandStartedAt,
       sessionUpdatedAt: commandStartedAt + 40,
     });
@@ -86,6 +88,16 @@ describe("collectLiveAgentTranscriptProof", () => {
     expect(proof.header.matchesExpectedSessionId).toBe(true);
     expect(proof.correlation.sessionUpdatedAfterCommand).toBe(true);
     expect(proof.correlation.assistantTimestampAfterCommand).toBe(true);
+    expect(proof.target).toEqual({
+      expectedProvider: "openai",
+      expectedModel: "gpt-5.3-codex",
+      resolvedProvider: "openai",
+      resolvedModel: "gpt-5.3-codex",
+      requestedProviderMatchedResolved: true,
+      requestedModelMatchedResolved: true,
+      transcriptProviderMatchedRequested: true,
+      transcriptModelMatchedRequested: true,
+    });
     expect(proof.transcript.correlationToken).toEqual({
       value: correlationToken,
       userObserved: true,
@@ -148,6 +160,8 @@ describe("collectLiveAgentTranscriptProof", () => {
         provider: "openai",
         model: "gpt-5.3-codex",
       },
+      expectedProvider: "openai-codex",
+      expectedModel: "gpt-5.4-mini",
       commandStartedAt,
       sessionUpdatedAt: commandStartedAt - 1,
     });
@@ -158,6 +172,12 @@ describe("collectLiveAgentTranscriptProof", () => {
     );
     expect(proof.failures).toContain(
       "agent meta sessionId mismatch: expected sess-1, found sess-2",
+    );
+    expect(proof.failures).toContain(
+      "agent meta provider mismatch: expected openai-codex, found openai",
+    );
+    expect(proof.failures).toContain(
+      "agent meta model mismatch: expected gpt-5.4-mini, found gpt-5.3-codex",
     );
     expect(proof.failures).toContain(
       "correlation token was not observed in any user transcript message",
@@ -172,10 +192,10 @@ describe("collectLiveAgentTranscriptProof", () => {
       "latest assistant transcript text did not match the returned payload text",
     );
     expect(proof.failures).toContain(
-      "assistant transcript provider mismatch: expected openai, found anthropic",
+      "assistant transcript provider mismatch: expected openai-codex, found anthropic",
     );
     expect(proof.failures).toContain(
-      "assistant transcript model mismatch: expected gpt-5.3-codex, found claude-sonnet",
+      "assistant transcript model mismatch: expected gpt-5.4-mini, found claude-sonnet",
     );
     expect(proof.failures).toContain(
       "latest assistant transcript message did not record positive token usage",

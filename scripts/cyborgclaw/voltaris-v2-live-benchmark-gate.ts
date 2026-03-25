@@ -34,6 +34,8 @@ type Args = {
   model: string;
   enabled: boolean;
   preflightOnly: boolean;
+  repeatRuns: number;
+  repeatDelayMs: number;
   authSourceStateDir?: string;
   authProfilesJsonPath?: string;
   authProfilesJsonInline?: string;
@@ -76,6 +78,7 @@ type SmokeProof = {
 };
 
 export type BenchmarkSmokeReport = {
+  runIndex: number;
   ok: boolean;
   command: string[];
   stdoutPath: string | null;
@@ -121,9 +124,13 @@ type GateReport = {
   packRef: string;
   profile: string;
   modelRef: string;
+  repeatRuns: number;
+  repeatDelayMs: number;
+  greenRunCount: number;
   preflight: BenchmarkPreflight;
   readiness: BenchmarkReadiness;
   smoke?: BenchmarkSmokeReport;
+  smokeRuns?: BenchmarkSmokeReport[];
   verdict: BenchmarkVerdict;
 };
 
@@ -152,6 +159,18 @@ function normalizeBooleanEnv(value: string | undefined): boolean {
   );
 }
 
+function parsePositiveInteger(value: string | undefined, fallback: number): number {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return fallback;
+  }
+  const parsed = Number.parseInt(normalized, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return parsed;
+}
+
 function resolveNonEmptyEnv(name: string): string | undefined {
   const value = process.env[name]?.trim();
   return value ? value : undefined;
@@ -174,6 +193,15 @@ function parseArgs(): Args {
       resolveArg("--model") ?? resolveNonEmptyEnv("OPENCLAW_LIVE_BENCHMARK_MODEL") ?? DEFAULT_MODEL,
     enabled: normalizeBooleanEnv(process.env.OPENCLAW_LIVE_BENCHMARK_ENABLED),
     preflightOnly: hasFlag("--preflight-only"),
+    repeatRuns: parsePositiveInteger(
+      resolveArg("--repeat-runs") ?? resolveNonEmptyEnv("OPENCLAW_LIVE_BENCHMARK_REPEAT_RUNS"),
+      1,
+    ),
+    repeatDelayMs: parsePositiveInteger(
+      resolveArg("--repeat-delay-ms") ??
+        resolveNonEmptyEnv("OPENCLAW_LIVE_BENCHMARK_REPEAT_DELAY_MS"),
+      0,
+    ),
     authSourceStateDir: resolveArg("--auth-source-state-dir"),
     authProfilesJsonPath: resolveArg("--auth-profiles-json-path"),
     authProfilesJsonInline:
@@ -537,11 +565,59 @@ export function evaluateLiveBenchmarkProof(proof: SmokeProof | null): BenchmarkV
   };
 }
 
+function aggregateBenchmarkVerdicts(verdicts: BenchmarkVerdict[]): BenchmarkVerdict {
+  if (verdicts.length === 0) {
+    return {
+      ok: false,
+      failedAssertions: [],
+      assertionCount: 0,
+      passedAssertionCount: 0,
+      failedAssertionCount: 0,
+      smokeError: "No live smoke runs were executed.",
+      status: "fail",
+      failureReasons: ["No live smoke runs were executed."],
+    };
+  }
+  if (verdicts.length === 1) {
+    return verdicts[0];
+  }
+
+  const failureReasons: string[] = [];
+  const failedAssertions: string[] = [];
+  let assertionCount = 0;
+  let passedAssertionCount = 0;
+  let failedAssertionCount = 0;
+
+  for (const [index, verdict] of verdicts.entries()) {
+    assertionCount += verdict.assertionCount;
+    passedAssertionCount += verdict.passedAssertionCount;
+    failedAssertionCount += verdict.failedAssertionCount;
+    failedAssertions.push(
+      ...verdict.failedAssertions.map((assertion) => `run${index + 1}:${assertion}`),
+    );
+    if (!verdict.ok) {
+      failureReasons.push(...verdict.failureReasons.map((reason) => `Run ${index + 1}: ${reason}`));
+    }
+  }
+
+  return {
+    ok: failureReasons.length === 0,
+    failedAssertions,
+    assertionCount,
+    passedAssertionCount,
+    failedAssertionCount,
+    smokeError: failureReasons[0] ?? null,
+    status: failureReasons.length === 0 ? "pass" : "fail",
+    failureReasons,
+  };
+}
+
 export function buildBenchmarkReadiness(params: {
   phase: "preflight" | "run";
   preflight: BenchmarkPreflight;
   verdict: BenchmarkVerdict;
   smoke?: BenchmarkSmokeReport;
+  smokeRuns?: BenchmarkSmokeReport[];
 }): BenchmarkReadiness {
   const preflightReady = params.preflight.ok;
   const preflightFailureReasons = [...params.preflight.failureReasons];
@@ -557,12 +633,20 @@ export function buildBenchmarkReadiness(params: {
   const smokeArtifactsCaptured = Boolean(
     params.smoke?.reportCopyPath || params.smoke?.proofRootCopyPath,
   );
+  const smokeRunCount =
+    Array.isArray(params.smokeRuns) && params.smokeRuns.length > 0
+      ? params.smokeRuns.length
+      : params.smoke
+        ? 1
+        : 0;
   const proofSummary = proofNotRun
     ? params.phase === "preflight"
       ? "Proof gate was not executed, so the lane is not promotable yet."
       : "Proof gate did not run because preflight readiness failed."
     : proofReady
-      ? `${params.verdict.passedAssertionCount}/${params.verdict.assertionCount} proof assertions passed${smokeArtifactsCaptured ? "; proof artifacts captured." : "."}`
+      ? smokeRunCount > 1
+        ? `${smokeRunCount}/${smokeRunCount} repeated proof runs passed with ${params.verdict.passedAssertionCount}/${params.verdict.assertionCount} assertions${smokeArtifactsCaptured ? "; proof artifacts captured." : "."}`
+        : `${params.verdict.passedAssertionCount}/${params.verdict.assertionCount} proof assertions passed${smokeArtifactsCaptured ? "; proof artifacts captured." : "."}`
       : params.verdict.failedAssertionCount > 0
         ? `${params.verdict.failedAssertionCount}/${params.verdict.assertionCount} proof assertions failed.`
         : (proofFailureReasons[0] ?? "Proof readiness is blocked.");
@@ -661,6 +745,7 @@ async function runSmoke(
   const stdoutPath = path.join(reportDir, "smoke.stdout.log");
   const stderrPath = path.join(reportDir, "smoke.stderr.log");
   const command = buildSmokeCommand(args, authSourceStateDir);
+  await ensureDir(reportDir);
 
   let stdout = "";
   let stderr = "";
@@ -724,9 +809,12 @@ function buildGateReport(params: {
   packRef: string;
   profile: string;
   modelRef: string;
+  repeatRuns: number;
+  repeatDelayMs: number;
   preflight: BenchmarkPreflight;
   verdict: BenchmarkVerdict;
   smoke?: BenchmarkSmokeReport;
+  smokeRuns?: BenchmarkSmokeReport[];
 }): GateReport {
   return {
     ok: params.ok,
@@ -735,14 +823,23 @@ function buildGateReport(params: {
     packRef: params.packRef,
     profile: params.profile,
     modelRef: params.modelRef,
+    repeatRuns: params.repeatRuns,
+    repeatDelayMs: params.repeatDelayMs,
+    greenRunCount: Array.isArray(params.smokeRuns)
+      ? params.smokeRuns.filter((run) => run.ok).length
+      : params.smoke?.ok
+        ? 1
+        : 0,
     preflight: params.preflight,
     readiness: buildBenchmarkReadiness({
       phase: params.phase,
       preflight: params.preflight,
       verdict: params.verdict,
       smoke: params.smoke,
+      smokeRuns: params.smokeRuns,
     }),
     smoke: params.smoke,
+    smokeRuns: params.smokeRuns,
     verdict: params.verdict,
   };
 }
@@ -771,6 +868,8 @@ async function main(): Promise<void> {
       packRef: args.packRef,
       profile: args.profile,
       modelRef: args.model,
+      repeatRuns: args.repeatRuns,
+      repeatDelayMs: args.repeatDelayMs,
       preflight,
       verdict: {
         ok: preflight.ok,
@@ -793,6 +892,8 @@ async function main(): Promise<void> {
       packRef: args.packRef,
       profile: args.profile,
       modelRef: args.model,
+      repeatRuns: args.repeatRuns,
+      repeatDelayMs: args.repeatDelayMs,
       preflight,
       verdict: {
         ok: false,
@@ -809,24 +910,73 @@ async function main(): Promise<void> {
   }
 
   try {
-    const smoke = await runSmoke(args, authSource.stateDir, reportDir);
-    const verdict = evaluateLiveBenchmarkProof(smoke.proof);
+    const smokeRuns: BenchmarkSmokeReport[] = [];
+    const runVerdicts: BenchmarkVerdict[] = [];
+    for (let runIndex = 0; runIndex < Math.max(1, args.repeatRuns); runIndex += 1) {
+      const runReportDir =
+        args.repeatRuns > 1
+          ? path.join(reportDir, `run-${String(runIndex + 1).padStart(2, "0")}`)
+          : reportDir;
+      try {
+        const smoke = await runSmoke(args, authSource.stateDir, runReportDir);
+        const verdict = evaluateLiveBenchmarkProof(smoke.proof);
+        smokeRuns.push({
+          runIndex: runIndex + 1,
+          ok: smoke.proof?.ok === true && verdict.ok,
+          command: ["node", ...smoke.command],
+          stdoutPath: smoke.stdoutPath,
+          stderrPath: smoke.stderrPath,
+          reportCopyPath: smoke.reportCopyPath,
+          proofRootCopyPath: smoke.proofRootCopyPath,
+          proof: smoke.proof,
+        });
+        runVerdicts.push(verdict);
+        if (!verdict.ok) {
+          break;
+        }
+      } catch (error) {
+        const stdoutPath = path.join(runReportDir, "smoke.stdout.log");
+        const stderrPath = path.join(runReportDir, "smoke.stderr.log");
+        smokeRuns.push({
+          runIndex: runIndex + 1,
+          ok: false,
+          command: ["node", ...buildSmokeCommand(args, authSource.stateDir)],
+          stdoutPath: (await pathExists(stdoutPath)) ? stdoutPath : null,
+          stderrPath: (await pathExists(stderrPath)) ? stderrPath : null,
+          reportCopyPath: null,
+          proofRootCopyPath: null,
+          proof: null,
+        });
+        runVerdicts.push({
+          ok: false,
+          failedAssertions: [],
+          assertionCount: 0,
+          passedAssertionCount: 0,
+          failedAssertionCount: 0,
+          smokeError: String((error as Error).message || error),
+          status: "fail",
+          failureReasons: [String((error as Error).message || error)],
+        });
+        break;
+      }
+      if (args.repeatDelayMs > 0 && runIndex + 1 < args.repeatRuns) {
+        await new Promise((resolve) => setTimeout(resolve, args.repeatDelayMs));
+      }
+    }
+
+    const verdict = aggregateBenchmarkVerdicts(runVerdicts);
+    const latestSmoke = smokeRuns.at(-1);
     const report = buildGateReport({
       ok: verdict.ok,
       phase: "run",
       packRef: args.packRef,
       profile: args.profile,
       modelRef: args.model,
+      repeatRuns: args.repeatRuns,
+      repeatDelayMs: args.repeatDelayMs,
       preflight,
-      smoke: {
-        ok: smoke.proof?.ok === true,
-        command: ["node", ...smoke.command],
-        stdoutPath: smoke.stdoutPath,
-        stderrPath: smoke.stderrPath,
-        reportCopyPath: smoke.reportCopyPath,
-        proofRootCopyPath: smoke.proofRootCopyPath,
-        proof: smoke.proof,
-      },
+      smoke: latestSmoke,
+      smokeRuns,
       verdict,
     });
     await summarizeAndExit(reportPath, report, verdict.ok ? 0 : 1);
@@ -842,8 +992,11 @@ async function main(): Promise<void> {
       packRef: args.packRef,
       profile: args.profile,
       modelRef: args.model,
+      repeatRuns: args.repeatRuns,
+      repeatDelayMs: args.repeatDelayMs,
       preflight,
       smoke: {
+        runIndex: 1,
         ok: false,
         command: smokeCommand,
         stdoutPath: (await pathExists(stdoutPath)) ? stdoutPath : null,
