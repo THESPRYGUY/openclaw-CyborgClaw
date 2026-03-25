@@ -5,8 +5,10 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   buildBenchmarkReadiness,
+  buildPersistedBenchmarkReceipt,
   buildLiveBenchmarkPreflight,
   evaluateLiveBenchmarkProof,
+  persistBenchmarkReceiptArtifacts,
 } from "../scripts/cyborgclaw/voltaris-v2-live-benchmark-gate.ts";
 import type { AuthProfileStore } from "../src/agents/auth-profiles/types.js";
 
@@ -320,6 +322,253 @@ describe("buildBenchmarkReadiness", () => {
   });
 });
 
+describe("persisted benchmark receipt artifacts", () => {
+  it("sanitizes a passing run into a compact receipt", () => {
+    const receipt = buildPersistedBenchmarkReceipt({
+      ok: true,
+      phase: "run",
+      generatedAt: "2026-03-25T00:00:00.000Z",
+      packRef: "examples/voltaris-v2-pack",
+      profile: "voltaris-proof",
+      modelRef: "openai-codex/gpt-5.3-codex",
+      repeatRuns: 3,
+      repeatDelayMs: 30000,
+      greenRunCount: 3,
+      preflight: {
+        ok: true,
+        modelRef: "openai-codex/gpt-5.3-codex",
+        providerId: "openai-codex",
+        enabled: true,
+        authSourceStateDir: "/tmp/auth-source",
+        authStorePath: "/tmp/auth-source/agents/main/agent/auth-profiles.json",
+        authStorePresent: true,
+        authProfileCount: 1,
+        readyProfileCount: 1,
+        readyProfileIds: ["proof"],
+        failureReasons: [],
+      },
+      readiness: {
+        preflight: {
+          ok: true,
+          status: "ready",
+          summary: "Provider auth is ready.",
+          providerId: "openai-codex",
+          readyProfileCount: 1,
+          readyProfileIds: ["proof"],
+          failureReasons: [],
+        },
+        proof: {
+          ok: true,
+          status: "ready",
+          summary: "Smoke proof passed.",
+          assertionCount: 18,
+          passedAssertionCount: 18,
+          failedAssertionCount: 0,
+          failedAssertions: [],
+          smokeError: null,
+          failureReasons: [],
+        },
+        promotion: {
+          ok: true,
+          status: "green",
+          summary: "Promotion is green.",
+          failureReasons: [],
+        },
+      },
+      smoke: {
+        runIndex: 3,
+        ok: true,
+        command: ["node", "smoke.js"],
+        stdoutPath: "/tmp/stdout.log",
+        stderrPath: "/tmp/stderr.log",
+        reportCopyPath: "/tmp/smoke-report.json",
+        proofRootCopyPath: "/tmp/smoke-proof",
+        proof: {
+          ok: true,
+          runtimeSmoke: {
+            evidenceSummary: {
+              requestedProvider: "openai-codex",
+              requestedModel: "gpt-5.3-codex",
+              resolvedProvider: "openai-codex",
+              resolvedModel: "gpt-5.3-codex",
+              transcriptProvider: "openai-codex",
+              transcriptModel: "gpt-5.3-codex",
+              proofStatus: "ready",
+            },
+          },
+        },
+      },
+      smokeRuns: [
+        {
+          runIndex: 1,
+          ok: true,
+          command: ["node", "smoke.js"],
+          stdoutPath: null,
+          stderrPath: null,
+          reportCopyPath: null,
+          proofRootCopyPath: null,
+          proof: {
+            ok: true,
+            runtimeSmoke: {
+              evidenceSummary: {
+                requestedProvider: "openai-codex",
+                requestedModel: "gpt-5.3-codex",
+                resolvedProvider: "openai-codex",
+                resolvedModel: "gpt-5.3-codex",
+                transcriptProvider: "openai-codex",
+                transcriptModel: "gpt-5.3-codex",
+                proofStatus: "ready",
+              },
+            },
+          },
+        },
+      ],
+      verdict: {
+        ok: true,
+        failedAssertions: [],
+        assertionCount: 18,
+        passedAssertionCount: 18,
+        failedAssertionCount: 0,
+        smokeError: null,
+        status: "pass",
+        failureReasons: [],
+      },
+    });
+
+    expect(receipt.contractVersion).toBe("openclaw.live-runtime-benchmark-receipt.v1");
+    expect(receipt.promotionStatus).toBe("green");
+    expect(receipt.latestRun).toMatchObject({
+      runIndex: 3,
+      requestedProvider: "openai-codex",
+      transcriptModel: "gpt-5.3-codex",
+    });
+    expect(receipt.runs).toHaveLength(1);
+    expect(receipt.runs[0]).not.toHaveProperty("stdoutPath");
+  });
+
+  it("keeps the last verified green receipt while appending later blocked runs to history", async () => {
+    const persistDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-live-benchmark-persist-"));
+    tempDirs.push(persistDir);
+
+    const greenReport = {
+      ok: true,
+      phase: "run",
+      generatedAt: "2026-03-25T00:00:00.000Z",
+      packRef: "examples/voltaris-v2-pack",
+      profile: "voltaris-proof",
+      modelRef: "openai-codex/gpt-5.3-codex",
+      repeatRuns: 2,
+      repeatDelayMs: 0,
+      greenRunCount: 2,
+      preflight: {
+        ok: true,
+        modelRef: "openai-codex/gpt-5.3-codex",
+        providerId: "openai-codex",
+        enabled: true,
+        authSourceStateDir: null,
+        authStorePath: null,
+        authStorePresent: true,
+        authProfileCount: 1,
+        readyProfileCount: 1,
+        readyProfileIds: ["proof"],
+        failureReasons: [],
+      },
+      readiness: {
+        preflight: {
+          ok: true,
+          status: "ready",
+          summary: "ready",
+          providerId: "openai-codex",
+          readyProfileCount: 1,
+          readyProfileIds: ["proof"],
+          failureReasons: [],
+        },
+        proof: {
+          ok: true,
+          status: "ready",
+          summary: "ready",
+          assertionCount: 4,
+          passedAssertionCount: 4,
+          failedAssertionCount: 0,
+          failedAssertions: [],
+          smokeError: null,
+          failureReasons: [],
+        },
+        promotion: {
+          ok: true,
+          status: "green",
+          summary: "green",
+          failureReasons: [],
+        },
+      },
+      verdict: {
+        ok: true,
+        failedAssertions: [],
+        assertionCount: 4,
+        passedAssertionCount: 4,
+        failedAssertionCount: 0,
+        smokeError: null,
+        status: "pass",
+        failureReasons: [],
+      },
+    };
+
+    const blockedReport = {
+      ...greenReport,
+      ok: false,
+      generatedAt: "2026-03-25T01:00:00.000Z",
+      greenRunCount: 0,
+      readiness: {
+        ...greenReport.readiness,
+        proof: {
+          ...greenReport.readiness.proof,
+          ok: false,
+          status: "blocked",
+          passedAssertionCount: 3,
+          failedAssertionCount: 1,
+          failedAssertions: ["transcriptReplyMatchedPayload"],
+          failureReasons: ["Transcript proof failed."],
+        },
+        promotion: {
+          ok: false,
+          status: "blocked",
+          summary: "blocked",
+          failureReasons: ["Transcript proof failed."],
+        },
+      },
+      verdict: {
+        ok: false,
+        failedAssertions: ["transcriptReplyMatchedPayload"],
+        assertionCount: 4,
+        passedAssertionCount: 3,
+        failedAssertionCount: 1,
+        smokeError: "Transcript proof failed.",
+        status: "fail",
+        failureReasons: ["Transcript proof failed."],
+      },
+    };
+
+    await persistBenchmarkReceiptArtifacts(greenReport, persistDir);
+    await persistBenchmarkReceiptArtifacts(blockedReport, persistDir);
+
+    const latestGreen = JSON.parse(
+      await fs.readFile(path.join(persistDir, "latest-green-receipt.json"), "utf8"),
+    ) as { generatedAt: string; promotionStatus: string };
+    const latestReceipt = JSON.parse(
+      await fs.readFile(path.join(persistDir, "latest-receipt.json"), "utf8"),
+    ) as { generatedAt: string; promotionStatus: string };
+    const historyLines = (await fs.readFile(path.join(persistDir, "history.jsonl"), "utf8"))
+      .trim()
+      .split("\n");
+
+    expect(latestGreen.generatedAt).toBe("2026-03-25T00:00:00.000Z");
+    expect(latestGreen.promotionStatus).toBe("green");
+    expect(latestReceipt.generatedAt).toBe("2026-03-25T01:00:00.000Z");
+    expect(latestReceipt.promotionStatus).toBe("blocked");
+    expect(historyLines).toHaveLength(2);
+  });
+});
+
 describe("voltaris-v2-live-benchmark-gate CLI", () => {
   it("writes a passing preflight report when provider auth state is seeded from env", async () => {
     const reportDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-live-benchmark-gate-"));
@@ -479,5 +728,53 @@ describe("voltaris-v2-live-benchmark-gate CLI", () => {
       refresh: "fresh-refresh",
       accountId: "acct-live-proof",
     });
+  });
+
+  it("persists a compact receipt artifact for preflight runs", async () => {
+    const reportDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-live-benchmark-gate-"));
+    const persistDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-live-benchmark-persist-"));
+    tempDirs.push(reportDir, persistDir);
+
+    const seededStore = makeStore({
+      profiles: {
+        proof: { type: "api_key", provider: "openai-codex", key: "sk-proof" },
+      },
+    });
+
+    execFileSync(
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        "scripts/cyborgclaw/voltaris-v2-live-benchmark-gate.ts",
+        "--preflight-only",
+        `--report-dir=${reportDir}`,
+        `--persist-dir=${persistDir}`,
+      ],
+      {
+        cwd: REPO_ROOT,
+        env: {
+          ...process.env,
+          OPENCLAW_LIVE_BENCHMARK_ENABLED: "true",
+          OPENCLAW_LIVE_BENCHMARK_MODEL: "openai-codex/gpt-5.3-codex",
+          OPENCLAW_LIVE_BENCHMARK_AUTH_PROFILES_JSON: JSON.stringify(seededStore),
+        },
+        stdio: "pipe",
+      },
+    );
+
+    const latestReceipt = JSON.parse(
+      await fs.readFile(path.join(persistDir, "latest-receipt.json"), "utf8"),
+    ) as { phase: string; preflightStatus: string };
+    const historyLines = (await fs.readFile(path.join(persistDir, "history.jsonl"), "utf8"))
+      .trim()
+      .split("\n");
+
+    expect(latestReceipt.phase).toBe("preflight");
+    expect(latestReceipt.preflightStatus).toBe("ready");
+    expect(historyLines).toHaveLength(1);
+    expect(
+      await fs.stat(path.join(persistDir, "latest-green-receipt.json")).catch(() => null),
+    ).toBeNull();
   });
 });

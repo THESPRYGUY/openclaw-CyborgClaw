@@ -19,6 +19,7 @@ const DEFAULT_PACK_REF = "examples/voltaris-v2-pack";
 const DEFAULT_PROFILE = "voltaris-proof";
 const DEFAULT_MODEL = "openai-codex/gpt-5.3-codex";
 const DEFAULT_REPORT_SUBDIR = "live-runtime-benchmark";
+const DEFAULT_PERSIST_SUBDIR = "live-runtime-benchmark";
 const OPENAI_CODEX_DEFAULT_PROFILE_ID = "openai-codex:default";
 const SMOKE_SCRIPT_PATH = path.join(
   REPO_ROOT,
@@ -29,6 +30,7 @@ const SMOKE_SCRIPT_PATH = path.join(
 
 type Args = {
   reportDir: string;
+  persistDir: string;
   packRef: string;
   profile: string;
   model: string;
@@ -70,6 +72,9 @@ type SmokeProof = {
   ok?: boolean;
   proofRoot?: string;
   reportPath?: string;
+  runtimeSmoke?: {
+    evidenceSummary?: Record<string, unknown>;
+  };
   assertions?: Record<string, unknown>;
   error?: {
     message?: string;
@@ -134,6 +139,50 @@ type GateReport = {
   verdict: BenchmarkVerdict;
 };
 
+type PersistedBenchmarkRunSummary = {
+  runIndex: number;
+  ok: boolean;
+  requestedProvider: string | null;
+  requestedModel: string | null;
+  resolvedProvider: string | null;
+  resolvedModel: string | null;
+  transcriptProvider: string | null;
+  transcriptModel: string | null;
+  proofStatus: string | null;
+};
+
+export type PersistedBenchmarkReceipt = {
+  contractVersion: "openclaw.live-runtime-benchmark-receipt.v1";
+  generatedAt: string;
+  ok: boolean;
+  phase: "preflight" | "run";
+  packRef: string;
+  profile: string;
+  modelRef: string;
+  repeatRuns: number;
+  repeatDelayMs: number;
+  greenRunCount: number;
+  providerId: string | null;
+  readyProfileCount: number;
+  readyProfileIds: string[];
+  preflightStatus: BenchmarkReadiness["preflight"]["status"];
+  proofStatus: BenchmarkReadiness["proof"]["status"];
+  promotionStatus: BenchmarkReadiness["promotion"]["status"];
+  assertionCount: number;
+  passedAssertionCount: number;
+  failedAssertionCount: number;
+  failedAssertions: string[];
+  failureReasons: string[];
+  latestRun: PersistedBenchmarkRunSummary | null;
+  runs: PersistedBenchmarkRunSummary[];
+  workflow: {
+    eventName: string | null;
+    runId: string | null;
+    runAttempt: string | null;
+    sha: string | null;
+  };
+};
+
 function resolveArg(flag: string): string | undefined {
   const argv = process.argv.slice(2);
   const eq = argv.find((entry) => entry.startsWith(`${flag}=`));
@@ -184,9 +233,22 @@ function resolveReportDir(): string {
   return path.join(os.tmpdir(), DEFAULT_REPORT_SUBDIR);
 }
 
+function resolvePersistDir(): string {
+  const explicit = resolveArg("--persist-dir");
+  if (explicit) {
+    return path.resolve(explicit);
+  }
+  const envValue = resolveNonEmptyEnv("OPENCLAW_LIVE_BENCHMARK_PERSIST_DIR");
+  if (envValue) {
+    return path.resolve(envValue);
+  }
+  return path.join(os.homedir(), ".openclaw", DEFAULT_PERSIST_SUBDIR);
+}
+
 function parseArgs(): Args {
   return {
     reportDir: resolveReportDir(),
+    persistDir: resolvePersistDir(),
     packRef: resolveArg("--pack") ?? DEFAULT_PACK_REF,
     profile: resolveArg("--profile") ?? DEFAULT_PROFILE,
     model:
@@ -793,14 +855,111 @@ async function summarizeAndExit(
   reportPath: string,
   report: GateReport,
   exitCode: number,
+  persistDir: string,
 ): Promise<never> {
   await writeJsonFile(reportPath, report);
+  try {
+    await persistBenchmarkReceiptArtifacts(report, persistDir);
+  } catch (error) {
+    process.stderr.write(
+      `Failed to persist benchmark receipt artifacts: ${String((error as Error).message || error)}\n`,
+    );
+  }
   if (exitCode === 0) {
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   } else {
     process.stderr.write(`${JSON.stringify(report, null, 2)}\n`);
   }
   process.exit(exitCode);
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
+
+function asStringValue(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function buildPersistedBenchmarkRunSummary(
+  smokeRun: BenchmarkSmokeReport | undefined,
+): PersistedBenchmarkRunSummary | null {
+  if (!smokeRun) {
+    return null;
+  }
+  const runtimeSmoke = asRecord(smokeRun.proof?.runtimeSmoke);
+  const evidenceSummary = asRecord(runtimeSmoke?.evidenceSummary);
+  return {
+    runIndex: smokeRun.runIndex,
+    ok: smokeRun.ok,
+    requestedProvider: asStringValue(evidenceSummary?.requestedProvider),
+    requestedModel: asStringValue(evidenceSummary?.requestedModel),
+    resolvedProvider: asStringValue(evidenceSummary?.resolvedProvider),
+    resolvedModel: asStringValue(evidenceSummary?.resolvedModel),
+    transcriptProvider: asStringValue(evidenceSummary?.transcriptProvider),
+    transcriptModel: asStringValue(evidenceSummary?.transcriptModel),
+    proofStatus: asStringValue(evidenceSummary?.proofStatus),
+  };
+}
+
+export function buildPersistedBenchmarkReceipt(report: GateReport): PersistedBenchmarkReceipt {
+  const runs = Array.isArray(report.smokeRuns)
+    ? report.smokeRuns
+        .map((run) => buildPersistedBenchmarkRunSummary(run))
+        .filter((run): run is PersistedBenchmarkRunSummary => Boolean(run))
+    : [];
+  const latestRun = buildPersistedBenchmarkRunSummary(report.smoke) ?? runs.at(-1) ?? null;
+
+  return {
+    contractVersion: "openclaw.live-runtime-benchmark-receipt.v1",
+    generatedAt: report.generatedAt,
+    ok: report.ok,
+    phase: report.phase,
+    packRef: report.packRef,
+    profile: report.profile,
+    modelRef: report.modelRef,
+    repeatRuns: report.repeatRuns,
+    repeatDelayMs: report.repeatDelayMs,
+    greenRunCount: report.greenRunCount,
+    providerId: report.preflight.providerId,
+    readyProfileCount: report.preflight.readyProfileCount,
+    readyProfileIds: report.preflight.readyProfileIds,
+    preflightStatus: report.readiness.preflight.status,
+    proofStatus: report.readiness.proof.status,
+    promotionStatus: report.readiness.promotion.status,
+    assertionCount: report.verdict.assertionCount,
+    passedAssertionCount: report.verdict.passedAssertionCount,
+    failedAssertionCount: report.verdict.failedAssertionCount,
+    failedAssertions: [...report.verdict.failedAssertions],
+    failureReasons: [...report.verdict.failureReasons],
+    latestRun,
+    runs,
+    workflow: {
+      eventName: asStringValue(process.env.GITHUB_EVENT_NAME),
+      runId: asStringValue(process.env.GITHUB_RUN_ID),
+      runAttempt: asStringValue(process.env.GITHUB_RUN_ATTEMPT),
+      sha: asStringValue(process.env.GITHUB_SHA),
+    },
+  };
+}
+
+export async function persistBenchmarkReceiptArtifacts(
+  report: GateReport,
+  persistDir: string,
+): Promise<PersistedBenchmarkReceipt> {
+  const receipt = buildPersistedBenchmarkReceipt(report);
+  const resolvedPersistDir = path.resolve(persistDir);
+  await ensureDir(resolvedPersistDir);
+  await writeJsonFile(path.join(resolvedPersistDir, "latest-receipt.json"), receipt);
+  await fs.appendFile(
+    path.join(resolvedPersistDir, "history.jsonl"),
+    `${JSON.stringify(receipt)}\n`,
+    "utf8",
+  );
+  if (receipt.phase === "run" && receipt.promotionStatus === "green" && receipt.ok) {
+    await writeJsonFile(path.join(resolvedPersistDir, "latest-green-receipt.json"), receipt);
+  }
+  return receipt;
 }
 
 function buildGateReport(params: {
@@ -882,7 +1041,7 @@ async function main(): Promise<void> {
         failureReasons: preflight.failureReasons,
       },
     });
-    await summarizeAndExit(reportPath, report, preflight.ok ? 0 : 1);
+    await summarizeAndExit(reportPath, report, preflight.ok ? 0 : 1, args.persistDir);
   }
 
   if (!preflight.ok || !authSource.stateDir) {
@@ -906,7 +1065,7 @@ async function main(): Promise<void> {
         failureReasons: preflight.failureReasons,
       },
     });
-    await summarizeAndExit(reportPath, report, 1);
+    await summarizeAndExit(reportPath, report, 1, args.persistDir);
   }
 
   try {
@@ -979,7 +1138,7 @@ async function main(): Promise<void> {
       smokeRuns,
       verdict,
     });
-    await summarizeAndExit(reportPath, report, verdict.ok ? 0 : 1);
+    await summarizeAndExit(reportPath, report, verdict.ok ? 0 : 1, args.persistDir);
   } catch (error) {
     const smokeCommand = authSource.stateDir
       ? ["node", ...buildSmokeCommand(args, authSource.stateDir)]
@@ -1016,7 +1175,7 @@ async function main(): Promise<void> {
         failureReasons: [String((error as Error).message || error)],
       },
     });
-    await summarizeAndExit(reportPath, report, 1);
+    await summarizeAndExit(reportPath, report, 1, args.persistDir);
   }
 }
 

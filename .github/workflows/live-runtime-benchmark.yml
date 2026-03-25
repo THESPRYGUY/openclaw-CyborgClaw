@@ -52,6 +52,7 @@ jobs:
     timeout-minutes: 45
     env:
       REPORT_DIR: ${{ runner.temp }}/live-runtime-benchmark
+      PERSIST_DIR: ${{ runner.temp }}/live-runtime-benchmark-persisted
       LIVE_BENCHMARK_PACK_REF: ${{ github.event.inputs.pack || 'examples/voltaris-v2-pack' }}
       LIVE_BENCHMARK_PROFILE: ${{ github.event.inputs.profile || 'voltaris-proof' }}
       OPENCLAW_LIVE_BENCHMARK_ENABLED: ${{ vars.OPENCLAW_LIVE_BENCHMARK_ENABLED }}
@@ -80,6 +81,7 @@ jobs:
           node --import tsx scripts/cyborgclaw/voltaris-v2-live-benchmark-gate.ts \
             --preflight-only \
             --report-dir "$REPORT_DIR" \
+            --persist-dir "$PERSIST_DIR" \
             --pack "$LIVE_BENCHMARK_PACK_REF" \
             --profile "$LIVE_BENCHMARK_PROFILE"
 
@@ -90,6 +92,7 @@ jobs:
           set -euo pipefail
           args=(
             --report-dir "$REPORT_DIR"
+            --persist-dir "$PERSIST_DIR"
             --pack "$LIVE_BENCHMARK_PACK_REF"
             --profile "$LIVE_BENCHMARK_PROFILE"
           )
@@ -213,3 +216,12 @@ jobs:
           path: ${{ env.REPORT_DIR }}
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Upload persisted benchmark receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-runtime-benchmark-receipts-${{ github.run_id }}
+          path: ${{ env.PERSIST_DIR }}
+          if-no-files-found: warn
+          retention-days: 30
