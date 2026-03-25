@@ -61,7 +61,7 @@ jobs:
       OPENCLAW_LIVE_BENCHMARK_AUTH_PROFILES_JSON: ${{ secrets.OPENCLAW_LIVE_BENCHMARK_AUTH_PROFILES_JSON }}
       OPENCLAW_LIVE_BENCHMARK_REPEAT_RUNS: ${{ github.event.inputs.repeat_runs || '1' }}
       OPENCLAW_LIVE_BENCHMARK_REPEAT_DELAY_MS: ${{ github.event.inputs.repeat_delay_ms || '0' }}
-      OPENCLAW_LIVE_BENCHMARK_HISTORY_MAX: "90"
+      OPENCLAW_LIVE_BENCHMARK_HISTORY_MAX: "540"
       LIVE_BENCHMARK_PREFLIGHT_ONLY: ${{ github.event.inputs.preflight_only || 'false' }}
     steps:
       - name: Checkout
@@ -74,6 +74,14 @@ jobs:
         with:
           install-bun: "false"
           use-sticky-disk: "true"
+
+      - name: Restore persisted runway cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.PERSIST_DIR }}
+          key: live-runtime-benchmark-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            live-runtime-benchmark-${{ github.ref_name }}-
 
       - name: Run live benchmark preflight
         shell: bash
@@ -143,6 +151,7 @@ jobs:
             raise SystemExit(0)
 
           report = json.loads(report_path.read_text(encoding="utf-8"))
+          history_summary_path = pathlib.Path(os.environ["PERSIST_DIR"]) / "history-summary.json"
           preflight = report.get("preflight") or {}
           readiness = report.get("readiness") or {}
           readiness_preflight = readiness.get("preflight") or {}
@@ -176,6 +185,39 @@ jobs:
               f"- Smoke proof copy: `{smoke.get('proofRootCopyPath') or 'n/a'}`",
             ]
           )
+
+          if history_summary_path.exists():
+            history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+            schedule = history_summary.get("schedule") or {}
+            event_counts = history_summary.get("eventCounts") or {}
+            lines.extend(
+              [
+                f"- Retained runway: `{history_summary.get('retainedHistoryCount', 0)}/{history_summary.get('retainedHistoryMax', 0)}`",
+                f"- Consecutive green: `{history_summary.get('consecutiveGreenCount', 0)}`",
+                f"- Longest green streak: `{history_summary.get('longestGreenStreak', 0)}`",
+                f"- Latest retained green: `{history_summary.get('latestGreenGeneratedAt') or 'n/a'}`",
+                f"- Latest retained green age (h): `{history_summary.get('latestGreenAgeHours', 'n/a')}`",
+                f"- Retained runway window (h): `{history_summary.get('runwayWindowHours', 0)}`",
+              ]
+            )
+            if event_counts:
+              event_counts_text = ", ".join(
+                f"{key}={value}" for key, value in sorted(event_counts.items())
+              )
+              lines.append(f"- Retained event mix: `{event_counts_text}`")
+            if schedule:
+              lines.extend(
+                [
+                  f"- Scheduled runway status: `{schedule.get('runwayStatus', 'unknown')}`",
+                  f"- Scheduled retained receipts: `{schedule.get('receiptCount', 0)}`",
+                  f"- Scheduled green receipts: `{schedule.get('greenReceiptCount', 0)}`",
+                  f"- Scheduled blocked receipts: `{schedule.get('blockedReceiptCount', 0)}`",
+                  f"- Scheduled consecutive green: `{schedule.get('consecutiveGreenCount', 0)}`",
+                  f"- Scheduled latest receipt: `{schedule.get('latestGeneratedAt') or 'n/a'}`",
+                  f"- Scheduled latest green: `{schedule.get('latestGreenGeneratedAt') or 'n/a'}`",
+                  f"- Scheduled latest green age (h): `{schedule.get('latestGreenAgeHours', 'n/a')}`",
+                ]
+              )
 
           ready_profile_ids = preflight.get("readyProfileIds") or []
           if ready_profile_ids:
@@ -226,4 +268,11 @@ jobs:
           name: live-runtime-benchmark-receipts-${{ github.run_id }}
           path: ${{ env.PERSIST_DIR }}
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 90
+
+      - name: Save persisted runway cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.PERSIST_DIR }}
+          key: live-runtime-benchmark-${{ github.ref_name }}-${{ github.run_id }}

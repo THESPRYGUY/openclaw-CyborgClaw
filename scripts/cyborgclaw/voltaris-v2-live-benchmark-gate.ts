@@ -20,8 +20,11 @@ const DEFAULT_PROFILE = "voltaris-proof";
 const DEFAULT_MODEL = "openai-codex/gpt-5.3-codex";
 const DEFAULT_REPORT_SUBDIR = "live-runtime-benchmark";
 const DEFAULT_PERSIST_SUBDIR = "live-runtime-benchmark";
-const DEFAULT_HISTORY_MAX_ENTRIES = 60;
+const DEFAULT_HISTORY_MAX_ENTRIES = 540;
 const OPENAI_CODEX_DEFAULT_PROFILE_ID = "openai-codex:default";
+const SCHEDULED_RUNWAY_CADENCE_HOURS = 12;
+const SCHEDULED_RUNWAY_WARNING_AFTER_HOURS = 18;
+const SCHEDULED_RUNWAY_STALE_AFTER_HOURS = 30;
 const SMOKE_SCRIPT_PATH = path.join(
   REPO_ROOT,
   "scripts",
@@ -152,6 +155,8 @@ type PersistedBenchmarkRunSummary = {
   proofStatus: string | null;
 };
 
+type PersistedBenchmarkRunwayStatus = "healthy" | "warning" | "stale" | "missing";
+
 export type PersistedBenchmarkReceipt = {
   contractVersion: "openclaw.live-runtime-benchmark-receipt.v1";
   generatedAt: string;
@@ -195,11 +200,28 @@ export type PersistedBenchmarkHistorySummary = {
   latestGeneratedAt: string | null;
   oldestGeneratedAt: string | null;
   latestGreenGeneratedAt: string | null;
+  latestGreenAgeHours: number | null;
   consecutiveGreenCount: number;
   longestGreenStreak: number;
   runwayWindowHours: number;
   providerIds: string[];
   modelRefs: string[];
+  eventCounts: Record<string, number>;
+  schedule: {
+    receiptCount: number;
+    greenReceiptCount: number;
+    blockedReceiptCount: number;
+    latestGeneratedAt: string | null;
+    latestGreenGeneratedAt: string | null;
+    latestGreenAgeHours: number | null;
+    consecutiveGreenCount: number;
+    longestGreenStreak: number;
+    cadenceHours: number;
+    warningAfterHours: number;
+    staleAfterHours: number;
+    runwayStatus: PersistedBenchmarkRunwayStatus;
+    healthy: boolean;
+  };
 };
 
 function resolveArg(flag: string): string | undefined {
@@ -907,6 +929,28 @@ function asStringValue(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function asTimestampMs(value: unknown): number | null {
+  const normalized = asStringValue(value);
+  if (!normalized) {
+    return null;
+  }
+  const parsed = Date.parse(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function roundHours(deltaMs: number): number {
+  return Math.round((deltaMs / (60 * 60 * 1000)) * 10) / 10;
+}
+
+function incrementCount(
+  counts: Record<string, number>,
+  key: string | null,
+  fallback: string,
+): void {
+  const normalized = key ?? fallback;
+  counts[normalized] = (counts[normalized] ?? 0) + 1;
+}
+
 function buildPersistedBenchmarkRunSummary(
   smokeRun: BenchmarkSmokeReport | undefined,
 ): PersistedBenchmarkRunSummary | null {
@@ -976,6 +1020,100 @@ function isGreenBenchmarkReceipt(receipt: PersistedBenchmarkReceipt | null | und
   return receipt.phase === "run" && receipt.ok && receipt.promotionStatus === "green";
 }
 
+function selectLatestReceipt(
+  receipts: PersistedBenchmarkReceipt[],
+  predicate: (receipt: PersistedBenchmarkReceipt) => boolean = () => true,
+): PersistedBenchmarkReceipt | null {
+  let latest: PersistedBenchmarkReceipt | null = null;
+  let latestMs = -1;
+  for (const receipt of receipts) {
+    if (!predicate(receipt)) {
+      continue;
+    }
+    const generatedAtMs = asTimestampMs(receipt.generatedAt);
+    if (generatedAtMs == null) {
+      continue;
+    }
+    if (!latest || generatedAtMs > latestMs) {
+      latest = receipt;
+      latestMs = generatedAtMs;
+    }
+  }
+  return latest;
+}
+
+function selectOldestReceipt(
+  receipts: PersistedBenchmarkReceipt[],
+  predicate: (receipt: PersistedBenchmarkReceipt) => boolean = () => true,
+): PersistedBenchmarkReceipt | null {
+  let oldest: PersistedBenchmarkReceipt | null = null;
+  let oldestMs = Number.POSITIVE_INFINITY;
+  for (const receipt of receipts) {
+    if (!predicate(receipt)) {
+      continue;
+    }
+    const generatedAtMs = asTimestampMs(receipt.generatedAt);
+    if (generatedAtMs == null) {
+      continue;
+    }
+    if (!oldest || generatedAtMs < oldestMs) {
+      oldest = receipt;
+      oldestMs = generatedAtMs;
+    }
+  }
+  return oldest;
+}
+
+function computeGreenStreak(receipts: PersistedBenchmarkReceipt[]): {
+  consecutiveGreenCount: number;
+  longestGreenStreak: number;
+} {
+  let consecutiveGreenCount = 0;
+  let longestGreenStreak = 0;
+  let currentGreenStreak = 0;
+
+  for (const receipt of receipts) {
+    if (isGreenBenchmarkReceipt(receipt)) {
+      currentGreenStreak += 1;
+      longestGreenStreak = Math.max(longestGreenStreak, currentGreenStreak);
+    } else if (receipt.phase === "run") {
+      currentGreenStreak = 0;
+    }
+  }
+
+  for (let index = receipts.length - 1; index >= 0; index -= 1) {
+    const receipt = receipts[index];
+    if (receipt.phase !== "run") {
+      continue;
+    }
+    if (isGreenBenchmarkReceipt(receipt)) {
+      consecutiveGreenCount += 1;
+      continue;
+    }
+    break;
+  }
+
+  return {
+    consecutiveGreenCount,
+    longestGreenStreak,
+  };
+}
+
+function classifyScheduledRunway(
+  latestGreenAgeHours: number | null,
+): PersistedBenchmarkRunwayStatus {
+  if (latestGreenAgeHours == null) {
+    return "missing";
+  }
+  if (latestGreenAgeHours > SCHEDULED_RUNWAY_STALE_AFTER_HOURS) {
+    return "stale";
+  }
+  if (latestGreenAgeHours > SCHEDULED_RUNWAY_WARNING_AFTER_HOURS) {
+    return "warning";
+  }
+  return "healthy";
+}
+
 async function readPersistedBenchmarkHistory(
   persistDir: string,
 ): Promise<PersistedBenchmarkReceipt[]> {
@@ -1002,57 +1140,60 @@ async function readPersistedBenchmarkHistory(
 export function buildPersistedBenchmarkHistorySummary(
   history: PersistedBenchmarkReceipt[],
   retainedHistoryMax: number,
+  nowMs = Date.now(),
 ): PersistedBenchmarkHistorySummary {
   const receipts = Array.isArray(history) ? history : [];
-  let consecutiveGreenCount = 0;
-  let longestGreenStreak = 0;
-  let currentGreenStreak = 0;
-
-  for (const receipt of receipts) {
-    if (isGreenBenchmarkReceipt(receipt)) {
-      currentGreenStreak += 1;
-      longestGreenStreak = Math.max(longestGreenStreak, currentGreenStreak);
-    } else {
-      currentGreenStreak = 0;
-    }
-  }
-
-  for (let index = receipts.length - 1; index >= 0; index -= 1) {
-    if (isGreenBenchmarkReceipt(receipts[index])) {
-      consecutiveGreenCount += 1;
-    } else {
-      break;
-    }
-  }
-
-  const latestReceipt = receipts.at(-1) ?? null;
-  const oldestReceipt = receipts[0] ?? null;
-  const latestGreenReceipt =
-    [...receipts].toReversed().find((receipt) => isGreenBenchmarkReceipt(receipt)) ?? null;
-  const latestTimestamp = latestReceipt?.generatedAt
-    ? Date.parse(latestReceipt.generatedAt)
-    : Number.NaN;
-  const oldestTimestamp = oldestReceipt?.generatedAt
-    ? Date.parse(oldestReceipt.generatedAt)
-    : Number.NaN;
+  const runReceipts = receipts.filter((receipt) => receipt.phase === "run");
+  const scheduledReceipts = receipts.filter((receipt) => receipt.workflow.eventName === "schedule");
+  const scheduledRunReceipts = scheduledReceipts.filter((receipt) => receipt.phase === "run");
+  const { consecutiveGreenCount, longestGreenStreak } = computeGreenStreak(runReceipts);
+  const {
+    consecutiveGreenCount: scheduledConsecutiveGreenCount,
+    longestGreenStreak: scheduledLongestGreenStreak,
+  } = computeGreenStreak(scheduledRunReceipts);
+  const latestReceipt = selectLatestReceipt(receipts);
+  const oldestReceipt = selectOldestReceipt(receipts);
+  const latestGreenReceipt = selectLatestReceipt(receipts, (receipt) =>
+    isGreenBenchmarkReceipt(receipt),
+  );
+  const latestScheduledReceipt = selectLatestReceipt(scheduledReceipts);
+  const latestScheduledGreenReceipt = selectLatestReceipt(scheduledReceipts, (receipt) =>
+    isGreenBenchmarkReceipt(receipt),
+  );
+  const latestTimestamp = asTimestampMs(latestReceipt?.generatedAt);
+  const oldestTimestamp = asTimestampMs(oldestReceipt?.generatedAt);
   const runwayWindowHours =
-    Number.isFinite(latestTimestamp) && Number.isFinite(oldestTimestamp)
+    latestTimestamp != null && oldestTimestamp != null
       ? Math.max(0, (latestTimestamp - oldestTimestamp) / (60 * 60 * 1000))
       : 0;
+  const latestGreenTimestamp = asTimestampMs(latestGreenReceipt?.generatedAt);
+  const latestScheduledGreenTimestamp = asTimestampMs(latestScheduledGreenReceipt?.generatedAt);
+  const latestGreenAgeHours =
+    latestGreenTimestamp == null ? null : roundHours(Math.max(0, nowMs - latestGreenTimestamp));
+  const latestScheduledGreenAgeHours =
+    latestScheduledGreenTimestamp == null
+      ? null
+      : roundHours(Math.max(0, nowMs - latestScheduledGreenTimestamp));
+  const eventCounts: Record<string, number> = {};
+
+  for (const receipt of receipts) {
+    incrementCount(eventCounts, asStringValue(receipt.workflow.eventName), "unknown");
+  }
+
+  const scheduledRunwayStatus = classifyScheduledRunway(latestScheduledGreenAgeHours);
 
   return {
     contractVersion: "openclaw.live-runtime-benchmark-history.v1",
-    generatedAt: new Date().toISOString(),
+    generatedAt: new Date(nowMs).toISOString(),
     retainedHistoryCount: receipts.length,
     retainedHistoryMax,
-    greenReceiptCount: receipts.filter((receipt) => isGreenBenchmarkReceipt(receipt)).length,
-    blockedReceiptCount: receipts.filter(
-      (receipt) => receipt.phase === "run" && !isGreenBenchmarkReceipt(receipt),
-    ).length,
+    greenReceiptCount: runReceipts.filter((receipt) => isGreenBenchmarkReceipt(receipt)).length,
+    blockedReceiptCount: runReceipts.filter((receipt) => !isGreenBenchmarkReceipt(receipt)).length,
     preflightReceiptCount: receipts.filter((receipt) => receipt.phase === "preflight").length,
     latestGeneratedAt: latestReceipt?.generatedAt || null,
     oldestGeneratedAt: oldestReceipt?.generatedAt || null,
     latestGreenGeneratedAt: latestGreenReceipt?.generatedAt || null,
+    latestGreenAgeHours,
     consecutiveGreenCount,
     longestGreenStreak,
     runwayWindowHours: Number(runwayWindowHours.toFixed(2)),
@@ -1062,6 +1203,25 @@ export function buildPersistedBenchmarkHistorySummary(
     modelRefs: [
       ...new Set(receipts.map((receipt) => asStringValue(receipt.modelRef)).filter(Boolean)),
     ],
+    eventCounts,
+    schedule: {
+      receiptCount: scheduledReceipts.length,
+      greenReceiptCount: scheduledRunReceipts.filter((receipt) => isGreenBenchmarkReceipt(receipt))
+        .length,
+      blockedReceiptCount: scheduledRunReceipts.filter(
+        (receipt) => !isGreenBenchmarkReceipt(receipt),
+      ).length,
+      latestGeneratedAt: latestScheduledReceipt?.generatedAt || null,
+      latestGreenGeneratedAt: latestScheduledGreenReceipt?.generatedAt || null,
+      latestGreenAgeHours: latestScheduledGreenAgeHours,
+      consecutiveGreenCount: scheduledConsecutiveGreenCount,
+      longestGreenStreak: scheduledLongestGreenStreak,
+      cadenceHours: SCHEDULED_RUNWAY_CADENCE_HOURS,
+      warningAfterHours: SCHEDULED_RUNWAY_WARNING_AFTER_HOURS,
+      staleAfterHours: SCHEDULED_RUNWAY_STALE_AFTER_HOURS,
+      runwayStatus: scheduledRunwayStatus,
+      healthy: scheduledRunwayStatus === "healthy",
+    },
   };
 }
 
@@ -1085,6 +1245,11 @@ export async function persistBenchmarkReceiptArtifacts(
   );
   await writeJsonFile(path.join(resolvedPersistDir, "history-summary.json"), historySummary);
   if (receipt.phase === "run" && receipt.promotionStatus === "green" && receipt.ok) {
+    await fs.appendFile(
+      path.join(resolvedPersistDir, "green-history.jsonl"),
+      `${JSON.stringify(receipt)}\n`,
+      "utf8",
+    );
     await writeJsonFile(path.join(resolvedPersistDir, "latest-green-receipt.json"), receipt);
   }
   return receipt;

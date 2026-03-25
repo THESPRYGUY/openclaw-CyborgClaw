@@ -561,6 +561,11 @@ describe("persisted benchmark receipt artifacts", () => {
     const historyLines = (await fs.readFile(path.join(persistDir, "history.jsonl"), "utf8"))
       .trim()
       .split("\n");
+    const greenHistoryLines = (
+      await fs.readFile(path.join(persistDir, "green-history.jsonl"), "utf8")
+    )
+      .trim()
+      .split("\n");
     const historySummary = JSON.parse(
       await fs.readFile(path.join(persistDir, "history-summary.json"), "utf8"),
     ) as {
@@ -576,6 +581,7 @@ describe("persisted benchmark receipt artifacts", () => {
     expect(latestReceipt.generatedAt).toBe("2026-03-25T01:00:00.000Z");
     expect(latestReceipt.promotionStatus).toBe("blocked");
     expect(historyLines).toHaveLength(2);
+    expect(greenHistoryLines).toHaveLength(1);
     expect(historySummary.retainedHistoryCount).toBe(2);
     expect(historySummary.greenReceiptCount).toBe(1);
     expect(historySummary.blockedReceiptCount).toBe(1);
@@ -677,6 +683,107 @@ describe("persisted benchmark receipt artifacts", () => {
     expect(historySummary.blockedReceiptCount).toBe(0);
     expect(historySummary.consecutiveGreenCount).toBe(2);
     expect(historySummary.longestGreenStreak).toBe(2);
+  });
+
+  it("reports scheduled runway health separately from interleaved preflight and manual receipts", () => {
+    const makeReceipt = ({
+      generatedAt,
+      phase,
+      eventName,
+      ok,
+      promotionStatus,
+    }: {
+      generatedAt: string;
+      phase: "preflight" | "run";
+      eventName: string;
+      ok: boolean;
+      promotionStatus: "green" | "blocked" | "not_run";
+    }): ReturnType<typeof buildPersistedBenchmarkReceipt> => ({
+      contractVersion: "openclaw.live-runtime-benchmark-receipt.v1",
+      generatedAt,
+      ok,
+      phase,
+      packRef: "examples/voltaris-v2-pack",
+      profile: "voltaris-proof",
+      modelRef: "openai-codex/gpt-5.3-codex",
+      repeatRuns: 3,
+      repeatDelayMs: 30000,
+      greenRunCount: phase === "run" && promotionStatus === "green" && ok ? 3 : 0,
+      providerId: "openai-codex",
+      readyProfileCount: 1,
+      readyProfileIds: ["proof"],
+      preflightStatus: phase === "preflight" ? "ready" : "ready",
+      proofStatus:
+        phase === "preflight" ? "not_run" : promotionStatus === "green" ? "ready" : "blocked",
+      promotionStatus,
+      assertionCount: phase === "run" ? 4 : 0,
+      passedAssertionCount: phase === "run" && promotionStatus === "green" ? 4 : 0,
+      failedAssertionCount: phase === "run" && promotionStatus === "blocked" ? 1 : 0,
+      failedAssertions: phase === "run" && promotionStatus === "blocked" ? ["proofStatus"] : [],
+      failureReasons: phase === "run" && promotionStatus === "blocked" ? ["proofStatus"] : [],
+      latestRun: null,
+      runs: [],
+      workflow: {
+        eventName,
+        runId: generatedAt,
+        runAttempt: "1",
+        sha: "deadbeef",
+      },
+    });
+
+    const summary = buildPersistedBenchmarkHistorySummary(
+      [
+        makeReceipt({
+          generatedAt: "2026-03-25T09:00:00.000Z",
+          phase: "preflight",
+          eventName: "schedule",
+          ok: true,
+          promotionStatus: "not_run",
+        }),
+        makeReceipt({
+          generatedAt: "2026-03-25T09:05:00.000Z",
+          phase: "run",
+          eventName: "schedule",
+          ok: true,
+          promotionStatus: "green",
+        }),
+        makeReceipt({
+          generatedAt: "2026-03-25T21:00:00.000Z",
+          phase: "preflight",
+          eventName: "schedule",
+          ok: true,
+          promotionStatus: "not_run",
+        }),
+        makeReceipt({
+          generatedAt: "2026-03-25T21:05:00.000Z",
+          phase: "run",
+          eventName: "schedule",
+          ok: true,
+          promotionStatus: "green",
+        }),
+        makeReceipt({
+          generatedAt: "2026-03-26T01:00:00.000Z",
+          phase: "run",
+          eventName: "workflow_dispatch",
+          ok: false,
+          promotionStatus: "blocked",
+        }),
+      ],
+      360,
+      Date.parse("2026-03-26T17:05:00.000Z"),
+    );
+
+    expect(summary.consecutiveGreenCount).toBe(0);
+    expect(summary.eventCounts).toEqual({ schedule: 4, workflow_dispatch: 1 });
+    expect(summary.schedule.receiptCount).toBe(4);
+    expect(summary.schedule.greenReceiptCount).toBe(2);
+    expect(summary.schedule.blockedReceiptCount).toBe(0);
+    expect(summary.schedule.consecutiveGreenCount).toBe(2);
+    expect(summary.schedule.longestGreenStreak).toBe(2);
+    expect(summary.schedule.latestGreenGeneratedAt).toBe("2026-03-25T21:05:00.000Z");
+    expect(summary.schedule.latestGreenAgeHours).toBe(20);
+    expect(summary.schedule.runwayStatus).toBe("warning");
+    expect(summary.schedule.healthy).toBe(false);
   });
 });
 
