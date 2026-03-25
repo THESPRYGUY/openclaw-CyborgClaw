@@ -25,6 +25,11 @@ const OPENAI_CODEX_DEFAULT_PROFILE_ID = "openai-codex:default";
 const SCHEDULED_RUNWAY_CADENCE_HOURS = 12;
 const SCHEDULED_RUNWAY_WARNING_AFTER_HOURS = 18;
 const SCHEDULED_RUNWAY_STALE_AFTER_HOURS = 30;
+const SHORT_RUNWAY_WINDOW_HOURS = 24;
+const MULTI_DAY_RUNWAY_WINDOW_HOURS = 72;
+const BORING_SCHEDULED_RUNWAY_WINDOW_HOURS = 72;
+const BORING_SCHEDULED_GREEN_STREAK = 4;
+const BORING_SCHEDULED_GREEN_RECEIPTS = 6;
 const SMOKE_SCRIPT_PATH = path.join(
   REPO_ROOT,
   "scripts",
@@ -156,6 +161,12 @@ type PersistedBenchmarkRunSummary = {
 };
 
 type PersistedBenchmarkRunwayStatus = "healthy" | "warning" | "stale" | "missing";
+type PersistedBenchmarkMaturityStatus =
+  | "missing"
+  | "ad_hoc_only"
+  | "emerging_scheduled"
+  | "multi_day_scheduled"
+  | "boring_multi_day";
 
 export type PersistedBenchmarkReceipt = {
   contractVersion: "openclaw.live-runtime-benchmark-receipt.v1";
@@ -204,6 +215,17 @@ export type PersistedBenchmarkHistorySummary = {
   consecutiveGreenCount: number;
   longestGreenStreak: number;
   runwayWindowHours: number;
+  runwayWindowDays: number;
+  runwayWindowCategory: "unknown" | "single_receipt" | "short" | "multi_day" | "extended";
+  runwayWindowLabel: string;
+  runwayWindowSeverity: string;
+  runwayWindowDetail: string;
+  runwayCadenceHours: number | null;
+  runwayCadenceLabel: string;
+  runwayMaturityStatus: PersistedBenchmarkMaturityStatus;
+  runwayMaturityLabel: string;
+  runwayMaturitySeverity: string;
+  runwayMaturityDetail: string;
   providerIds: string[];
   modelRefs: string[];
   eventCounts: Record<string, number>;
@@ -211,11 +233,15 @@ export type PersistedBenchmarkHistorySummary = {
     receiptCount: number;
     greenReceiptCount: number;
     blockedReceiptCount: number;
+    oldestGeneratedAt: string | null;
+    oldestGreenGeneratedAt: string | null;
     latestGeneratedAt: string | null;
     latestGreenGeneratedAt: string | null;
     latestGreenAgeHours: number | null;
     consecutiveGreenCount: number;
     longestGreenStreak: number;
+    runwayWindowHours: number;
+    runwayWindowDays: number;
     cadenceHours: number;
     warningAfterHours: number;
     staleAfterHours: number;
@@ -972,6 +998,16 @@ function buildPersistedBenchmarkRunSummary(
   };
 }
 
+function resolveWorkflowEventName(): string {
+  return asStringValue(process.env.GITHUB_EVENT_NAME) ?? "local_manual";
+}
+
+function resolveReceiptEventName(
+  receipt: Pick<PersistedBenchmarkReceipt, "workflow"> | null | undefined,
+): string {
+  return asStringValue(receipt?.workflow?.eventName) ?? "local_manual";
+}
+
 export function buildPersistedBenchmarkReceipt(report: GateReport): PersistedBenchmarkReceipt {
   const runs = Array.isArray(report.smokeRuns)
     ? report.smokeRuns
@@ -1005,7 +1041,7 @@ export function buildPersistedBenchmarkReceipt(report: GateReport): PersistedBen
     latestRun,
     runs,
     workflow: {
-      eventName: asStringValue(process.env.GITHUB_EVENT_NAME),
+      eventName: resolveWorkflowEventName(),
       runId: asStringValue(process.env.GITHUB_RUN_ID),
       runAttempt: asStringValue(process.env.GITHUB_RUN_ATTEMPT),
       sha: asStringValue(process.env.GITHUB_SHA),
@@ -1114,6 +1150,160 @@ function classifyScheduledRunway(
   return "healthy";
 }
 
+function buildRetainedRunwayProjection(params: {
+  runwayWindowHours: number;
+  retainedHistoryCount: number;
+}): {
+  runwayWindowDays: number;
+  runwayWindowCategory: "unknown" | "single_receipt" | "short" | "multi_day" | "extended";
+  runwayWindowLabel: string;
+  runwayWindowSeverity: string;
+  runwayWindowDetail: string;
+  runwayCadenceHours: number | null;
+  runwayCadenceLabel: string;
+} {
+  const runwayWindowHours = Number.isFinite(params.runwayWindowHours)
+    ? params.runwayWindowHours
+    : 0;
+  const retainedHistoryCount = Number.isFinite(params.retainedHistoryCount)
+    ? params.retainedHistoryCount
+    : 0;
+  const runwayCadenceHours =
+    retainedHistoryCount > 1
+      ? Number((runwayWindowHours / Math.max(1, retainedHistoryCount - 1)).toFixed(2))
+      : null;
+
+  let runwayWindowCategory: "unknown" | "single_receipt" | "short" | "multi_day" | "extended" =
+    "unknown";
+  let runwayWindowLabel = "Unknown runway";
+  let runwayWindowSeverity = "unknown";
+  let runwayWindowDetail = "No benchmark runway history is available yet.";
+
+  if (retainedHistoryCount === 1) {
+    runwayWindowCategory = "single_receipt";
+    runwayWindowLabel = "Single receipt";
+    runwayWindowSeverity = "unknown";
+    runwayWindowDetail =
+      "Only one persisted benchmark receipt is available, so runway span is still undefined.";
+  } else if (retainedHistoryCount > 1) {
+    if (runwayWindowHours < SHORT_RUNWAY_WINDOW_HOURS) {
+      runwayWindowCategory = "short";
+      runwayWindowLabel = "Short runway";
+      runwayWindowSeverity = "urgent";
+      runwayWindowDetail = "Receipts are clustered inside a single workday.";
+    } else if (runwayWindowHours < MULTI_DAY_RUNWAY_WINDOW_HOURS) {
+      runwayWindowCategory = "multi_day";
+      runwayWindowLabel = "Multi-day runway";
+      runwayWindowSeverity = "steady";
+      runwayWindowDetail = "Receipts span multiple days and are no longer time-critical.";
+    } else {
+      runwayWindowCategory = "extended";
+      runwayWindowLabel = "Extended runway";
+      runwayWindowSeverity = "relaxed";
+      runwayWindowDetail = "Receipts span several days and the runway is comfortably wide.";
+    }
+  }
+
+  let runwayCadenceLabel = "unknown";
+  if (Number.isFinite(runwayCadenceHours ?? Number.NaN)) {
+    if ((runwayCadenceHours ?? 0) < SHORT_RUNWAY_WINDOW_HOURS) {
+      runwayCadenceLabel = "same-day cadence";
+    } else if ((runwayCadenceHours ?? 0) < MULTI_DAY_RUNWAY_WINDOW_HOURS) {
+      runwayCadenceLabel = "multi-day cadence";
+    } else {
+      runwayCadenceLabel = "extended cadence";
+    }
+  }
+
+  return {
+    runwayWindowDays: Number((runwayWindowHours / 24).toFixed(2)),
+    runwayWindowCategory,
+    runwayWindowLabel,
+    runwayWindowSeverity,
+    runwayWindowDetail,
+    runwayCadenceHours,
+    runwayCadenceLabel,
+  };
+}
+
+function classifyRunwayMaturity(params: {
+  retainedHistoryCount: number;
+  eventCounts: Record<string, number>;
+  scheduledReceiptCount: number;
+  scheduledGreenReceiptCount: number;
+  scheduledConsecutiveGreenCount: number;
+  scheduledWindowHours: number;
+}): {
+  runwayMaturityStatus: PersistedBenchmarkMaturityStatus;
+  runwayMaturityLabel: string;
+  runwayMaturitySeverity: string;
+  runwayMaturityDetail: string;
+} {
+  const retainedHistoryCount = Number(params.retainedHistoryCount || 0) || 0;
+  const scheduledReceiptCount = Number(params.scheduledReceiptCount || 0) || 0;
+  const scheduledGreenReceiptCount = Number(params.scheduledGreenReceiptCount || 0) || 0;
+  const scheduledConsecutiveGreenCount = Number(params.scheduledConsecutiveGreenCount || 0) || 0;
+  const scheduledWindowHours = Number(params.scheduledWindowHours || 0) || 0;
+  const eventCounts = params.eventCounts || {};
+  const adHocReceiptCount =
+    Number(eventCounts.local_manual || 0) +
+    Number(eventCounts.push || 0) +
+    Number(eventCounts.workflow_dispatch || 0) +
+    Number(eventCounts.unknown || 0);
+
+  if (scheduledReceiptCount <= 0) {
+    if (retainedHistoryCount <= 0) {
+      return {
+        runwayMaturityStatus: "missing",
+        runwayMaturityLabel: "No retained runway",
+        runwayMaturitySeverity: "danger",
+        runwayMaturityDetail: "No persisted benchmark history is available yet.",
+      };
+    }
+    return {
+      runwayMaturityStatus: "ad_hoc_only",
+      runwayMaturityLabel: "Ad hoc runway only",
+      runwayMaturitySeverity: "warning",
+      runwayMaturityDetail:
+        adHocReceiptCount > 0
+          ? "The retained runway is backed by local, push, or manual dispatch proofs, but no scheduled benchmark receipts have accumulated yet."
+          : "The retained runway exists, but it is not yet backed by scheduled benchmark receipts.",
+    };
+  }
+
+  if (
+    scheduledWindowHours >= BORING_SCHEDULED_RUNWAY_WINDOW_HOURS &&
+    scheduledConsecutiveGreenCount >= BORING_SCHEDULED_GREEN_STREAK &&
+    scheduledGreenReceiptCount >= BORING_SCHEDULED_GREEN_RECEIPTS
+  ) {
+    return {
+      runwayMaturityStatus: "boring_multi_day",
+      runwayMaturityLabel: "Boring multi-day runway",
+      runwayMaturitySeverity: "success",
+      runwayMaturityDetail:
+        "Scheduled benchmark receipts now span several days with a sustained green streak, so the runway is operationally boring.",
+    };
+  }
+
+  if (scheduledWindowHours >= SHORT_RUNWAY_WINDOW_HOURS && scheduledGreenReceiptCount >= 2) {
+    return {
+      runwayMaturityStatus: "multi_day_scheduled",
+      runwayMaturityLabel: "Multi-day scheduled runway",
+      runwayMaturitySeverity: "info",
+      runwayMaturityDetail:
+        "Scheduled benchmark receipts now span multiple days, but the runway is still accumulating before it can be called boring.",
+    };
+  }
+
+  return {
+    runwayMaturityStatus: "emerging_scheduled",
+    runwayMaturityLabel: "Emerging scheduled runway",
+    runwayMaturitySeverity: "warning",
+    runwayMaturityDetail:
+      "Scheduled benchmark receipts exist, but the runway is still young and has not yet matured into a multi-day boring history.",
+  };
+}
+
 async function readPersistedBenchmarkHistory(
   persistDir: string,
 ): Promise<PersistedBenchmarkReceipt[]> {
@@ -1144,7 +1334,9 @@ export function buildPersistedBenchmarkHistorySummary(
 ): PersistedBenchmarkHistorySummary {
   const receipts = Array.isArray(history) ? history : [];
   const runReceipts = receipts.filter((receipt) => receipt.phase === "run");
-  const scheduledReceipts = receipts.filter((receipt) => receipt.workflow.eventName === "schedule");
+  const scheduledReceipts = receipts.filter(
+    (receipt) => resolveReceiptEventName(receipt) === "schedule",
+  );
   const scheduledRunReceipts = scheduledReceipts.filter((receipt) => receipt.phase === "run");
   const { consecutiveGreenCount, longestGreenStreak } = computeGreenStreak(runReceipts);
   const {
@@ -1157,7 +1349,11 @@ export function buildPersistedBenchmarkHistorySummary(
     isGreenBenchmarkReceipt(receipt),
   );
   const latestScheduledReceipt = selectLatestReceipt(scheduledReceipts);
+  const oldestScheduledReceipt = selectOldestReceipt(scheduledReceipts);
   const latestScheduledGreenReceipt = selectLatestReceipt(scheduledReceipts, (receipt) =>
+    isGreenBenchmarkReceipt(receipt),
+  );
+  const oldestScheduledGreenReceipt = selectOldestReceipt(scheduledReceipts, (receipt) =>
     isGreenBenchmarkReceipt(receipt),
   );
   const latestTimestamp = asTimestampMs(latestReceipt?.generatedAt);
@@ -1167,6 +1363,8 @@ export function buildPersistedBenchmarkHistorySummary(
       ? Math.max(0, (latestTimestamp - oldestTimestamp) / (60 * 60 * 1000))
       : 0;
   const latestGreenTimestamp = asTimestampMs(latestGreenReceipt?.generatedAt);
+  const latestScheduledTimestamp = asTimestampMs(latestScheduledReceipt?.generatedAt);
+  const oldestScheduledTimestamp = asTimestampMs(oldestScheduledReceipt?.generatedAt);
   const latestScheduledGreenTimestamp = asTimestampMs(latestScheduledGreenReceipt?.generatedAt);
   const latestGreenAgeHours =
     latestGreenTimestamp == null ? null : roundHours(Math.max(0, nowMs - latestGreenTimestamp));
@@ -1177,10 +1375,28 @@ export function buildPersistedBenchmarkHistorySummary(
   const eventCounts: Record<string, number> = {};
 
   for (const receipt of receipts) {
-    incrementCount(eventCounts, asStringValue(receipt.workflow.eventName), "unknown");
+    incrementCount(eventCounts, resolveReceiptEventName(receipt), "local_manual");
   }
 
   const scheduledRunwayStatus = classifyScheduledRunway(latestScheduledGreenAgeHours);
+  const scheduledRunwayWindowHours =
+    latestScheduledTimestamp != null && oldestScheduledTimestamp != null
+      ? Math.max(0, (latestScheduledTimestamp - oldestScheduledTimestamp) / (60 * 60 * 1000))
+      : 0;
+  const retainedRunwayProjection = buildRetainedRunwayProjection({
+    runwayWindowHours: Number(runwayWindowHours.toFixed(2)),
+    retainedHistoryCount: receipts.length,
+  });
+  const runwayMaturity = classifyRunwayMaturity({
+    retainedHistoryCount: receipts.length,
+    eventCounts,
+    scheduledReceiptCount: scheduledReceipts.length,
+    scheduledGreenReceiptCount: scheduledRunReceipts.filter((receipt) =>
+      isGreenBenchmarkReceipt(receipt),
+    ).length,
+    scheduledConsecutiveGreenCount,
+    scheduledWindowHours: Number(scheduledRunwayWindowHours.toFixed(2)),
+  });
 
   return {
     contractVersion: "openclaw.live-runtime-benchmark-history.v1",
@@ -1197,6 +1413,8 @@ export function buildPersistedBenchmarkHistorySummary(
     consecutiveGreenCount,
     longestGreenStreak,
     runwayWindowHours: Number(runwayWindowHours.toFixed(2)),
+    ...retainedRunwayProjection,
+    ...runwayMaturity,
     providerIds: [
       ...new Set(receipts.map((receipt) => asStringValue(receipt.providerId)).filter(Boolean)),
     ],
@@ -1211,11 +1429,15 @@ export function buildPersistedBenchmarkHistorySummary(
       blockedReceiptCount: scheduledRunReceipts.filter(
         (receipt) => !isGreenBenchmarkReceipt(receipt),
       ).length,
+      oldestGeneratedAt: oldestScheduledReceipt?.generatedAt || null,
+      oldestGreenGeneratedAt: oldestScheduledGreenReceipt?.generatedAt || null,
       latestGeneratedAt: latestScheduledReceipt?.generatedAt || null,
       latestGreenGeneratedAt: latestScheduledGreenReceipt?.generatedAt || null,
       latestGreenAgeHours: latestScheduledGreenAgeHours,
       consecutiveGreenCount: scheduledConsecutiveGreenCount,
       longestGreenStreak: scheduledLongestGreenStreak,
+      runwayWindowHours: Number(scheduledRunwayWindowHours.toFixed(2)),
+      runwayWindowDays: Number((scheduledRunwayWindowHours / 24).toFixed(2)),
       cadenceHours: SCHEDULED_RUNWAY_CADENCE_HOURS,
       warningAfterHours: SCHEDULED_RUNWAY_WARNING_AFTER_HOURS,
       staleAfterHours: SCHEDULED_RUNWAY_STALE_AFTER_HOURS,

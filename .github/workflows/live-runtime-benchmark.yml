@@ -2,7 +2,7 @@ name: Live Runtime Benchmark
 
 on:
   push:
-    branches: [main]
+    branches: [main, m20-trust-the-refusal-closeout]
     paths:
       - ".github/workflows/live-runtime-benchmark.yml"
       - "scripts/cyborgclaw/voltaris-v2-live-benchmark-gate.ts"
@@ -198,6 +198,9 @@ jobs:
                 f"- Latest retained green: `{history_summary.get('latestGreenGeneratedAt') or 'n/a'}`",
                 f"- Latest retained green age (h): `{history_summary.get('latestGreenAgeHours', 'n/a')}`",
                 f"- Retained runway window (h): `{history_summary.get('runwayWindowHours', 0)}`",
+                f"- Retained runway label: `{history_summary.get('runwayWindowLabel', 'unknown')}`",
+                f"- Retained runway cadence: `{history_summary.get('runwayCadenceLabel', 'unknown')}`",
+                f"- Runway maturity: `{history_summary.get('runwayMaturityLabel', 'unknown')}`",
               ]
             )
             if event_counts:
@@ -213,6 +216,7 @@ jobs:
                   f"- Scheduled green receipts: `{schedule.get('greenReceiptCount', 0)}`",
                   f"- Scheduled blocked receipts: `{schedule.get('blockedReceiptCount', 0)}`",
                   f"- Scheduled consecutive green: `{schedule.get('consecutiveGreenCount', 0)}`",
+                  f"- Scheduled runway window (h): `{schedule.get('runwayWindowHours', 0)}`",
                   f"- Scheduled latest receipt: `{schedule.get('latestGeneratedAt') or 'n/a'}`",
                   f"- Scheduled latest green: `{schedule.get('latestGreenGeneratedAt') or 'n/a'}`",
                   f"- Scheduled latest green age (h): `{schedule.get('latestGreenAgeHours', 'n/a')}`",

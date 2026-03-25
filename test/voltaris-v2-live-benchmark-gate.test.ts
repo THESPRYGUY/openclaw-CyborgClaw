@@ -574,6 +574,8 @@ describe("persisted benchmark receipt artifacts", () => {
       blockedReceiptCount: number;
       consecutiveGreenCount: number;
       longestGreenStreak: number;
+      eventCounts: Record<string, number>;
+      runwayMaturityLabel: string;
     };
 
     expect(latestGreen.generatedAt).toBe("2026-03-25T00:00:00.000Z");
@@ -587,6 +589,8 @@ describe("persisted benchmark receipt artifacts", () => {
     expect(historySummary.blockedReceiptCount).toBe(1);
     expect(historySummary.consecutiveGreenCount).toBe(0);
     expect(historySummary.longestGreenStreak).toBe(1);
+    expect(historySummary.eventCounts).toEqual({ local_manual: 2 });
+    expect(historySummary.runwayMaturityLabel).toBe("Ad hoc runway only");
   });
 
   it("trims retained history and reports the current green streak window", async () => {
@@ -683,6 +687,8 @@ describe("persisted benchmark receipt artifacts", () => {
     expect(historySummary.blockedReceiptCount).toBe(0);
     expect(historySummary.consecutiveGreenCount).toBe(2);
     expect(historySummary.longestGreenStreak).toBe(2);
+    expect(historySummary.eventCounts).toEqual({ local_manual: 2 });
+    expect(historySummary.runwayMaturityLabel).toBe("Ad hoc runway only");
   });
 
   it("reports scheduled runway health separately from interleaved preflight and manual receipts", () => {
@@ -784,6 +790,70 @@ describe("persisted benchmark receipt artifacts", () => {
     expect(summary.schedule.latestGreenAgeHours).toBe(20);
     expect(summary.schedule.runwayStatus).toBe("warning");
     expect(summary.schedule.healthy).toBe(false);
+    expect(summary.schedule.runwayWindowHours).toBe(12.08);
+    expect(summary.runwayMaturityLabel).toBe("Emerging scheduled runway");
+    expect(summary.runwayMaturityStatus).toBe("emerging_scheduled");
+  });
+
+  it("classifies a sustained scheduled history as a boring multi-day runway", () => {
+    const makeReceipt = ({
+      generatedAt,
+      eventName,
+    }: {
+      generatedAt: string;
+      eventName: string;
+    }): ReturnType<typeof buildPersistedBenchmarkReceipt> => ({
+      contractVersion: "openclaw.live-runtime-benchmark-receipt.v1",
+      generatedAt,
+      ok: true,
+      phase: "run",
+      packRef: "examples/voltaris-v2-pack",
+      profile: "voltaris-proof",
+      modelRef: "openai-codex/gpt-5.3-codex",
+      repeatRuns: 3,
+      repeatDelayMs: 30000,
+      greenRunCount: 3,
+      providerId: "openai-codex",
+      readyProfileCount: 1,
+      readyProfileIds: ["proof"],
+      preflightStatus: "ready",
+      proofStatus: "ready",
+      promotionStatus: "green",
+      assertionCount: 4,
+      passedAssertionCount: 4,
+      failedAssertionCount: 0,
+      failedAssertions: [],
+      failureReasons: [],
+      latestRun: null,
+      runs: [],
+      workflow: {
+        eventName,
+        runId: generatedAt,
+        runAttempt: "1",
+        sha: "deadbeef",
+      },
+    });
+
+    const summary = buildPersistedBenchmarkHistorySummary(
+      [
+        makeReceipt({ generatedAt: "2026-03-20T09:05:00.000Z", eventName: "schedule" }),
+        makeReceipt({ generatedAt: "2026-03-20T21:05:00.000Z", eventName: "schedule" }),
+        makeReceipt({ generatedAt: "2026-03-21T09:05:00.000Z", eventName: "schedule" }),
+        makeReceipt({ generatedAt: "2026-03-21T21:05:00.000Z", eventName: "schedule" }),
+        makeReceipt({ generatedAt: "2026-03-22T09:05:00.000Z", eventName: "schedule" }),
+        makeReceipt({ generatedAt: "2026-03-22T21:05:00.000Z", eventName: "schedule" }),
+        makeReceipt({ generatedAt: "2026-03-23T09:05:00.000Z", eventName: "schedule" }),
+      ],
+      540,
+      Date.parse("2026-03-23T10:00:00.000Z"),
+    );
+
+    expect(summary.schedule.receiptCount).toBe(7);
+    expect(summary.schedule.greenReceiptCount).toBe(7);
+    expect(summary.schedule.consecutiveGreenCount).toBe(7);
+    expect(summary.schedule.runwayWindowHours).toBe(72);
+    expect(summary.runwayMaturityLabel).toBe("Boring multi-day runway");
+    expect(summary.runwayMaturityStatus).toBe("boring_multi_day");
   });
 });
 
