@@ -233,6 +233,9 @@ export type PersistedBenchmarkHistorySummary = {
     receiptCount: number;
     greenReceiptCount: number;
     blockedReceiptCount: number;
+    receiptObservationState: "missing" | "observed";
+    receiptObservationLabel: string;
+    receiptObservationDetail: string;
     oldestGeneratedAt: string | null;
     oldestGreenGeneratedAt: string | null;
     latestGeneratedAt: string | null;
@@ -1150,6 +1153,43 @@ function classifyScheduledRunway(
   return "healthy";
 }
 
+function buildScheduledReceiptObservation(params: {
+  receiptCount: number;
+  greenReceiptCount: number;
+}): {
+  receiptObservationState: "missing" | "observed";
+  receiptObservationLabel: string;
+  receiptObservationDetail: string;
+} {
+  const receiptCount = Number(params.receiptCount || 0) || 0;
+  const greenReceiptCount = Number(params.greenReceiptCount || 0) || 0;
+
+  if (receiptCount <= 0) {
+    return {
+      receiptObservationState: "missing",
+      receiptObservationLabel: "No scheduled receipts observed",
+      receiptObservationDetail:
+        "The retained runway is still backed only by ad hoc receipts, so scheduled runway truth has not been observed yet.",
+    };
+  }
+
+  if (greenReceiptCount <= 0) {
+    return {
+      receiptObservationState: "observed",
+      receiptObservationLabel: "Scheduled receipts observed without green runs",
+      receiptObservationDetail:
+        "Scheduled receipts are present in history, but none of the scheduled runs have turned green yet.",
+    };
+  }
+
+  return {
+    receiptObservationState: "observed",
+    receiptObservationLabel: "Scheduled receipts observed",
+    receiptObservationDetail:
+      "Scheduled receipts are present in history and include at least one green run.",
+  };
+}
+
 function buildRetainedRunwayProjection(params: {
   runwayWindowHours: number;
   retainedHistoryCount: number;
@@ -1373,6 +1413,11 @@ export function buildPersistedBenchmarkHistorySummary(
       ? null
       : roundHours(Math.max(0, nowMs - latestScheduledGreenTimestamp));
   const eventCounts: Record<string, number> = {};
+  const scheduledReceiptObservation = buildScheduledReceiptObservation({
+    receiptCount: scheduledReceipts.length,
+    greenReceiptCount: scheduledRunReceipts.filter((receipt) => isGreenBenchmarkReceipt(receipt))
+      .length,
+  });
 
   for (const receipt of receipts) {
     incrementCount(eventCounts, resolveReceiptEventName(receipt), "local_manual");
@@ -1429,6 +1474,7 @@ export function buildPersistedBenchmarkHistorySummary(
       blockedReceiptCount: scheduledRunReceipts.filter(
         (receipt) => !isGreenBenchmarkReceipt(receipt),
       ).length,
+      ...scheduledReceiptObservation,
       oldestGeneratedAt: oldestScheduledReceipt?.generatedAt || null,
       oldestGreenGeneratedAt: oldestScheduledGreenReceipt?.generatedAt || null,
       latestGeneratedAt: latestScheduledReceipt?.generatedAt || null,

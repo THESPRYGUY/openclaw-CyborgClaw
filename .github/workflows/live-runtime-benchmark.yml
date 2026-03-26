@@ -212,6 +212,7 @@ jobs:
               lines.extend(
                 [
                   f"- Scheduled runway status: `{schedule.get('runwayStatus', 'unknown')}`",
+                  f"- Scheduled runway evidence: `{schedule.get('receiptObservationLabel', 'unknown')}`",
                   f"- Scheduled retained receipts: `{schedule.get('receiptCount', 0)}`",
                   f"- Scheduled green receipts: `{schedule.get('greenReceiptCount', 0)}`",
                   f"- Scheduled blocked receipts: `{schedule.get('blockedReceiptCount', 0)}`",

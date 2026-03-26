@@ -784,6 +784,8 @@ describe("persisted benchmark receipt artifacts", () => {
     expect(summary.schedule.receiptCount).toBe(4);
     expect(summary.schedule.greenReceiptCount).toBe(2);
     expect(summary.schedule.blockedReceiptCount).toBe(0);
+    expect(summary.schedule.receiptObservationState).toBe("observed");
+    expect(summary.schedule.receiptObservationLabel).toBe("Scheduled receipts observed");
     expect(summary.schedule.consecutiveGreenCount).toBe(2);
     expect(summary.schedule.longestGreenStreak).toBe(2);
     expect(summary.schedule.latestGreenGeneratedAt).toBe("2026-03-25T21:05:00.000Z");
@@ -793,6 +795,87 @@ describe("persisted benchmark receipt artifacts", () => {
     expect(summary.schedule.runwayWindowHours).toBe(12.08);
     expect(summary.runwayMaturityLabel).toBe("Emerging scheduled runway");
     expect(summary.runwayMaturityStatus).toBe("emerging_scheduled");
+  });
+
+  it("keeps push-only runway histories honest about missing scheduled evidence", () => {
+    const summary = buildPersistedBenchmarkHistorySummary(
+      [
+        {
+          contractVersion: "openclaw.live-runtime-benchmark-receipt.v1",
+          generatedAt: "2026-03-25T09:00:00.000Z",
+          ok: false,
+          phase: "run",
+          packRef: "examples/voltaris-v2-pack",
+          profile: "voltaris-proof",
+          modelRef: "openai-codex/gpt-5.3-codex",
+          repeatRuns: 1,
+          repeatDelayMs: 0,
+          greenRunCount: 0,
+          providerId: "openai-codex",
+          readyProfileCount: 1,
+          readyProfileIds: ["proof"],
+          preflightStatus: "ready",
+          proofStatus: "blocked",
+          promotionStatus: "blocked",
+          assertionCount: 4,
+          passedAssertionCount: 3,
+          failedAssertionCount: 1,
+          failedAssertions: ["proofStatus"],
+          failureReasons: ["proofStatus"],
+          latestRun: null,
+          runs: [],
+          workflow: {
+            eventName: "push",
+            runId: "push-1",
+            runAttempt: "1",
+            sha: "deadbeef",
+          },
+        },
+        {
+          contractVersion: "openclaw.live-runtime-benchmark-receipt.v1",
+          generatedAt: "2026-03-25T11:00:00.000Z",
+          ok: true,
+          phase: "run",
+          packRef: "examples/voltaris-v2-pack",
+          profile: "voltaris-proof",
+          modelRef: "openai-codex/gpt-5.3-codex",
+          repeatRuns: 1,
+          repeatDelayMs: 0,
+          greenRunCount: 1,
+          providerId: "openai-codex",
+          readyProfileCount: 1,
+          readyProfileIds: ["proof"],
+          preflightStatus: "ready",
+          proofStatus: "ready",
+          promotionStatus: "green",
+          assertionCount: 4,
+          passedAssertionCount: 4,
+          failedAssertionCount: 0,
+          failedAssertions: [],
+          failureReasons: [],
+          latestRun: null,
+          runs: [],
+          workflow: {
+            eventName: "push",
+            runId: "push-2",
+            runAttempt: "1",
+            sha: "deadbeef",
+          },
+        },
+      ],
+      360,
+      Date.parse("2026-03-25T12:00:00.000Z"),
+    );
+
+    expect(summary.schedule.receiptCount).toBe(0);
+    expect(summary.schedule.greenReceiptCount).toBe(0);
+    expect(summary.schedule.receiptObservationState).toBe("missing");
+    expect(summary.schedule.receiptObservationLabel).toBe("No scheduled receipts observed");
+    expect(summary.schedule.receiptObservationDetail).toContain(
+      "scheduled runway truth has not been observed yet",
+    );
+    expect(summary.runwayMaturityLabel).toBe("Ad hoc runway only");
+    expect(summary.runwayMaturityStatus).toBe("ad_hoc_only");
   });
 
   it("classifies a sustained scheduled history as a boring multi-day runway", () => {
