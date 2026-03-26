@@ -734,6 +734,8 @@ describe("persisted benchmark receipt artifacts", () => {
         runId: generatedAt,
         runAttempt: "1",
         sha: "deadbeef",
+        refName: "main",
+        defaultBranch: "main",
       },
     });
 
@@ -786,6 +788,9 @@ describe("persisted benchmark receipt artifacts", () => {
     expect(summary.schedule.blockedReceiptCount).toBe(0);
     expect(summary.schedule.receiptObservationState).toBe("observed");
     expect(summary.schedule.receiptObservationLabel).toBe("Scheduled receipts observed");
+    expect(summary.schedule.branchEligibilityState).toBe("eligible");
+    expect(summary.schedule.branchName).toBe("main");
+    expect(summary.schedule.defaultBranch).toBe("main");
     expect(summary.schedule.consecutiveGreenCount).toBe(2);
     expect(summary.schedule.longestGreenStreak).toBe(2);
     expect(summary.schedule.latestGreenGeneratedAt).toBe("2026-03-25T21:05:00.000Z");
@@ -829,6 +834,8 @@ describe("persisted benchmark receipt artifacts", () => {
             runId: "push-1",
             runAttempt: "1",
             sha: "deadbeef",
+            refName: "m20-trust-the-refusal-closeout",
+            defaultBranch: "main",
           },
         },
         {
@@ -860,6 +867,8 @@ describe("persisted benchmark receipt artifacts", () => {
             runId: "push-2",
             runAttempt: "1",
             sha: "deadbeef",
+            refName: "m20-trust-the-refusal-closeout",
+            defaultBranch: "main",
           },
         },
       ],
@@ -870,10 +879,16 @@ describe("persisted benchmark receipt artifacts", () => {
     expect(summary.schedule.receiptCount).toBe(0);
     expect(summary.schedule.greenReceiptCount).toBe(0);
     expect(summary.schedule.receiptObservationState).toBe("missing");
-    expect(summary.schedule.receiptObservationLabel).toBe("No scheduled receipts observed");
-    expect(summary.schedule.receiptObservationDetail).toContain(
-      "scheduled runway truth has not been observed yet",
+    expect(summary.schedule.receiptObservationLabel).toBe(
+      "Scheduled runway requires default branch",
     );
+    expect(summary.schedule.receiptObservationDetail).toContain("default branch (main)");
+    expect(summary.schedule.branchEligibilityState).toBe("blocked_non_default_branch");
+    expect(summary.schedule.branchEligibilityLabel).toBe(
+      "Scheduled runway requires default branch",
+    );
+    expect(summary.schedule.branchName).toBe("m20-trust-the-refusal-closeout");
+    expect(summary.schedule.defaultBranch).toBe("main");
     expect(summary.runwayMaturityLabel).toBe("Ad hoc runway only");
     expect(summary.runwayMaturityStatus).toBe("ad_hoc_only");
   });
@@ -914,6 +929,8 @@ describe("persisted benchmark receipt artifacts", () => {
         runId: generatedAt,
         runAttempt: "1",
         sha: "deadbeef",
+        refName: "main",
+        defaultBranch: "main",
       },
     });
 

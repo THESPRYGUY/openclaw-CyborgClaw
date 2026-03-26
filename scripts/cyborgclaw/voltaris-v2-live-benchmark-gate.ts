@@ -167,6 +167,10 @@ type PersistedBenchmarkMaturityStatus =
   | "emerging_scheduled"
   | "multi_day_scheduled"
   | "boring_multi_day";
+type PersistedBenchmarkScheduleBranchEligibilityState =
+  | "eligible"
+  | "blocked_non_default_branch"
+  | "unknown";
 
 export type PersistedBenchmarkReceipt = {
   contractVersion: "openclaw.live-runtime-benchmark-receipt.v1";
@@ -197,6 +201,8 @@ export type PersistedBenchmarkReceipt = {
     runId: string | null;
     runAttempt: string | null;
     sha: string | null;
+    refName: string | null;
+    defaultBranch: string | null;
   };
 };
 
@@ -236,6 +242,11 @@ export type PersistedBenchmarkHistorySummary = {
     receiptObservationState: "missing" | "observed";
     receiptObservationLabel: string;
     receiptObservationDetail: string;
+    branchEligibilityState: PersistedBenchmarkScheduleBranchEligibilityState;
+    branchEligibilityLabel: string;
+    branchEligibilityDetail: string;
+    branchName: string | null;
+    defaultBranch: string | null;
     oldestGeneratedAt: string | null;
     oldestGreenGeneratedAt: string | null;
     latestGeneratedAt: string | null;
@@ -1005,6 +1016,20 @@ function resolveWorkflowEventName(): string {
   return asStringValue(process.env.GITHUB_EVENT_NAME) ?? "local_manual";
 }
 
+function resolveWorkflowRefName(): string | null {
+  return (
+    asStringValue(process.env.GITHUB_REF_NAME) ??
+    asStringValue(process.env.OPENCLAW_LIVE_BENCHMARK_REF_NAME)
+  );
+}
+
+function resolveWorkflowDefaultBranch(): string | null {
+  return (
+    asStringValue(process.env.GITHUB_DEFAULT_BRANCH) ??
+    asStringValue(process.env.OPENCLAW_LIVE_BENCHMARK_DEFAULT_BRANCH)
+  );
+}
+
 function resolveReceiptEventName(
   receipt: Pick<PersistedBenchmarkReceipt, "workflow"> | null | undefined,
 ): string {
@@ -1048,6 +1073,8 @@ export function buildPersistedBenchmarkReceipt(report: GateReport): PersistedBen
       runId: asStringValue(process.env.GITHUB_RUN_ID),
       runAttempt: asStringValue(process.env.GITHUB_RUN_ATTEMPT),
       sha: asStringValue(process.env.GITHUB_SHA),
+      refName: resolveWorkflowRefName(),
+      defaultBranch: resolveWorkflowDefaultBranch(),
     },
   };
 }
@@ -1153,9 +1180,53 @@ function classifyScheduledRunway(
   return "healthy";
 }
 
+function buildScheduledBranchEligibility(params: {
+  branchName: string | null;
+  defaultBranch: string | null;
+}): {
+  branchEligibilityState: PersistedBenchmarkScheduleBranchEligibilityState;
+  branchEligibilityLabel: string;
+  branchEligibilityDetail: string;
+  branchName: string | null;
+  defaultBranch: string | null;
+} {
+  const branchName = asStringValue(params.branchName);
+  const defaultBranch = asStringValue(params.defaultBranch);
+
+  if (!branchName || !defaultBranch) {
+    return {
+      branchEligibilityState: "unknown",
+      branchEligibilityLabel: "Scheduled branch eligibility unknown",
+      branchEligibilityDetail:
+        "The retained runway does not include enough branch metadata to determine whether scheduled receipts should be expected here.",
+      branchName: branchName ?? null,
+      defaultBranch: defaultBranch ?? null,
+    };
+  }
+
+  if (branchName !== defaultBranch) {
+    return {
+      branchEligibilityState: "blocked_non_default_branch",
+      branchEligibilityLabel: "Scheduled runway requires default branch",
+      branchEligibilityDetail: `GitHub scheduled workflows only run from the default branch (${defaultBranch}), but this retained runway belongs to ${branchName}.`,
+      branchName,
+      defaultBranch,
+    };
+  }
+
+  return {
+    branchEligibilityState: "eligible",
+    branchEligibilityLabel: "Scheduled runway eligible on this branch",
+    branchEligibilityDetail: `This retained runway belongs to the default branch (${defaultBranch}), so scheduled receipts can accumulate here once the workflow is active.`,
+    branchName,
+    defaultBranch,
+  };
+}
+
 function buildScheduledReceiptObservation(params: {
   receiptCount: number;
   greenReceiptCount: number;
+  branchEligibility: ReturnType<typeof buildScheduledBranchEligibility>;
 }): {
   receiptObservationState: "missing" | "observed";
   receiptObservationLabel: string;
@@ -1163,8 +1234,16 @@ function buildScheduledReceiptObservation(params: {
 } {
   const receiptCount = Number(params.receiptCount || 0) || 0;
   const greenReceiptCount = Number(params.greenReceiptCount || 0) || 0;
+  const branchEligibility = params.branchEligibility;
 
   if (receiptCount <= 0) {
+    if (branchEligibility.branchEligibilityState === "blocked_non_default_branch") {
+      return {
+        receiptObservationState: "missing",
+        receiptObservationLabel: "Scheduled runway requires default branch",
+        receiptObservationDetail: branchEligibility.branchEligibilityDetail,
+      };
+    }
     return {
       receiptObservationState: "missing",
       receiptObservationLabel: "No scheduled receipts observed",
@@ -1413,10 +1492,15 @@ export function buildPersistedBenchmarkHistorySummary(
       ? null
       : roundHours(Math.max(0, nowMs - latestScheduledGreenTimestamp));
   const eventCounts: Record<string, number> = {};
+  const scheduledBranchEligibility = buildScheduledBranchEligibility({
+    branchName: asStringValue(latestReceipt?.workflow?.refName),
+    defaultBranch: asStringValue(latestReceipt?.workflow?.defaultBranch),
+  });
   const scheduledReceiptObservation = buildScheduledReceiptObservation({
     receiptCount: scheduledReceipts.length,
     greenReceiptCount: scheduledRunReceipts.filter((receipt) => isGreenBenchmarkReceipt(receipt))
       .length,
+    branchEligibility: scheduledBranchEligibility,
   });
 
   for (const receipt of receipts) {
@@ -1475,6 +1559,7 @@ export function buildPersistedBenchmarkHistorySummary(
         (receipt) => !isGreenBenchmarkReceipt(receipt),
       ).length,
       ...scheduledReceiptObservation,
+      ...scheduledBranchEligibility,
       oldestGeneratedAt: oldestScheduledReceipt?.generatedAt || null,
       oldestGreenGeneratedAt: oldestScheduledGreenReceipt?.generatedAt || null,
       latestGeneratedAt: latestScheduledReceipt?.generatedAt || null,

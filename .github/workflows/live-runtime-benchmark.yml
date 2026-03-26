@@ -63,6 +63,7 @@ jobs:
       OPENCLAW_LIVE_BENCHMARK_REPEAT_DELAY_MS: ${{ github.event.inputs.repeat_delay_ms || '0' }}
       OPENCLAW_LIVE_BENCHMARK_HISTORY_MAX: "540"
       LIVE_BENCHMARK_PREFLIGHT_ONLY: ${{ github.event.inputs.preflight_only || 'false' }}
+      OPENCLAW_LIVE_BENCHMARK_DEFAULT_BRANCH: ${{ github.event.repository.default_branch || 'main' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -211,6 +212,10 @@ jobs:
             if schedule:
               lines.extend(
                 [
+                  f"- Scheduled branch eligibility: `{schedule.get('branchEligibilityState', 'unknown')}`",
+                  f"- Scheduled branch eligibility label: `{schedule.get('branchEligibilityLabel', 'unknown')}`",
+                  f"- Scheduled branch: `{schedule.get('branchName') or 'n/a'}`",
+                  f"- Scheduled default branch: `{schedule.get('defaultBranch') or 'n/a'}`",
                   f"- Scheduled runway status: `{schedule.get('runwayStatus', 'unknown')}`",
                   f"- Scheduled runway evidence: `{schedule.get('receiptObservationLabel', 'unknown')}`",
                   f"- Scheduled retained receipts: `{schedule.get('receiptCount', 0)}`",
@@ -223,6 +228,9 @@ jobs:
                   f"- Scheduled latest green age (h): `{schedule.get('latestGreenAgeHours', 'n/a')}`",
                 ]
               )
+              schedule_branch_detail = schedule.get("branchEligibilityDetail")
+              if schedule_branch_detail:
+                lines.append(f"- Scheduled branch detail: {schedule_branch_detail}")
 
           ready_profile_ids = preflight.get("readyProfileIds") or []
           if ready_profile_ids:
