@@ -52,8 +52,6 @@ jobs:
     timeout-minutes: 45
     env:
       CHECKOUT_REF: ${{ github.event.inputs.checkout_ref || vars.OPENCLAW_LIVE_BENCHMARK_CHECKOUT_REF || 'm20-trust-the-refusal-closeout' }}
-      REPORT_DIR: ${{ runner.temp }}/live-runtime-benchmark
-      PERSIST_DIR: ${{ runner.temp }}/live-runtime-benchmark-persisted
       LIVE_BENCHMARK_PACK_REF: ${{ github.event.inputs.pack || 'examples/voltaris-v2-pack' }}
       LIVE_BENCHMARK_PROFILE: ${{ github.event.inputs.profile || 'voltaris-proof' }}
       OPENCLAW_LIVE_BENCHMARK_ENABLED: ${{ vars.OPENCLAW_LIVE_BENCHMARK_ENABLED || 'true' }}
@@ -77,10 +75,17 @@ jobs:
           install-bun: "false"
           use-sticky-disk: "false"
 
+      - name: Prepare benchmark directories
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "REPORT_DIR=$RUNNER_TEMP/live-runtime-benchmark" >> "$GITHUB_ENV"
+          echo "PERSIST_DIR=$RUNNER_TEMP/live-runtime-benchmark-persisted" >> "$GITHUB_ENV"
+
       - name: Restore persisted runway cache
         uses: actions/cache/restore@v4
         with:
-          path: ${{ env.PERSIST_DIR }}
+          path: ${{ runner.temp }}/live-runtime-benchmark-persisted
           key: live-runtime-benchmark-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
             live-runtime-benchmark-${{ github.ref_name }}-
@@ -170,7 +175,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: live-runtime-benchmark-${{ github.run_id }}
-          path: ${{ env.REPORT_DIR }}
+          path: ${{ runner.temp }}/live-runtime-benchmark
           if-no-files-found: warn
           retention-days: 14
 
@@ -179,7 +184,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: live-runtime-benchmark-receipts-${{ github.run_id }}
-          path: ${{ env.PERSIST_DIR }}
+          path: ${{ runner.temp }}/live-runtime-benchmark-persisted
           if-no-files-found: warn
           retention-days: 90
 
@@ -187,5 +192,5 @@ jobs:
         if: always()
         uses: actions/cache/save@v4
         with:
-          path: ${{ env.PERSIST_DIR }}
+          path: ${{ runner.temp }}/live-runtime-benchmark-persisted
           key: live-runtime-benchmark-${{ github.ref_name }}-${{ github.run_id }}
