@@ -13,6 +13,7 @@ import { resolveChannelCapabilities } from "../../config/channel-capabilities.js
 import type { OpenClawConfig } from "../../config/config.js";
 import { getMachineDisplayName } from "../../infra/machine-name.js";
 import { generateSecureToken } from "../../infra/secure-random.js";
+import { appendCompactionCheckpointToEpisodicJournal } from "../../memory/episodic-journal.js";
 import { getGlobalHookRunner } from "../../plugins/hook-runner-global.js";
 import { type enqueueCommand, enqueueCommandInLane } from "../../process/command-queue.js";
 import { isCronSessionKey, isSubagentSessionKey } from "../../routing/session-key.js";
@@ -629,6 +630,22 @@ export async function compactEmbeddedPiSessionDirect(
           workspaceDir: params.workspaceDir,
           messageProvider: params.messageChannel ?? params.messageProvider,
         };
+        try {
+          await appendCompactionCheckpointToEpisodicJournal({
+            eventType: "compaction.before",
+            agentId: sessionAgentId,
+            sessionId: params.sessionId,
+            sessionKey: params.sessionKey?.trim() || params.sessionId,
+            workspaceDir: params.workspaceDir,
+            metrics: {
+              messageCount: preCompactionMessages.length,
+              compactingCount: limited.length,
+              missingSessionKey: !params.sessionKey || !params.sessionKey.trim(),
+            },
+          });
+        } catch (err) {
+          log.warn(`episodic journal compaction.before failed: ${String(err)}`);
+        }
         if (hookRunner?.hasHooks("before_compaction")) {
           hookRunner
             .runBeforeCompaction(
@@ -678,6 +695,23 @@ export async function compactEmbeddedPiSessionDirect(
         } catch {
           // If estimation fails, leave tokensAfter undefined
           tokensAfter = undefined;
+        }
+        try {
+          await appendCompactionCheckpointToEpisodicJournal({
+            eventType: "compaction.after",
+            agentId: sessionAgentId,
+            sessionId: params.sessionId,
+            sessionKey: params.sessionKey?.trim() || params.sessionId,
+            workspaceDir: params.workspaceDir,
+            metrics: {
+              messageCount: session.messages.length,
+              tokenCount: tokensAfter,
+              compactedCount: limited.length - session.messages.length,
+              missingSessionKey: !params.sessionKey || !params.sessionKey.trim(),
+            },
+          });
+        } catch (err) {
+          log.warn(`episodic journal compaction.after failed: ${String(err)}`);
         }
         // Run after_compaction hooks (fire-and-forget).
         // Also includes sessionFile for plugins that only need to act after

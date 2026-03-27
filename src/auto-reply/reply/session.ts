@@ -1,8 +1,10 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
+import fsPromises from "node:fs/promises";
 import path from "node:path";
+import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import { CURRENT_SESSION_VERSION, SessionManager } from "@mariozechner/pi-coding-agent";
-import { resolveSessionAgentId } from "../../agents/agent-scope.js";
+import { resolveAgentWorkspaceDir, resolveSessionAgentId } from "../../agents/agent-scope.js";
 import { normalizeChatType } from "../../channels/chat-type.js";
 import type { OpenClawConfig } from "../../config/config.js";
 import {
@@ -29,6 +31,7 @@ import type { TtsAutoMode } from "../../config/types.tts.js";
 import { archiveSessionTranscripts } from "../../gateway/session-utils.fs.js";
 import { deliverSessionMaintenanceWarning } from "../../infra/session-maintenance-warning.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
+import { backfillSessionEndHandoffMemory } from "../../memory/handoff-memory.js";
 import { getGlobalHookRunner } from "../../plugins/hook-runner-global.js";
 import { normalizeMainKey } from "../../routing/session-key.js";
 import { parseAgentSessionKey } from "../../sessions/session-key-utils.js";
@@ -44,6 +47,29 @@ import { normalizeInboundTextNewlines } from "./inbound-text.js";
 import { stripMentions, stripStructuralPrefixes } from "./mentions.js";
 
 const log = createSubsystemLogger("session-init");
+
+async function loadMessagesForSessionLifecycle(sessionFile?: string): Promise<AgentMessage[]> {
+  if (!sessionFile) {
+    return [];
+  }
+
+  const messages: AgentMessage[] = [];
+  const content = await fsPromises.readFile(sessionFile, "utf-8");
+  for (const line of content.split("\n")) {
+    if (!line.trim()) {
+      continue;
+    }
+    try {
+      const entry = JSON.parse(line);
+      if (entry.type === "message" && entry.message) {
+        messages.push(entry.message);
+      }
+    } catch {
+      // Skip malformed transcript rows so session rollover can continue.
+    }
+  }
+  return messages;
+}
 
 function resolveSessionKeyChannelHint(sessionKey?: string): string | undefined {
   const parsed = parseAgentSessionKey(sessionKey);
@@ -490,6 +516,29 @@ export async function initSessionState(params: {
     },
   );
 
+  let previousSessionMessages: AgentMessage[] = [];
+  let previousSessionTranscriptMtimeMs: number | undefined;
+  if (previousSessionEntry?.sessionId && previousSessionEntry.sessionId !== (sessionId ?? "")) {
+    const previousSessionFilePath = previousSessionEntry.sessionFile;
+    try {
+      // Capture the old transcript before archival so session_end handoff writes can
+      // still summarize the prior run after /new or /reset rotates the file away.
+      previousSessionMessages = await loadMessagesForSessionLifecycle(previousSessionFilePath);
+    } catch {
+      // Keep rollover resilient; handoff backfill can still proceed with an empty transcript.
+    }
+    if (previousSessionFilePath) {
+      try {
+        const transcriptStat = await fsPromises.stat(previousSessionFilePath);
+        if (Number.isFinite(transcriptStat.mtimeMs)) {
+          previousSessionTranscriptMtimeMs = transcriptStat.mtimeMs;
+        }
+      } catch {
+        // Keep rollover resilient; session_end can still fall back to the archived-path behavior.
+      }
+    }
+  }
+
   // Archive old transcript so it doesn't accumulate on disk (#14869).
   if (previousSessionEntry?.sessionId) {
     archiveSessionTranscripts({
@@ -518,31 +567,45 @@ export async function initSessionState(params: {
     IsNewSession: isNewSession ? "true" : "false",
   };
 
-  // Run session plugin hooks (fire-and-forget)
   const hookRunner = getGlobalHookRunner();
-  if (hookRunner && isNewSession) {
+  if (isNewSession) {
     const effectiveSessionId = sessionId ?? "";
 
     // If replacing an existing session, fire session_end for the old one
     if (previousSessionEntry?.sessionId && previousSessionEntry.sessionId !== effectiveSessionId) {
-      if (hookRunner.hasHooks("session_end")) {
-        void hookRunner
-          .runSessionEnd(
-            {
-              sessionId: previousSessionEntry.sessionId,
-              messageCount: 0,
-            },
-            {
-              sessionId: previousSessionEntry.sessionId,
-              agentId: resolveSessionAgentId({ sessionKey, config: cfg }),
-            },
-          )
-          .catch(() => {});
-      }
+      const previousSessionId = previousSessionEntry.sessionId;
+      const previousSessionFile = previousSessionEntry.sessionFile;
+      const sessionEndEvent = {
+        sessionId: previousSessionId,
+        messageCount: 0,
+      };
+      const sessionEndContext = {
+        sessionId: previousSessionId,
+        agentId: resolveSessionAgentId({ sessionKey, config: cfg }),
+      };
+      const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId);
+      void (async () => {
+        try {
+          await backfillSessionEndHandoffMemory({
+            workspaceDir,
+            agentId,
+            sessionId: previousSessionId,
+            sessionKey,
+            sessionFile: previousSessionFile,
+            transcriptMtimeMs: previousSessionTranscriptMtimeMs,
+            messages: previousSessionMessages,
+          });
+        } catch {
+          // Keep rollover resilient; session_end hooks still run even if handoff backfill fails.
+        }
+        if (hookRunner?.hasHooks("session_end")) {
+          await hookRunner.runSessionEnd(sessionEndEvent, sessionEndContext).catch(() => {});
+        }
+      })().catch(() => {});
     }
 
     // Fire session_start for the new session
-    if (hookRunner.hasHooks("session_start")) {
+    if (hookRunner?.hasHooks("session_start")) {
       void hookRunner
         .runSessionStart(
           {

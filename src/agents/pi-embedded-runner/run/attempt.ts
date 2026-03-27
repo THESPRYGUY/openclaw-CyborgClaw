@@ -12,9 +12,11 @@ import { resolveChannelCapabilities } from "../../../config/channel-capabilities
 import type { OpenClawConfig } from "../../../config/config.js";
 import { getMachineDisplayName } from "../../../infra/machine-name.js";
 import { MAX_IMAGE_BYTES } from "../../../media/constants.js";
+import { writeAgentEndHandoffMemory } from "../../../memory/handoff-memory.js";
 import { getGlobalHookRunner } from "../../../plugins/hook-runner-global.js";
 import type {
   PluginHookAgentContext,
+  PluginHookAgentEndEvent,
   PluginHookBeforeAgentStartResult,
   PluginHookBeforePromptBuildResult,
 } from "../../../plugins/types.js";
@@ -127,6 +129,11 @@ type PromptBuildHookRunner = {
   ) => Promise<PluginHookBeforeAgentStartResult | undefined>;
 };
 
+type AgentEndHookRunner = {
+  hasHooks: (hookName: "agent_end") => boolean;
+  runAgentEnd: (event: PluginHookAgentEndEvent, ctx: PluginHookAgentContext) => Promise<void>;
+};
+
 export async function resolvePromptBuildHookResult(params: {
   prompt: string;
   messages: unknown[];
@@ -179,6 +186,61 @@ export function resolvePromptModeForSession(sessionKey?: string): "minimal" | "f
     return "full";
   }
   return isSubagentSessionKey(sessionKey) ? "minimal" : "full";
+}
+
+export async function runAgentEndLifecycle(params: {
+  workspaceDir: string;
+  agentId: string;
+  sessionId: string;
+  sessionKey?: string;
+  sessionFile: string;
+  messagesSnapshot: AgentMessage[];
+  success: boolean;
+  error?: string;
+  durationMs: number;
+  trigger?: string;
+  messageProvider?: string;
+  messageChannel?: string;
+  hookRunner?: AgentEndHookRunner | null;
+}): Promise<void> {
+  try {
+    await writeAgentEndHandoffMemory({
+      workspaceDir: params.workspaceDir,
+      agentId: params.agentId,
+      sessionId: params.sessionId,
+      sessionKey: params.sessionKey,
+      sessionFile: params.sessionFile,
+      trigger: params.trigger,
+      messages: params.messagesSnapshot,
+      success: params.success,
+      error: params.error,
+      durationMs: params.durationMs,
+    });
+  } catch (err) {
+    log.warn(`agent_end handoff write failed: ${String(err)}`);
+  }
+
+  if (params.hookRunner?.hasHooks("agent_end")) {
+    void params.hookRunner
+      .runAgentEnd(
+        {
+          messages: params.messagesSnapshot,
+          success: params.success,
+          error: params.error,
+          durationMs: params.durationMs,
+        },
+        {
+          agentId: params.agentId,
+          sessionKey: params.sessionKey,
+          sessionId: params.sessionId,
+          workspaceDir: params.workspaceDir,
+          messageProvider: params.messageProvider ?? params.messageChannel ?? undefined,
+        },
+      )
+      .catch((err) => {
+        log.warn(`agent_end hook failed: ${err}`);
+      });
+  }
 }
 
 export function resolveAttemptFsWorkspaceOnly(params: {
@@ -1227,30 +1289,20 @@ export async function runEmbeddedAttempt(
         });
         anthropicPayloadLogger?.recordUsage(messagesSnapshot, promptError);
 
-        // Run agent_end hooks to allow plugins to analyze the conversation
-        // This is fire-and-forget, so we don't await
-        // Run even on compaction timeout so plugins can log/cleanup
-        if (hookRunner?.hasHooks("agent_end")) {
-          hookRunner
-            .runAgentEnd(
-              {
-                messages: messagesSnapshot,
-                success: !aborted && !promptError,
-                error: promptError ? describeUnknownError(promptError) : undefined,
-                durationMs: Date.now() - promptStartedAt,
-              },
-              {
-                agentId: hookAgentId,
-                sessionKey: params.sessionKey,
-                sessionId: params.sessionId,
-                workspaceDir: params.workspaceDir,
-                messageProvider: params.messageProvider ?? undefined,
-              },
-            )
-            .catch((err) => {
-              log.warn(`agent_end hook failed: ${err}`);
-            });
-        }
+        await runAgentEndLifecycle({
+          workspaceDir: resolvedWorkspace,
+          agentId: hookAgentId,
+          sessionId: params.sessionId,
+          sessionKey: params.sessionKey,
+          sessionFile: params.sessionFile,
+          messagesSnapshot,
+          success: !aborted && !promptError,
+          error: promptError ? describeUnknownError(promptError) : undefined,
+          durationMs: Date.now() - promptStartedAt,
+          messageProvider: params.messageProvider ?? undefined,
+          messageChannel: params.messageChannel ?? undefined,
+          hookRunner: hookRunner as AgentEndHookRunner | null | undefined,
+        });
       } finally {
         clearTimeout(abortTimer);
         if (abortWarnTimer) {

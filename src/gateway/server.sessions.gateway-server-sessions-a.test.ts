@@ -18,6 +18,11 @@ import {
   writeSessionStore,
 } from "./test-helpers.js";
 
+vi.mock("@mariozechner/pi-ai/oauth", () => ({
+  getOAuthApiKey: vi.fn(),
+  getOAuthProviders: () => [],
+}));
+
 const sessionCleanupMocks = vi.hoisted(() => ({
   clearSessionQueues: vi.fn(() => ({ followupCleared: 0, laneCleared: 0, keys: [] })),
   stopSubagentsForRequester: vi.fn(() => ({ stopped: 0 })),

@@ -1,7 +1,11 @@
 import fs from "node:fs/promises";
+import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import { logVerbose } from "../../globals.js";
 import { createInternalHookEvent, triggerInternalHook } from "../../hooks/internal-hooks.js";
+import { appendResetCheckpointToEpisodicJournal } from "../../memory/episodic-journal.js";
+import { backfillBeforeResetHandoffMemory } from "../../memory/handoff-memory.js";
 import { getGlobalHookRunner } from "../../plugins/hook-runner-global.js";
+import { resolveAgentIdFromSessionKey } from "../../routing/session-key.js";
 import { resolveSendPolicy } from "../../sessions/send-policy.js";
 import { shouldHandleTextCommands } from "../commands-registry.js";
 import { handleAcpCommand } from "./commands-acp.js";
@@ -42,6 +46,29 @@ let HANDLERS: CommandHandler[] | null = null;
 
 export type ResetCommandAction = "new" | "reset";
 
+async function loadMessagesForBeforeReset(sessionFile?: string): Promise<AgentMessage[]> {
+  if (!sessionFile) {
+    return [];
+  }
+
+  const messages: AgentMessage[] = [];
+  const content = await fs.readFile(sessionFile, "utf-8");
+  for (const line of content.split("\n")) {
+    if (!line.trim()) {
+      continue;
+    }
+    try {
+      const entry = JSON.parse(line);
+      if (entry.type === "message" && entry.message) {
+        messages.push(entry.message);
+      }
+    } catch {
+      // Skip malformed JSONL rows so reset can continue.
+    }
+  }
+  return messages;
+}
+
 export async function emitResetCommandHooks(params: {
   action: ResetCommandAction;
   ctx: HandleCommandsParams["ctx"];
@@ -65,6 +92,19 @@ export async function emitResetCommandHooks(params: {
   await triggerInternalHook(hookEvent);
   params.command.resetHookTriggered = true;
 
+  try {
+    await appendResetCheckpointToEpisodicJournal({
+      action: params.action,
+      workspaceDir: params.workspaceDir,
+      sessionKey: params.sessionKey,
+      sessionId:
+        params.previousSessionEntry?.sessionId ?? params.sessionEntry?.sessionId ?? undefined,
+      commandSource: params.command.surface,
+    });
+  } catch (err: unknown) {
+    logVerbose(`episodic journal reset checkpoint failed: ${String(err)}`);
+  }
+
   // Send hook messages immediately if present
   if (hookEvent.messages.length > 0) {
     // Use OriginatingChannel/To if available, otherwise fall back to command channel/from
@@ -87,47 +127,41 @@ export async function emitResetCommandHooks(params: {
     }
   }
 
-  // Fire before_reset plugin hook — extract memories before session history is lost
   const hookRunner = getGlobalHookRunner();
-  if (hookRunner?.hasHooks("before_reset")) {
-    const prevEntry = params.previousSessionEntry;
-    const sessionFile = prevEntry?.sessionFile;
-    // Fire-and-forget: read old session messages and run hook
-    void (async () => {
-      try {
-        const messages: unknown[] = [];
-        if (sessionFile) {
-          const content = await fs.readFile(sessionFile, "utf-8");
-          for (const line of content.split("\n")) {
-            if (!line.trim()) {
-              continue;
-            }
-            try {
-              const entry = JSON.parse(line);
-              if (entry.type === "message" && entry.message) {
-                messages.push(entry.message);
-              }
-            } catch {
-              // skip malformed lines
-            }
-          }
-        } else {
-          logVerbose("before_reset: no session file available, firing hook with empty messages");
-        }
-        await hookRunner.runBeforeReset(
-          { sessionFile, messages, reason: params.action },
-          {
-            agentId: params.sessionKey?.split(":")[0] ?? "main",
-            sessionKey: params.sessionKey,
-            sessionId: prevEntry?.sessionId,
-            workspaceDir: params.workspaceDir,
-          },
-        );
-      } catch (err: unknown) {
-        logVerbose(`before_reset hook failed: ${String(err)}`);
+  const prevEntry = params.previousSessionEntry;
+  const sessionFile = prevEntry?.sessionFile;
+  void (async () => {
+    try {
+      const messages = await loadMessagesForBeforeReset(sessionFile);
+      if (!sessionFile) {
+        logVerbose("before_reset: no session file available, continuing with empty messages");
       }
-    })();
-  }
+      await backfillBeforeResetHandoffMemory({
+        workspaceDir: params.workspaceDir,
+        agentId: resolveAgentIdFromSessionKey(params.sessionKey),
+        sessionId: prevEntry?.sessionId,
+        sessionKey: params.sessionKey,
+        sessionFile,
+        action: params.action,
+        messages,
+        commandSource: params.command.surface,
+      });
+      if (!hookRunner?.hasHooks("before_reset")) {
+        return;
+      }
+      await hookRunner.runBeforeReset(
+        { sessionFile, messages, reason: params.action },
+        {
+          agentId: resolveAgentIdFromSessionKey(params.sessionKey),
+          sessionKey: params.sessionKey,
+          sessionId: prevEntry?.sessionId,
+          workspaceDir: params.workspaceDir,
+        },
+      );
+    } catch (err: unknown) {
+      logVerbose(`before_reset hook failed: ${String(err)}`);
+    }
+  })();
 }
 
 export async function handleCommands(params: HandleCommandsParams): Promise<CommandHandlerResult> {
