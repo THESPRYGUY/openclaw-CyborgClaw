@@ -1,9 +1,9 @@
 {
   "mission": "mission-007",
-  "status": "READY",
+  "status": "COMPLETE",
   "owner": "main",
-  "updatedUtc": "2026-04-04T12:15:00Z",
+  "updatedUtc": "2026-04-04T15:27:17Z",
   "currentDeliverable": "deliverable-001",
-  "latestRunDir": "ops/missions/mission-007/runs",
-  "notes": "Mission 007 is staged as the full-flow golden run. The 10-loop structure, success bar, and receipt template are filed and ready for live execution."
+  "latestRunDir": "ops/missions/mission-007/runs/20260404_152717Z",
+  "notes": "Mission 007 completed a real golden-run hardening pass. Flow and Build now share a live golden-run spine, use a shared hero object and next action, and refresh on a 5s cadence plus focus return."
 }
