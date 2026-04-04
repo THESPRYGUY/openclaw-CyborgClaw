@@ -1,0 +1,9 @@
+{
+  "mission": "mission-006",
+  "status": "COMPLETE",
+  "owner": "main",
+  "updatedUtc": "2026-04-04T11:59:50Z",
+  "currentDeliverable": "deliverable-010",
+  "latestRunDir": "ops/missions/mission-006/runs/20260404_115950Z",
+  "notes": "Mission 006 completed a 10-loop overnight hardening pass. Telemetry truth, canonical card grammar, team blocker truth, STUD paperwork-path gating, and docs-rail truth were all tightened with focused tests and live route checks."
+}

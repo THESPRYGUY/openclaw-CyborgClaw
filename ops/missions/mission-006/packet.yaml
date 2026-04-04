@@ -1,0 +1,79 @@
+missionId: MISSION-006
+simulation: false
+missionType: overnight-live-fire-hardening
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-04T11:59:50Z
+
+route:
+  targetLead: main
+  lane: cyborgclaw-hardening
+  team: CyborgClaw MVP hardening crew
+
+objective:
+  short: Harden CyborgClaw UI truth, telemetry truth, STUD boot truth, and paperwork truth under live-fire canary conditions.
+  detail: >
+    Run a 10-loop recursive self-improvement pass across Agent Design Studio,
+    Strike Team Design Studio, the agent foyer, the workforce mission room,
+    STUD boot sequencing, and docs rails. Prefer truthful operator guidance,
+    canonical card grammar, and the smallest safe fixes over broad redesign.
+
+scope:
+  inScope:
+    - Near-real-time telemetry truth across foyer and mission room
+    - Canonical CyborgClaw agent card enforcement
+    - Seat-first and formation-first Studio simplification
+    - Team blocker truth
+    - STUD paperwork-path boot gating
+    - Honest docs-rail statuses and receipts
+  outOfScope:
+    - Runtime-authority expansion
+    - Silent RSI-driven mutation
+    - Broad architecture rewrites
+    - New control-plane feature sprawl
+
+participants:
+  alreadySpawnedAgents:
+    - STUD
+    - main
+  helperLanes:
+    - Ampere
+    - Banach
+    - Dewey
+
+instructions:
+  leadInstructions:
+    - Prefer the smallest safe fix that restores truth and operator clarity.
+    - Keep one canonical baseball-card grammar across the main surfaces.
+    - Treat stale or partial telemetry as stale or partial; never fake green.
+    - Keep Team Studio composition-first and Agent Studio seat-first.
+  downstreamInstructions:
+    - target: Ampere
+      instructions:
+        - Audit Agent Design Studio information hierarchy and first-contact noise.
+    - target: Banach
+      instructions:
+        - Audit Strike Team Design Studio blocker truth and team/seat boundary clarity.
+    - target: Dewey
+      instructions:
+        - Audit paperwork truth, docs rails, and receipt-path reliability.
+
+acknowledgmentRequirements:
+  requiresReceiptConfirmation: true
+  requiresUnderstandingConfirmation: true
+  requiresParticipantDeclaration: false
+
+successCriteria:
+  - Telemetry truth is acceptably fresh across foyer and mission room
+  - Team Studio no longer mislabels mixed blockers as seat blockers
+  - Doctrine and overlay libraries are secondary in Team Studio
+  - STUD boot includes a paperwork-path phase
+  - Docs-rail statuses distinguish live rails from waiting rails
+  - Focused tests and live route checks pass
+
+failureCriteria:
+  - Any surface still implies publish equals runtime effective
+  - Canonical card grammar drifts again
+  - Telemetry remains stale or Alpha-biased after refresh
+  - STUD can still go false-green on missing paperwork path
+  - Paperwork or receipt rails become less truthful than before
