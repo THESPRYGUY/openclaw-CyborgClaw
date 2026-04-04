@@ -1,0 +1,72 @@
+missionId: MISSION-005
+simulation: false
+missionType: rsi-default-canary
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-04T00:00:00Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Prove RSI-by-default improves one specialist seat and one team bundle without runtime drift.
+  detail: >
+    Run a controlled canary centered on the current DevEx and QA reliability seat.
+    RSI must inspect the latest published seat and team artifacts, produce bounded draft
+    improvements, pass eval-first review, and preserve strict publish/runtime separation.
+
+scope:
+  inScope:
+    - Seat refinement draft for dir-devex-qa-01
+    - Team recommendation draft for Strike Team Alpha
+    - Eval and proof-gate review
+    - STUD readiness review against the updated published bundle
+  outOfScope:
+    - Silent runtime mutation
+    - Unreviewed bench-to-core promotion
+    - Model or tool widening outside specialist boundaries
+    - Live deployment claims without downstream acceptance
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - dir-devex-qa-01
+    - dir-application-eng-01
+  agentsToBeSpawned:
+    - STUD
+
+instructions:
+  leadInstructions:
+    - Keep RSI draft-only and eval-first.
+    - Ensure seat specialization stays bounded.
+    - Surface one team recommendation only if it is directly supported by the seat review.
+  downstreamInstructions:
+    - target: dir-devex-qa-01
+      instructions:
+        - Review current seat boundary, non-goals, proof gates, and eval posture.
+        - Propose bounded improvements only.
+    - target: dir-application-eng-01
+      instructions:
+        - Review whether team handoffs into reliability can be sharpened.
+        - Do not widen scope beyond the current team bundle.
+
+acknowledgmentRequirements:
+  requiresReceiptConfirmation: true
+  requiresUnderstandingConfirmation: true
+  requiresParticipantDeclaration: true
+
+successCriteria:
+  - RSI produces one bounded seat refinement draft
+  - RSI produces one bounded team recommendation draft
+  - Operator can review both changes clearly in Studio
+  - Publish/runtime separation remains explicit
+  - STUD can consume the updated bundle as governed input
+
+failureCriteria:
+  - RSI attempts direct runtime mutation
+  - Seat specialty widens without explicit approval
+  - Proof or eval gates weaken
+  - Team recommendation blurs seat authoring with team composition
+  - Operator cannot tell draft from published from runtime-effective state

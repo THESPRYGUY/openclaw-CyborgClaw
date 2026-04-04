@@ -1,0 +1,9 @@
+{
+  "mission": "mission-005",
+  "status": "READY",
+  "owner": "main",
+  "updatedUtc": "2026-04-04T00:00:00Z",
+  "currentDeliverable": "deliverable-001",
+  "latestRunDir": "ops/missions/mission-005/runs",
+  "notes": "RSI Default Canary prepared for Strike Team Alpha with dir-devex-qa-01 as the primary refinement seat."
+}
