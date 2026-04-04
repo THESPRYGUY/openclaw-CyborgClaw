@@ -1,0 +1,84 @@
+missionId: MISSION-007
+simulation: false
+missionType: full-flow-golden-run
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-04T12:15:00Z
+
+route:
+  targetLead: main
+  lane: cyborgclaw-golden-run
+  team: CyborgClaw golden-run crew
+
+objective:
+  short: Prove one idea can travel end to end through CyborgClaw with truthful state, bounded authority, and complete receipts.
+  detail: >
+    Run a 10-loop recursive improvement mission across the full CyborgClaw operator path:
+    idea drop, shaping, PRD/dev-staging, specialist seat design, strike-team composition,
+    STUD boot, mission execution, proof/review, development publishing, and closeout.
+    The mission should prefer truth, clarity, and auditability over speed or feature growth.
+
+scope:
+  inScope:
+    - Idea lifecycle truth
+    - PRD and dev-staging handoff truth
+    - Agent Design Studio seat truth
+    - Strike Team Design Studio formation truth
+    - STUD boot and launch truth
+    - Mission execution telemetry truth
+    - Proof, receipts, and paperwork integrity
+    - Development publishing and closeout truth
+  outOfScope:
+    - Runtime authority expansion
+    - Silent RSI-driven mutation
+    - Broad redesign unrelated to the full-flow golden run
+    - Cosmetic-only UI work with no impact on operator truth
+
+participants:
+  alreadySpawnedAgents:
+    - STUD
+    - main
+  helperLanes:
+    - Ampere
+    - Banach
+    - Dewey
+
+instructions:
+  leadInstructions:
+    - Work like a launch crew.
+    - Prefer honest yellow over fake green.
+    - Keep one canonical lifecycle vocabulary across the flow.
+    - Keep Agent Studio seat-first and Strike Team Studio formation-first.
+    - Treat paperwork as part of runtime readiness, not an afterthought.
+  downstreamInstructions:
+    - target: Ampere
+      instructions:
+        - Audit architecture boundaries and stage-truth integrity across the full flow.
+    - target: Banach
+      instructions:
+        - Audit operator clarity, overload points, and next-action ambiguity across the full flow.
+    - target: Dewey
+      instructions:
+        - Audit paperwork, artifact, and receipt integrity across the full flow.
+
+acknowledgmentRequirements:
+  requiresReceiptConfirmation: true
+  requiresUnderstandingConfirmation: true
+  requiresParticipantDeclaration: false
+
+successCriteria:
+  - One bounded idea can move from intake through closeout
+  - Lifecycle truth remains distinct at every stage
+  - Seat design and team composition stay clearly separated
+  - STUD boot blocks false-green launches
+  - Mission execution and proof rails remain truthful
+  - Development publishing and closeout are receipt-backed
+  - The operator never loses the next action
+
+failureCriteria:
+  - Any surface implies publish equals live
+  - Any stage goes green without the necessary receipt path
+  - Team Studio drifts into seat authoring
+  - Agent Studio drifts into runtime authority
+  - Telemetry becomes misleading under live use
+  - Closeout cannot be audited

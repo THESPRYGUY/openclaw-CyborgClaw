@@ -1,0 +1,9 @@
+{
+  "mission": "mission-007",
+  "status": "READY",
+  "owner": "main",
+  "updatedUtc": "2026-04-04T12:15:00Z",
+  "currentDeliverable": "deliverable-001",
+  "latestRunDir": "ops/missions/mission-007/runs",
+  "notes": "Mission 007 is staged as the full-flow golden run. The 10-loop structure, success bar, and receipt template are filed and ready for live execution."
+}
