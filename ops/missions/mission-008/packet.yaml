@@ -1,0 +1,96 @@
+missionId: MISSION-008
+simulation: false
+missionType: strike-team-alpha-swarm-unlock-implementation
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-05T01:25:45Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Implement bounded Alpha-only subagent spawning and carry it through proof, publish, and sealed closeout.
+  detail: >
+    Start from the sealed Swarm Unlock canary and turn it into a real implementation mission.
+    Strike Team Alpha must admit the delegation contract, implement the bounded spawn path,
+    prove the guardrails, expose the receipts, publish the outcome, and seal the run.
+
+scope:
+  inScope:
+    - Strike Team Alpha-only delegation contract
+    - Runtime or policy guardrails for Alpha-only spawning
+    - Bounded spawn plumbing and mission-shape checks
+    - Spawn ledger and closeout receipt visibility
+    - Positive, denial, and stop-condition proofs
+    - Publish bundle and sealed closeout packet
+  outOfScope:
+    - Cross-team or global swarm enabling
+    - Silent autonomous spawning
+    - Runtime authority expansion beyond the admitted contract
+    - Feature work unrelated to bounded subagent delegation
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - dir-architecture-01
+    - dir-application-eng-01
+    - dir-devex-qa-01
+    - voltaris-v2
+  agentsToBeSpawned:
+    - STUD
+
+instructions:
+  leadInstructions:
+    - Treat the sealed canary as prerequisite evidence, not as the implementation job to reuse.
+    - Keep the feature Alpha-only until the admitted contract says otherwise.
+    - Block any runtime behavior that would create a second authority surface.
+    - Require receipts for allowed, denied, and stopped spawn paths.
+  downstreamInstructions:
+    - target: dir-architecture-01
+      instructions:
+        - Finalize the delegation contract and the policy guardrails.
+        - Define allowed mission shapes, max depth, and stop conditions.
+    - target: dir-application-eng-01
+      instructions:
+        - Implement the bounded spawn plumbing and enforce the admitted constraints.
+        - Do not widen the feature beyond Alpha-only scope.
+    - target: dir-devex-qa-01
+      instructions:
+        - Prove the positive path, denial path, stop path, and receipt path.
+        - Reject completion if receipts or kill conditions are weak.
+    - target: voltaris-v2
+      instructions:
+        - Keep the operator surface calm, explicit, and receipt-oriented.
+        - Make it obvious who spawned what, why it was allowed, and where closeout lives.
+
+acknowledgmentRequirements:
+  requiresReceiptConfirmation: true
+  requiresUnderstandingConfirmation: true
+  requiresParticipantDeclaration: true
+
+prerequisites:
+  sourceIdeaId: 4FnUAhwOMznsfYmXG2Xdd
+  sourceTodoId: tT9DoFo_FSIfimzoPomIi
+  sourcePrdSessionId: M3Utw-QnOBBkerYB31edq
+  sealedCanaryJobId: job-jYPCQdM9ul
+  sourceDevPackPath: /home/spryguy/openclaw-workspace/projects/SPRYTLY/sprytly-internal-dashboard/data/reviews/evidence/dev-pack-tT9DoFo_FSIfimzoPomIi-2026-04-04T204935Z.md
+  sourcePrdThreadPath: /home/spryguy/openclaw-workspace/SPRYSPACE/vnext/spaces/hivemind/threads/THR-20260404-prd-groupthink-strike-team-alpha-swarm-unlock-canary-M3Utw-QnOBBkerYB31edq.md
+
+successCriteria:
+  - Delegation contract is admitted and versioned
+  - Alpha-only guardrails are implemented and enforced
+  - Allowed spawn path emits ledger and closeout receipts
+  - Denied and stopped paths emit visible receipts
+  - Positive, denial, and stop-condition proofs are accepted
+  - Publish bundle exists without implying live global swarm enablement
+  - Final closeout packet is sealed and auditable
+
+failureCriteria:
+  - Spawning works outside Strike Team Alpha
+  - Spawning works outside the admitted contract
+  - Depth or fanout limits are missing or bypassed
+  - Receipts are missing, weak, or unverifiable
+  - Publish is presented as runtime effective
+  - Operator cannot inspect the swarm path calmly and truthfully
