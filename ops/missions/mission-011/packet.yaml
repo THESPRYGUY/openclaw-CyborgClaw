@@ -1,0 +1,94 @@
+missionId: MISSION-011
+simulation: false
+missionType: canonical-agent-card-rollout-hardening
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-05T23:00:00Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Roll the Canonical Agent Baseball Card VNext onto the live dashboard seams without semantic drift.
+  detail: >
+    Mission 011 takes the proven Mission 010 VNext card packet and drives it into the
+    real dashboard renderer seam. The mission must harden AgentOsSeatTile, add the
+    bounded child-work rail, converge the high-value surfaces that still drift, and
+    deliver a publish-ready closeout packet showing improved operator truth.
+
+scope:
+  inScope:
+    - Shared renderer seam hardening in the live dashboard repo
+    - Canonical child-work rail on the parent card
+    - Mission room, roster wall, barracks, studio, and selector/inspector adoption slices
+    - Regression/contract coverage for shared semantics
+    - Publish-ready rollout-hardening closeout
+  outOfScope:
+    - New card species
+    - Full product-wide redesign
+    - Broader swarm power expansion
+    - Silent runtime mutation or fake telemetry
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - dir-application-eng-01
+    - dir-architecture-01
+    - dir-devex-qa-01
+    - voltaris-v2
+    - codex
+  agentsToBeSpawned:
+    - STUD
+
+instructions:
+  leadInstructions:
+    - Treat AgentOsSeatTile as the single rollout seam.
+    - Collapse drift; do not add more surface-local wrappers than necessary.
+    - Keep parent authority primary and child-work bounded.
+  downstreamInstructions:
+    - target: dir-application-eng-01
+      instructions:
+        - Implement through the shared seam, not local forks.
+        - Land the bounded child-work rail on the parent card.
+    - target: dir-architecture-01
+      instructions:
+        - Guard the shared-vs-variable boundary.
+        - Reject status/provenance drift.
+    - target: dir-devex-qa-01
+      instructions:
+        - Expand shared card regression coverage.
+        - Stop rollout if any surface lies about freshness or authority.
+    - target: voltaris-v2
+      instructions:
+        - Keep the card premium and alive while preserving operator truth.
+        - Child hover content must stay bounded to task, freshness, and latest proof/progress.
+    - target: codex
+      instructions:
+        - Keep the rollout implementation-real.
+        - Reduce drift instead of moving it around.
+
+acknowledgmentRequirements:
+  requiresReceiptConfirmation: true
+  requiresUnderstandingConfirmation: true
+  requiresParticipantDeclaration: true
+
+prerequisites:
+  sourceMissionId: MISSION-010
+  vnextSpecPath: ops/cyborgclaw/CANONICAL_AGENT_TILE_VNEXT_SPEC.md
+  autopsyPath: ops/missions/mission-010/post-run-autopsy.md
+  receiptBundlePath: ops/missions/mission-010/runs/20260405_213039Z/receipt_bundle.md
+
+successCriteria:
+  - Shared seam is hardened without new card species
+  - Child-work rail is admitted on the parent card
+  - Major live surfaces converge on one card species
+  - Contract tests cover the rollout seam and child-work truth
+  - Publish-ready closeout packet is filed
+
+failureCriteria:
+  - Surface-specific forks remain authoritative
+  - Child-work semantics drift by page
+  - Fake freshness or implied child authority appears
+  - Selector or inspector surfaces keep separate card grammar
