@@ -1,0 +1,102 @@
+missionId: MISSION-009
+simulation: false
+missionType: strike-team-alpha-swarm-unlock-v2-live-fire
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-05T16:30:00Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Carry one Alpha swarm implementation job from dispatch through visible child execution, publish, and sealed closeout.
+  detail: >
+    Swarm Unlock V2 must prove that one real Strike Team Alpha parent seat can spawn
+    one bounded child unit, show that child work live on mission surfaces, explicitly
+    accept the child output, advance the same workforce job beyond dispatched, publish
+    the outcome, and seal closeout without hidden authority drift.
+
+scope:
+  inScope:
+    - Strike Team Alpha-only live-fire run
+    - Parent-seat-owned child execution under the current job
+    - Mission room, roster wall, and canonical card spawn visibility
+    - Parent acceptance receipts and workforce state advancement
+    - Publish bundle and sealed closeout
+    - MVP ticker reassessment from observable evidence
+  outOfScope:
+    - Cross-team swarm rollout
+    - Global autonomous spawning
+    - Child units as peer roster seats
+    - Any silent runtime mutation outside the admitted contract
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - dir-application-eng-01
+    - dir-architecture-01
+    - dir-devex-qa-01
+    - voltaris-v2
+    - codex
+  agentsToBeSpawned:
+    - STUD
+
+instructions:
+  leadInstructions:
+    - Do not reuse the stalled V1 execution rail without correcting the visibility and acceptance gap.
+    - Keep the parent seat as the authority face at all times.
+    - Block any progression that is not visible on mission surfaces.
+    - Treat publish and seal as blocked until parent acceptance and child provenance are explicit.
+  downstreamInstructions:
+    - target: dir-application-eng-01
+      instructions:
+        - Ensure child execution attaches to the current job and parent seat.
+        - Ensure the workforce job can leave dispatched after accepted child proof.
+    - target: dir-architecture-01
+      instructions:
+        - Finalize the Alpha-only authority and depth/fanout boundaries for this run.
+        - Reject any path that makes child units look like peer authorities.
+    - target: dir-devex-qa-01
+      instructions:
+        - Verify positive, denial, and stop receipts.
+        - Reject completion if the run requires manual inference to prove child work happened.
+    - target: voltaris-v2
+      instructions:
+        - Keep the roster wall, mission room, and baseball-card telemetry operator-legible.
+        - Surface live, derived, stale, and blocked truth explicitly.
+    - target: codex
+      instructions:
+        - Keep the execution rail honest.
+        - Do not let proof-side success masquerade as job completion.
+
+acknowledgmentRequirements:
+  requiresReceiptConfirmation: true
+  requiresUnderstandingConfirmation: true
+  requiresParticipantDeclaration: true
+
+prerequisites:
+  sourceMissionId: MISSION-008
+  sealedCanaryJobId: job-jYPCQdM9ul
+  stalledImplementationJobId: job-66BHu_h1Xd
+  v1AutopsyPath: ops/missions/mission-008/swarm-unlock-v1-autopsy.md
+  v2BriefPath: ops/missions/mission-008/swarm-unlock-v2-run.md
+  delegationContractPath: ops/missions/mission-008/alpha-subagent-delegation-contract.md
+
+successCriteria:
+  - One Alpha parent seat reaches acknowledged and in_progress
+  - One bounded child unit appears live under that parent seat
+  - Parent-child lineage is visible on mission room, roster wall, and canonical card
+  - Parent accepts child proof explicitly
+  - Workforce job advances beyond dispatched
+  - Publish bundle exists
+  - Job archives and seals cleanly
+  - MVP ticker reassessment is evidence-based
+
+failureCriteria:
+  - Child work happens but remains off-surface
+  - Parent cannot accept or reject child output explicitly
+  - Job stays at dispatched after accepted child proof
+  - Any surface implies hidden authority or peer-seat child promotion
+  - Publish or seal requires manual truth stitching
