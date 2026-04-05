@@ -13,6 +13,12 @@ let healthVersion = 1;
 let healthCache: HealthSummary | null = null;
 let healthRefresh: Promise<HealthSummary> | null = null;
 let broadcastHealthUpdate: ((snap: HealthSummary) => void) | null = null;
+let runtimeSnapshotProvider:
+  | (() => {
+      channels?: Record<string, unknown>;
+      channelAccounts?: Record<string, Record<string, unknown> | undefined>;
+    })
+  | null = null;
 
 export function buildGatewaySnapshot(): Snapshot {
   const cfg = loadConfig();
@@ -66,10 +72,24 @@ export function setBroadcastHealthUpdate(fn: ((snap: HealthSummary) => void) | n
   broadcastHealthUpdate = fn;
 }
 
+export function setHealthRuntimeSnapshotProvider(
+  fn:
+    | (() => {
+        channels?: Record<string, unknown>;
+        channelAccounts?: Record<string, Record<string, unknown> | undefined>;
+      })
+    | null,
+) {
+  runtimeSnapshotProvider = fn;
+}
+
 export async function refreshGatewayHealthSnapshot(opts?: { probe?: boolean }) {
   if (!healthRefresh) {
     healthRefresh = (async () => {
-      const snap = await getHealthSnapshot({ probe: opts?.probe });
+      const snap = await getHealthSnapshot({
+        probe: opts?.probe,
+        runtimeSnapshot: runtimeSnapshotProvider?.(),
+      });
       healthCache = snap;
       healthVersion += 1;
       if (broadcastHealthUpdate) {

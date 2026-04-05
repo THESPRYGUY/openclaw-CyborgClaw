@@ -71,6 +71,11 @@ export type HealthSummary = {
   };
 };
 
+type RuntimeChannelSnapshot = {
+  channels?: Record<string, ChannelAccountSnapshot | undefined>;
+  channelAccounts?: Record<string, Record<string, ChannelAccountSnapshot | undefined> | undefined>;
+};
+
 const DEFAULT_TIMEOUT_MS = 10_000;
 
 const debugHealth = (...args: unknown[]) => {
@@ -348,6 +353,7 @@ export const formatHealthChannelLines = (
 export async function getHealthSnapshot(params?: {
   timeoutMs?: number;
   probe?: boolean;
+  runtimeSnapshot?: RuntimeChannelSnapshot;
 }): Promise<HealthSummary> {
   const timeoutMs = params?.timeoutMs;
   const cfg = loadConfig();
@@ -377,6 +383,7 @@ export async function getHealthSnapshot(params?: {
   const start = Date.now();
   const cappedTimeout = timeoutMs === undefined ? DEFAULT_TIMEOUT_MS : Math.max(50, timeoutMs);
   const doProbe = params?.probe !== false;
+  const runtimeSnapshot = params?.runtimeSnapshot;
   const channels: Record<string, ChannelHealthSummary> = {};
   const channelOrder = listChannelPlugins().map((plugin) => plugin.id);
   const channelLabels: Record<string, string> = {};
@@ -416,6 +423,9 @@ export async function getHealthSnapshot(params?: {
     const accountSummaries: Record<string, ChannelAccountHealthSummary> = {};
 
     for (const accountId of accountIdsToProbe) {
+      const runtimeForAccount =
+        runtimeSnapshot?.channelAccounts?.[plugin.id]?.[accountId] ??
+        (accountId === defaultAccountId ? runtimeSnapshot?.channels?.[plugin.id] : undefined);
       const account = plugin.config.resolveAccount(cfg, accountId);
       const enabled = plugin.config.isEnabled
         ? plugin.config.isEnabled(account, cfg)
@@ -451,6 +461,7 @@ export async function getHealthSnapshot(params?: {
       }
 
       const snapshot: ChannelAccountSnapshot = {
+        ...runtimeForAccount,
         accountId,
         enabled,
         configured,

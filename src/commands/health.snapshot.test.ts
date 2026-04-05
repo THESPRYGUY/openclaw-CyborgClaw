@@ -250,4 +250,49 @@ describe("getHealthSnapshot", () => {
     expect(ops?.heartbeat.everyMs).toBeTruthy();
     expect(ops?.heartbeat.every).toBe("1h");
   });
+
+  it("preserves live runtime state for non-probe snapshots when provided", async () => {
+    testConfig = {
+      channels: { telegram: { botToken: "t-live" } },
+    };
+    testStore = {};
+    vi.stubEnv("DISCORD_BOT_TOKEN", "");
+    vi.stubGlobal("fetch", vi.fn());
+
+    const snap = await getHealthSnapshot({
+      timeoutMs: 10,
+      probe: false,
+      runtimeSnapshot: {
+        channels: {
+          telegram: {
+            accountId: "default",
+            running: true,
+            connected: true,
+            lastStartAt: 111,
+          },
+        },
+        channelAccounts: {
+          telegram: {
+            default: {
+              accountId: "default",
+              running: true,
+              connected: true,
+              lastStartAt: 111,
+            },
+          },
+        },
+      },
+    });
+
+    const telegram = snap.channels.telegram as {
+      configured?: boolean;
+      running?: boolean;
+      probe?: unknown;
+      accounts?: Record<string, { running?: boolean }>;
+    };
+    expect(telegram.configured).toBe(true);
+    expect(telegram.running).toBe(true);
+    expect(telegram.probe).toBeUndefined();
+    expect(telegram.accounts?.default?.running).toBe(true);
+  });
 });
