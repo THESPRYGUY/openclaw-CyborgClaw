@@ -1,0 +1,9 @@
+{
+  "mission": "mission-010",
+  "status": "SEALED",
+  "owner": "president-a",
+  "updatedUtc": "2026-04-05T21:30:39Z",
+  "currentDeliverable": "deliverable-001",
+  "latestRunDir": "ops/missions/mission-010/runs/20260405_213039Z",
+  "notes": "Mission 010 sealed after live incubator shaping, DEV staging, Alpha execution, accepted seat proofs, and publish-ready closeout for the canonical baseball-card VNext packet."
+}

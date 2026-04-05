@@ -1,0 +1,97 @@
+missionId: MISSION-010
+simulation: false
+missionType: canonical-agent-baseball-card-vnext-golden-run
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-05T20:20:00Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Carry the canonical agent baseball-card VNext design packet from ideas incubation through sealed closeout.
+  detail: >
+    This Golden Run must prove that one real design-system job can move from
+    incubator capture, through live shaping, DEV staging, Alpha execution, proof
+    acceptance, publish-ready paperwork, and sealed closeout using the canonical
+    agent baseball-card VNext work as source truth.
+
+scope:
+  inScope:
+    - Canonical baseball-card VNext design-system packet
+    - Shared-vs-variable telemetry matrix
+    - Bounded subagent affordance on the parent card
+    - Shared component architecture recommendation
+    - Safe rollout plan for foyers, barracks, mission rooms, roster walls, and studios
+    - Sealed Golden Run closeout
+  outOfScope:
+    - Full implementation sweep across all surfaces
+    - New card species
+    - Cross-team swarm rollout
+    - Any silent runtime mutation
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - dir-application-eng-01
+    - dir-architecture-01
+    - dir-devex-qa-01
+    - voltaris-v2
+    - codex
+  agentsToBeSpawned:
+    - STUD
+
+instructions:
+  leadInstructions:
+    - Keep one canonical card species across all surfaces.
+    - Reject any proposal that turns child units into peer authority cards.
+    - Treat the VNext packet as publish-ready design-system source truth, not decorative moodboarding.
+  downstreamInstructions:
+    - target: dir-application-eng-01
+      instructions:
+        - Define the shared base component evolution path.
+        - Keep child-work visibility attached to the parent card.
+    - target: dir-architecture-01
+      instructions:
+        - Lock the shared-vs-variable contract boundary.
+        - Reject surface-specific semantic drift.
+    - target: dir-devex-qa-01
+      instructions:
+        - Pressure-test rollout safety and regression risk.
+        - Require a bounded upgrade path.
+    - target: voltaris-v2
+      instructions:
+        - Keep the card premium, alive, and operator-legible.
+        - Do not trade clarity for decoration.
+    - target: codex
+      instructions:
+        - Keep the shared schema and component strategy implementation-real.
+        - Reject hidden complexity or special-case drift.
+
+acknowledgmentRequirements:
+  requiresReceiptConfirmation: true
+  requiresUnderstandingConfirmation: true
+  requiresParticipantDeclaration: true
+
+prerequisites:
+  sourceMissionId: MISSION-009
+  vnextSpecPath: ops/cyborgclaw/CANONICAL_AGENT_TILE_VNEXT_SPEC.md
+  schemaPath: ops/cyborgclaw/CANONICAL_AGENT_TILE_SCHEMA.md
+  tokenPath: ops/cyborgclaw/CANONICAL_AGENT_TILE_TOKENS.md
+  visualAnchorPath: ops/missions/mission-007/BASEBALL_CARD_HANGAR_BOARD_VISUAL_SPEC.md
+  autopsyPath: ops/missions/mission-009/swarm-unlock-v2-autopsy.md
+
+successCriteria:
+  - One incubated idea completes live shaping
+  - The idea is promoted and admitted into DEV staging
+  - Alpha closes the job with three accepted seat proofs
+  - A publish-ready baseball-card VNext packet is filed
+  - The job archives and seals cleanly
+
+failureCriteria:
+  - Card semantics drift by surface
+  - Child work implies peer authority
+  - The run cannot point to concrete publish-ready artifacts
+  - Closeout requires operator guesswork
