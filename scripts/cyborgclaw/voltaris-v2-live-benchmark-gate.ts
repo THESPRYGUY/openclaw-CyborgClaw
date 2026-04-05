@@ -510,7 +510,9 @@ function isProfileReady(store: AuthProfileStore, profileId: string, now: number)
     return false;
   }
   const expires = resolveProfileExpiry(credential);
-  if (expires != null && expires <= now) {
+  const hasRefreshToken =
+    credential.type === "oauth" && typeof credential.refresh === "string" && credential.refresh.length > 0;
+  if (expires != null && expires <= now && !hasRefreshToken) {
     return false;
   }
   return true;
