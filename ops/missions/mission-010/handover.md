@@ -16,3 +16,5 @@ Intent:
 - 2026-04-05T21:30:39Z UTC: Actual `codex` and actual `voltaris-v2` both returned `GO yes` closeout reviews. Publish-ready bundle filed at `ops/missions/mission-010/runs/20260405_213039Z/receipt_bundle.md`.
 - 2026-04-05T21:30:39Z UTC: Mission 010 sealed as the first Golden Run for the canonical agent baseball-card VNext packet.
 - 2026-04-05T21:39:05Z UTC: Actual `president-a` returned `GO yes`, `CONFIDENCE high`, `READY ready` for the sealed Mission 010 closeout.
+- 2026-04-05T22:48:31Z UTC: Mission-registry drift in the live dashboard was repaired so the archived Mission 010 workforce row now remains `approved` from accepted proof backbriefs. Focused regression landed in the dashboard repo and the live row verified with accepted-proof metadata.
+- 2026-04-05T22:48:31Z UTC: Post-run autopsy filed at `ops/missions/mission-010/post-run-autopsy.md`. Real `codex` called the MVP ticker `91.5%`; real `voltaris-v2` called it `92.0%`. Conservative reconciled operator-grounding update: `92.0%`.

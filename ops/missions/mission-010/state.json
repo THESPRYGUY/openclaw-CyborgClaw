@@ -2,8 +2,8 @@
   "mission": "mission-010",
   "status": "SEALED",
   "owner": "president-a",
-  "updatedUtc": "2026-04-05T21:30:39Z",
+  "updatedUtc": "2026-04-05T22:48:31Z",
   "currentDeliverable": "deliverable-001",
   "latestRunDir": "ops/missions/mission-010/runs/20260405_213039Z",
-  "notes": "Mission 010 sealed after live incubator shaping, DEV staging, Alpha execution, accepted seat proofs, and publish-ready closeout for the canonical baseball-card VNext packet."
+  "notes": "Mission 010 sealed after live incubator shaping, DEV staging, Alpha execution, accepted seat proofs, publish-ready closeout, and a follow-up mission-registry truth repair that keeps the archived run approved from proof metadata."
 }
