@@ -245,8 +245,9 @@ describe("buildAgentSystemPrompt", () => {
     });
 
     expect(prompt).toContain("sessions_spawn");
+    expect(prompt).toContain('Prefer `mode: "run"` for one-shot work');
     expect(prompt).toContain(
-      'runtime="acp" requires `agentId` unless `acp.defaultAgent` is configured',
+      '`runtime: "acp"` requires `agentId` unless `acp.defaultAgent` is configured',
     );
     expect(prompt).toContain("not agents_list");
   });
@@ -280,7 +281,9 @@ describe("buildAgentSystemPrompt", () => {
     );
     expect(prompt).not.toContain('runtime="acp" requires `agentId`');
     expect(prompt).not.toContain("not ACP harness ids");
-    expect(prompt).toContain("- sessions_spawn: Spawn an isolated sub-agent session");
+    expect(prompt).toContain(
+      '- sessions_spawn: Spawn an isolated sub-agent session. Prefer `mode: "run"` for one-shot work; use `mode: "session"` only for thread-bound follow-up on channels that support it (currently Discord).',
+    );
     expect(prompt).toContain("- agents_list: List OpenClaw agent ids allowed for sessions_spawn");
   });
 

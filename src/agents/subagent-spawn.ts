@@ -121,7 +121,7 @@ async function ensureThreadBindingForSubagentSpawn(params: {
     return {
       status: "error",
       error:
-        "thread=true is unavailable because no channel plugin registered subagent_spawning hooks.",
+        'thread=true is unavailable because no channel plugin registered subagent_spawning hooks. Use mode="run" without thread for one-shot subagent work, or use a thread-capable channel (currently Discord) for persistent subagent sessions.',
     };
   }
 

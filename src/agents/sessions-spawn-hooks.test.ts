@@ -10,6 +10,7 @@ import {
 import { resetSubagentRegistryForTests } from "./subagent-registry.js";
 
 const hookRunnerMocks = vi.hoisted(() => ({
+  hasSubagentSpawningHook: true,
   hasSubagentEndedHook: true,
   runSubagentSpawning: vi.fn(async (event: unknown) => {
     const input = event as {
@@ -39,7 +40,7 @@ const hookRunnerMocks = vi.hoisted(() => ({
 vi.mock("../plugins/hook-runner-global.js", () => ({
   getGlobalHookRunner: vi.fn(() => ({
     hasHooks: (hookName: string) =>
-      hookName === "subagent_spawning" ||
+      (hookName === "subagent_spawning" && hookRunnerMocks.hasSubagentSpawningHook) ||
       hookName === "subagent_spawned" ||
       (hookName === "subagent_ended" && hookRunnerMocks.hasSubagentEndedHook),
     runSubagentSpawning: hookRunnerMocks.runSubagentSpawning,
@@ -68,6 +69,7 @@ function mockAgentStartFailure() {
 describe("sessions_spawn subagent lifecycle hooks", () => {
   beforeEach(() => {
     resetSubagentRegistryForTests();
+    hookRunnerMocks.hasSubagentSpawningHook = true;
     hookRunnerMocks.hasSubagentEndedHook = true;
     hookRunnerMocks.runSubagentSpawning.mockClear();
     hookRunnerMocks.runSubagentSpawned.mockClear();
@@ -313,6 +315,29 @@ describe("sessions_spawn subagent lifecycle hooks", () => {
     const details = result.details as { error?: string };
     expect(details.error).toMatch(/only discord/i);
     expect(hookRunnerMocks.runSubagentSpawning).toHaveBeenCalledTimes(1);
+    expect(hookRunnerMocks.runSubagentSpawned).not.toHaveBeenCalled();
+    expectSessionsDeleteWithoutAgentStart();
+  });
+
+  it("suggests mode=run when thread binding hooks are unavailable", async () => {
+    hookRunnerMocks.hasSubagentSpawningHook = false;
+    const tool = await getSessionsSpawnTool({
+      agentSessionKey: "main",
+      agentChannel: "webchat",
+      agentTo: "session:alpha",
+    });
+
+    const result = await tool.execute("call5b", {
+      task: "do thing",
+      thread: true,
+      mode: "session",
+    });
+
+    expect(result.details).toMatchObject({ status: "error" });
+    const details = result.details as { error?: string; childSessionKey?: string };
+    expect(details.error).toContain('Use mode="run" without thread');
+    expect(details.error).toContain("currently Discord");
+    expect(hookRunnerMocks.runSubagentSpawning).not.toHaveBeenCalled();
     expect(hookRunnerMocks.runSubagentSpawned).not.toHaveBeenCalled();
     expectSessionsDeleteWithoutAgentStart();
   });

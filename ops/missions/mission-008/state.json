@@ -1,9 +1,9 @@
 {
   "mission": "mission-008",
-  "status": "READY",
+  "status": "IN_PROGRESS",
   "owner": "president-a",
-  "updatedUtc": "2026-04-05T01:25:45Z",
-  "currentDeliverable": "deliverable-001",
-  "latestRunDir": null,
-  "notes": "Mission 008 converts the sealed Swarm Unlock canary into the real Alpha-only implementation mission. The source idea is promoted, the staging item is queued and authorized, and the next step is to execute the bounded implementation job rather than reusing the archived canary."
+  "updatedUtc": "2026-04-05T02:34:31Z",
+  "currentDeliverable": "deliverable-004",
+  "latestRunDir": "ops/missions/mission-008/runs/20260405_023225Z",
+  "notes": "Mission 008 is actively executing. The bounded Alpha-only spawn path now has live positive and denial proofs, plus direct depth/fanout stop-condition coverage. The next gates are final contract admission, publish recommendation, and sealed closeout."
 }
