@@ -1,9 +1,9 @@
 {
   "mission": "mission-009",
-  "status": "READY",
+  "status": "SEALED",
   "owner": "president-a",
-  "updatedUtc": "2026-04-05T16:30:00Z",
+  "updatedUtc": "2026-04-05T18:25:46Z",
   "currentDeliverable": "deliverable-001",
-  "latestRunDir": null,
-  "notes": "Mission 009 is the Swarm Unlock V2 live-fire packet. Launch is blocked until parent-child telemetry is truthful on mission room, roster wall, and canonical seat card, and until one admitted Alpha parent seat can carry child proof through publish and sealed closeout."
+  "latestRunDir": "ops/missions/mission-009/runs/20260405_180627Z",
+  "notes": "Mission 009 is sealed. Strike Team Alpha carried one bounded same-seat child path from admitted live-fire execution through three accepted seat proofs, published closeout paperwork, archived job completion, and a conservative 90% MVP reassessment grounded in the live-fire evidence."
 }
