@@ -97,3 +97,11 @@ Intent:
   - `node --test scripts/tests/agent_os_surface_contract.test.mjs`
   - `npm run build`
   - live route check `GET /agent-rsi -> 200`
+- 2026-04-06T02:21:22Z UTC: Slice 5 completed:
+  - Mission 011 Slice 1 was handed through the normal Alpha workforce mission path
+  - live workforce artifacts admitted:
+    - To-Do `todo-fcdd8721e6964b1991fc`
+    - Alpha binding `14f7ed84718b4bd69e3558`
+    - workforce job `job-f08701d623c745d6bceb78`
+  - the job was delegated to `president-a`, fanned out, and all three Alpha seats moved to `in_progress`
+- 2026-04-06T02:21:22Z UTC: Mission 012 has now proven that `Agent RSI` can seed a real next-run baton and push it into execution-real Alpha work instead of leaving it as a planning-only queue.
