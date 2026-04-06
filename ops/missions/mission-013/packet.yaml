@@ -1,0 +1,66 @@
+missionId: MISSION-013
+simulation: false
+missionType: control-plane-drift-detection-golden-run
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-06T15:00:00Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Detect and harden control-plane drift across manifest, database, runtime, and operator surfaces.
+  detail: >
+    Mission 013 turns the next RSI Golden Run into a bounded hardening loop for
+    control-plane drift detection. The mission must define canonical source
+    precedence, identify at least one real divergence or prove its absence,
+    surface the result to operators, and close with an autopsy that seeds the
+    next reliability seam.
+
+scope:
+  inScope:
+    - manifest vs DB vs runtime truth contract
+    - operator-visible drift signal
+    - bounded proof path
+    - closeout packet and residual-risk note
+  outOfScope:
+    - broad UI redesign
+    - Agent Design Studio feature expansion
+    - commercial/product strategy work
+    - non-drift backlog cleanup
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - voltaris-v2
+    - codex
+    - STUD
+  agentsToBeSpawned: []
+
+instructions:
+  leadInstructions:
+    - Keep the packet focused on truth divergence, not generic cleanup.
+    - Require one explicit source-precedence contract.
+    - Prefer the smallest proofable seam with the highest operator leverage.
+  downstreamInstructions:
+    - target: voltaris-v2
+      instructions:
+        - Ensure the operator signal is legible and does not imply fake certainty.
+        - Reject cosmetic work that does not improve truth.
+    - target: codex
+      instructions:
+        - Ground the run in concrete source-of-truth code paths.
+        - Reject broad refactors that exceed one bounded seam.
+
+successCriteria:
+  - canonical precedence contract exists
+  - at least one drift seam is proven or resolved
+  - operator truth improves on a live surface
+  - closeout files the next recommendation from evidence
+
+failureCriteria:
+  - drift remains hand-waved or anecdotal
+  - operator surfaces still imply truth without backing source clarity
+  - the packet widens into a general redesign
