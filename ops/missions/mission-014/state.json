@@ -1,9 +1,9 @@
 {
   "mission": "mission-014",
-  "status": "QUEUED",
+  "status": "CONCLUDED_NO_GO",
   "owner": "president-a",
-  "updatedUtc": "2026-04-06T16:15:00Z",
+  "updatedUtc": "2026-04-06T19:51:28Z",
   "currentDeliverable": "deliverable-001",
-  "latestRunDir": "",
-  "notes": "Mission 014 preempts Mission 013 temporarily so OpenClaw 2026.4.5 can be evaluated as a bounded upgrade seam before any live runtime update is attempted."
+  "latestRunDir": "ops/missions/mission-014/runs/20260406_195128Z",
+  "notes": "Mission 014 concluded with a unanimous NO-GO vote from mission lead, real codex, and real voltaris-v2. The OpenClaw 2026.4.5 upgrade was not performed because the current memory estate is too uneven for a trustworthy hardening-phase rollout."
 }
