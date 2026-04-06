@@ -1,0 +1,9 @@
+{
+  "mission": "mission-012",
+  "status": "IN_PROGRESS",
+  "owner": "president-a",
+  "updatedUtc": "2026-04-06T00:10:00Z",
+  "currentDeliverable": "deliverable-001",
+  "latestRunDir": null,
+  "notes": "Mission 012 is the next Golden Run mission. It uses the Golden Flow itself to define the first governed Agent RSI entrypoint and RSI engine contract, with Mission 011 admitted as the first seeded next-run candidate."
+}

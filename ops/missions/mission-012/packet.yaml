@@ -1,0 +1,82 @@
+missionId: MISSION-012
+simulation: false
+missionType: agent-rsi-entrypoint-engine-golden-run
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-06T00:10:00Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Build the first governed RSI engine and Agent RSI entrypoint using the Golden Flow itself.
+  detail: >
+    Mission 012 turns the existing Agent RSI placeholder into the contract and operating
+    model for CyborgClaw's recursive self-improvement engine. The mission must define the
+    entrypoint, engine objects, Golden Flow bindings, idle-mode boundaries, and first
+    seeded next-run queue so future Golden Runs can be generated, proven, and closed
+    through one consistent governed path.
+
+scope:
+  inScope:
+    - Agent RSI entrypoint contract
+    - RSI engine model and bounded object lifecycle
+    - Golden Flow mapping for improvement runs
+    - Idle mode rules and stop conditions
+    - Seeded candidate queue using Mission 011 as first real next-run candidate
+    - Publish-ready closeout packet
+  outOfScope:
+    - Runtime auto-mutation
+    - Automatic publish or activation
+    - Broad autonomous scope expansion
+    - Replacing existing Mission 005 / Mission 006 doctrine
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - voltaris-v2
+    - codex
+    - STUD
+  agentsToBeSpawned: []
+
+instructions:
+  leadInstructions:
+    - Treat Agent RSI as the operator doorway, not as a second hidden authority plane.
+    - Keep the engine bounded, evidence-backed, and concrete enough to implement next.
+    - Use Mission 011 as the first seeded candidate so the queue is real on day one.
+  downstreamInstructions:
+    - target: voltaris-v2
+      instructions:
+        - Keep the entrypoint premium, calm, and operator-legible.
+        - Make idle mode boundaries and review points obvious.
+    - target: codex
+      instructions:
+        - Keep the engine implementation-real and Golden-Flow-native.
+        - Reject speculative complexity and duplicated doctrine.
+
+acknowledgmentRequirements:
+  requiresReceiptConfirmation: true
+  requiresUnderstandingConfirmation: true
+  requiresParticipantDeclaration: true
+
+prerequisites:
+  strategyPath: ops/cyborgclaw/RSI_GOLDEN_FLOW_DEVELOPMENT_STRATEGY.md
+  defaultRsiDoctrinePath: ops/missions/mission-005/spec.md
+  hardeningDoctrinePath: ops/missions/mission-006/spec.md
+  goldenFlowPath: ops/missions/mission-007/WIREFRAME_FLOW.md
+  seededCandidatePath: ops/missions/mission-011/spec.md
+
+successCriteria:
+  - Agent RSI becomes the documented entrypoint for the improvement engine
+  - The engine contract is bounded and Golden-Flow-native
+  - Idle mode is clearly limited to inspect, score, draft, and queue
+  - Mission 011 is visible as the first seeded candidate
+  - The closeout packet is strong enough to drive the next implementation mission
+
+failureCriteria:
+  - Agent RSI implies hidden runtime authority
+  - Idle mode can mutate runtime or auto-publish
+  - The engine duplicates existing doctrine without adding execution shape
+  - No concrete next-run candidate queue exists at closeout

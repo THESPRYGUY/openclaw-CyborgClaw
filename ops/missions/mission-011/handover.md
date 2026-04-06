@@ -29,3 +29,5 @@ Intent:
 - 2026-04-05T23:13:00Z UTC: Sidecar audit also confirmed the highest semantic-drift risks:
   - status vocabulary split across multiple surface-local helpers
   - provenance collapse where published/runtime/effective state gets compressed into generic chip text
+- 2026-04-06T00:14:00Z UTC: Mission 012 admitted Mission 011 as the first seeded queued candidate for the Agent RSI engine.
+- 2026-04-06T00:14:00Z UTC: Mission 011 remains the next concrete surface-hardening run, but the top-level active Golden Run slot now belongs to Mission 012.

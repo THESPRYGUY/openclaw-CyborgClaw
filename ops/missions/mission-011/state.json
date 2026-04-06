@@ -1,9 +1,9 @@
 {
   "mission": "mission-011",
-  "status": "IN_PROGRESS",
+  "status": "QUEUED",
   "owner": "president-a",
-  "updatedUtc": "2026-04-05T23:13:00Z",
+  "updatedUtc": "2026-04-06T00:14:00Z",
   "currentDeliverable": "deliverable-002",
   "latestRunDir": null,
-  "notes": "Mission 011 is the rollout-hardening follow-up to Mission 010. Its job is to move the proven canonical Agent Baseball Card VNext packet into the live shared renderer seam, add bounded child-work visibility, collapse the highest-value surface drift without creating a second card species, and execute the rollout in bounded slices from shared seam to surface proof."
+  "notes": "Mission 011 is the rollout-hardening follow-up to Mission 010. Mission 012 now treats it as the first seeded queued candidate inside the Agent RSI engine, so it remains the next concrete surface-hardening run but no longer claims the top-level active mission slot."
 }
