@@ -2,7 +2,7 @@
 
 Status:
 
-- queued
+- queued after Mission 014
 
 Selected source item:
 
@@ -13,6 +13,7 @@ Why this packet was selected:
 
 - highest converged vote from mission lead, real `codex`, and real `voltaris-v2`
 - strongest combination of operator-truth value, reliability leverage, and bounded proof path
+- temporarily sequenced behind Mission 014 so the OpenClaw `2026.4.5` upgrade seam can be evaluated first
 
 What this mission should not become:
 

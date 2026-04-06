@@ -1,9 +1,9 @@
 {
   "mission": "mission-013",
-  "status": "QUEUED",
+  "status": "QUEUED_AFTER_MISSION_014",
   "owner": "president-a",
-  "updatedUtc": "2026-04-06T15:00:00Z",
+  "updatedUtc": "2026-04-06T16:15:00Z",
   "currentDeliverable": "deliverable-001",
   "latestRunDir": "",
-  "notes": "Mission 013 is the next queued Golden Run packet. It was selected by converged vote from mission lead, real codex, and real voltaris-v2 after the 2026-04-06 backlog triage pass cleaned the live Ideas Incubator and To-Do lanes."
+  "notes": "Mission 013 remains the next hardening packet, but it is queued behind Mission 014 so the OpenClaw 2026.4.5 upgrade seam can be evaluated first."
 }

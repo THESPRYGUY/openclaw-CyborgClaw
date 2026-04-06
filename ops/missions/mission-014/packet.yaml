@@ -1,0 +1,68 @@
+missionId: MISSION-014
+simulation: false
+missionType: openclaw-upgrade-evaluation
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-06T16:15:00Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Evaluate OpenClaw 2026.4.5 before any live runtime update.
+  detail: >
+    Mission 014 turns the OpenClaw 2026.4.5 release into a bounded upgrade-prep
+    packet. The mission must verify the release from official sources, capture
+    the current 2026.4.3 baseline, assess the new memory and dreaming changes,
+    define the go/no-go gates for the actual update, and close with a clear
+    recommendation before Mission 013 resumes.
+
+scope:
+  inScope:
+    - official release verification
+    - local baseline capture
+    - memory and dreaming impact assessment
+    - config migration and rollback planning
+    - go/no-go recommendation
+  outOfScope:
+    - performing the actual update
+    - unrelated backlog hardening
+    - broad platform redesign
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - voltaris-v2
+    - codex
+    - STUD
+  agentsToBeSpawned: []
+
+instructions:
+  leadInstructions:
+    - Treat the update as its own governed seam.
+    - Do not mix blind upgrade work into the active Golden Run hardening lane.
+    - Require a clear return path to Mission 013.
+  downstreamInstructions:
+    - target: voltaris-v2
+      instructions:
+        - Keep the operator view honest about risk and readiness.
+        - Block any path that blurs prep with deployment.
+    - target: codex
+      instructions:
+        - Ground the recommendation in official release notes and local runtime facts.
+        - Prefer explicit gates and rollback notes over optimism.
+
+successCriteria:
+  - official release is verified
+  - local baseline is captured
+  - memory and dreaming impact is explained
+  - go/no-go gates are explicit
+  - Mission 013 queue state is clarified
+
+failureCriteria:
+  - upgrade recommendation is based on guesswork
+  - local memory unevenness is ignored
+  - the packet silently mutates runtime
+  - Mission 013 queue truth becomes ambiguous
