@@ -22,3 +22,15 @@ Intent:
   - Agent RSI should become a usable operator flow, not just a placeholder label
   - idle mode must remain inspect/draft-only and end in reviewable drafts with evidence and risks
 - 2026-04-06T00:10:00Z UTC: Mission 011 admitted as the first seeded queued candidate for the RSI engine.
+- 2026-04-06T00:24:18Z UTC: Mission 012 launched as the active Golden Run with run receipt `ops/missions/mission-012/runs/20260406_002418Z/receipt_bundle.md`.
+- 2026-04-06T00:24:18Z UTC: Execution posture set to hybrid:
+  - Codex leads the initial entrypoint/engine contract and proof framing
+  - bounded implementation slices will then route through Strike Team Alpha
+- 2026-04-06T00:32:00Z UTC: Slice 1 landed in the live dashboard repo:
+  - `Agent RSI` foyer tile now routes to `/agent-rsi`
+  - `/agent-rsi` now renders the contract-first RSI entry surface for Mission 012
+  - the page shows active mission posture, bounded loop model, idle-mode guardrails, seeded Mission 011 queue truth, and Golden Flow binding
+- 2026-04-06T00:32:00Z UTC: Slice 1 verification completed:
+  - `node --test scripts/tests/agent_os_surface_contract.test.mjs`
+  - `npm run build`
+  - live route check `GET /agent-rsi -> 200`
