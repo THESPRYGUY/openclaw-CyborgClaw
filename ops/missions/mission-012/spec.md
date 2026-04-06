@@ -70,6 +70,20 @@ Mission 012 is about building a truthful development engine that:
 - writes the autopsy
 - seeds the next run from evidence
 
+## Foundational service intent
+
+Agent RSI lives under `Agents` during this Golden Run phase, but the mature target is larger:
+
+- the governed growth engine for CyborgClaw
+- the place that observes failures, scores improvements, drafts bounded packets, evaluates outcomes, and grounds the next optimization
+- the durable improvement substrate for Golden Runs and future non-Golden-Run hardening work
+
+Build it so the current foyer/page contract can scale into that role without breaking:
+
+- no campaign-specific lifecycle hacks
+- no hidden runtime authority
+- no Golden-Run-only object model that must be rewritten later
+
 ## Non-negotiable rules
 
 - Publish plane and runtime plane stay separate.
@@ -147,6 +161,17 @@ File the Mission 012 closeout with:
 - acceptance bar
 - residual risks
 
+7. Improvement loop contract
+
+Define the long-term object flow that Agent RSI will own beyond this single campaign:
+
+- signal intake
+- candidate creation
+- evidence packet
+- eval verdict
+- promotion / hold state
+- autopsy / grounding output
+
 ## Golden Run shape
 
 ### Phase 1 - Entrypoint definition
@@ -181,6 +206,11 @@ File the Mission 012 closeout with:
 - prove the engine is concrete enough to run the next mission
 - file the autopsy and next-action packet
 
+### Phase 7 - Service-ready loop contract
+
+- prove Agent RSI can grow into the durable CyborgClaw improvement engine without breaking the Golden Flow chassis
+- define the canonical improvement loop contract so future work is not trapped inside one campaign shell
+
 ## Acceptance criteria
 
 1. A real operator can point to Agent RSI as the product entrypoint for the improvement engine.
@@ -196,6 +226,7 @@ File the Mission 012 closeout with:
 4. The strategy keeps publish/runtime separation hard and visible.
 5. Idle mode is bounded to inspect/draft/queue behavior only.
 6. The packet is concrete enough to implement next without inventing major missing pieces.
+7. The core loop contract is broad enough to serve future improvement work beyond Golden Runs while staying governed and bounded.
 
 ## Fail-fast blockers
 

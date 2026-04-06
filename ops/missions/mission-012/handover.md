@@ -53,3 +53,21 @@ Intent:
   - `node --test scripts/tests/agent_os_surface_contract.test.mjs`
   - `npm run build`
   - live route check `GET /agent-rsi -> 200`
+- 2026-04-06T01:14:00Z UTC: Real `codex` and real `voltaris-v2` re-reviewed Mission 012 progress with the broader product goal admitted:
+  - current progress is real:
+    - live foyer tile
+    - live `/agent-rsi` surface
+    - shared dashboard contract for lifecycle, queue, packet requirements, and engine objects
+  - shared conclusion:
+    - Agent RSI should grow into CyborgClaw's governed recursive self-improvement / growth / development / optimization / learning engine
+    - the current Golden Run phase is the proving ground, not the final box it should stay trapped inside
+  - major risk if we build too narrowly:
+    - Agent RSI degenerates into a Golden Run tracker or campaign shell instead of the durable improvement substrate
+  - agreed next slice:
+    - define the canonical improvement loop contract:
+      - signal intake
+      - candidate creation
+      - evidence packet
+      - eval verdict
+      - promotion / hold state
+      - autopsy / grounding output

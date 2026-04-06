@@ -39,6 +39,10 @@ The point is:
 - prove the fix in the next Golden Run
 - get better by doing the work, not by talking about it
 
+In the near term, this engine may surface inside the `Agents` area as `Agent RSI`.
+
+In the mature product, it should be understood as CyborgClaw's internal growth, development, optimization, and learning engine.
+
 This document is a synthesis layer, not a replacement doctrine.
 
 Use:
