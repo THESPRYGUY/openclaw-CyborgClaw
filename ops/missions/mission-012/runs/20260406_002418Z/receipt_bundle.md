@@ -61,3 +61,50 @@ Verification:
 - `npm run build`
 - live route check:
   - `GET /agent-rsi -> 200`
+
+## Slice 2 completion
+
+Slice 2 is now landed in the dashboard repo.
+
+Delivered:
+
+- shared `Agent RSI` dashboard contract module
+- explicit foyer lifecycle contract:
+  - standby
+  - ready
+  - review pending
+  - active Golden Run
+  - sealed / next candidate ready
+- shared packet requirement contract:
+  - objective
+  - scope
+  - exclusions
+  - eval plan
+  - success bar
+  - rollback note
+- shared engine object glossary:
+  - signal harvester
+  - candidate scorer
+  - packet generator
+  - Golden Run registry
+  - proof gate
+  - autopsy rail
+- foyer tile now derives from the shared contract instead of page-local literals
+
+Real collaborator convergence:
+
+- `codex`:
+  - keep the shared contract module and single builder driving both the foyer tile and `/agent-rsi`
+  - biggest drift risk is split foyer/page status semantics
+  - must-have proof is one seeded candidate traversing the same states on both surfaces from one payload
+- `voltaris-v2`:
+  - keep the shared contract and builder, but make states derive from evidence-backed mission truth
+  - biggest drift risk is optimistic UI labels pretending readiness or seal without proof
+  - must-have UX proof is zero divergence between foyer tile and `/agent-rsi`
+
+Verification:
+
+- `node --test scripts/tests/agent_os_surface_contract.test.mjs`
+- `npm run build`
+- live route check:
+  - `GET /agent-rsi -> 200`

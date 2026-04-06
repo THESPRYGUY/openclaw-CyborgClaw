@@ -34,3 +34,22 @@ Intent:
   - `node --test scripts/tests/agent_os_surface_contract.test.mjs`
   - `npm run build`
   - live route check `GET /agent-rsi -> 200`
+- 2026-04-06T01:02:00Z UTC: Slice 2 landed in the live dashboard repo:
+  - `Agent RSI` now reads from one shared contract module instead of duplicating lifecycle, seeded queue, and packet requirements in page-local constants
+  - the foyer tile and `/agent-rsi` surface now share:
+    - foyer lifecycle states
+    - seeded candidate schema
+    - packet requirement contract
+    - engine object glossary
+- 2026-04-06T01:02:00Z UTC: Real `codex` Slice 2 guidance admitted:
+  - keep the shared contract module and single builder driving both the foyer tile and `/agent-rsi`
+  - biggest drift risk is the foyer tile and page silently growing separate status semantics even while importing the same module
+  - must-have proof: one seeded candidate must be able to traverse all defined foyer states using one underlying contract payload
+- 2026-04-06T01:02:00Z UTC: Real `voltaris-v2` Slice 2 guidance admitted:
+  - keep the shared contract and builder, but ensure foyer states stay derived from evidence-backed mission truth rather than optimistic UI flags
+  - biggest operator drift risk is overstating `ready`, `review pending`, or `sealed` without live proof
+  - must-have UX proof: the foyer tile and `/agent-rsi` render the same mission state and packet status with no divergence
+- 2026-04-06T01:02:00Z UTC: Slice 2 verification completed:
+  - `node --test scripts/tests/agent_os_surface_contract.test.mjs`
+  - `npm run build`
+  - live route check `GET /agent-rsi -> 200`
