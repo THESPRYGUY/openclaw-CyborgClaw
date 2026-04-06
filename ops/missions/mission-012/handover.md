@@ -71,3 +71,17 @@ Intent:
       - eval verdict
       - promotion / hold state
       - autopsy / grounding output
+- 2026-04-06T01:28:00Z UTC: Slice 3 landed in the live dashboard repo:
+  - the shared `Agent RSI` contract now includes the canonical improvement loop:
+    - signal intake
+    - candidate creation
+    - evidence packet
+    - eval verdict
+    - promotion / hold state
+    - autopsy / grounding output
+  - the foyer launcher now derives from the broader contract snapshot
+  - `/agent-rsi` now shows the loop contract as part of the live product seam rather than leaving it only in strategy docs
+- 2026-04-06T01:28:00Z UTC: Slice 3 verification completed:
+  - `node --test scripts/tests/agent_os_surface_contract.test.mjs`
+  - `npm run build`
+  - live route check `GET /agent-rsi -> 200`

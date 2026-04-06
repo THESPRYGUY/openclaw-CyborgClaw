@@ -62,6 +62,35 @@ Verification:
 - live route check:
   - `GET /agent-rsi -> 200`
 
+## Slice 3 completion
+
+Slice 3 is now landed in the dashboard repo.
+
+Delivered:
+
+- canonical improvement loop contract admitted into the shared `Agent RSI` product seam:
+  - signal intake
+  - candidate creation
+  - evidence packet
+  - eval verdict
+  - promotion / hold state
+  - autopsy / grounding output
+- shared contract snapshot now drives the foyer launcher as well as the `/agent-rsi` page
+- `Agent RSI` is now explicitly shaped to grow beyond the current Golden Run campaign into CyborgClaw's durable governed improvement engine
+
+Why this slice matters:
+
+- it prevents `Agent RSI` from collapsing into a campaign-only Golden Run tracker
+- it gives the engine a canonical object flow that future bounded missions can execute and prove
+- it keeps the current proving phase inside `Agents` without forcing a later rewrite of the underlying model
+
+Verification:
+
+- `node --test scripts/tests/agent_os_surface_contract.test.mjs`
+- `npm run build`
+- live route check:
+  - `GET /agent-rsi -> 200`
+
 ## Slice 2 completion
 
 Slice 2 is now landed in the dashboard repo.

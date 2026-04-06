@@ -2,8 +2,8 @@
   "mission": "mission-012",
   "status": "IN_PROGRESS",
   "owner": "president-a",
-  "updatedUtc": "2026-04-06T01:14:00Z",
-  "currentDeliverable": "deliverable-005",
+  "updatedUtc": "2026-04-06T01:28:00Z",
+  "currentDeliverable": "deliverable-006",
   "latestRunDir": "ops/missions/mission-012/runs/20260406_002418Z",
-  "notes": "Mission 012 is now the active Golden Run. Slice 1 admitted the live Agent RSI entry surface, Slice 2 centralized the shared dashboard contract, and the next admitted slice is to define the canonical improvement loop contract so Agent RSI can mature from this Golden Run proving surface into CyborgClaw's durable governed improvement engine."
+  "notes": "Mission 012 is now the active Golden Run. Slice 1 admitted the live Agent RSI entry surface, Slice 2 centralized the shared dashboard contract, and Slice 3 admitted the canonical improvement loop contract into the live product seam. Next step is to bind that contract to one bounded candidate flow and hand the first implementation-real slice to Strike Team Alpha."
 }
