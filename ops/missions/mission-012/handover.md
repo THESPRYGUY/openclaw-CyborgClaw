@@ -85,3 +85,15 @@ Intent:
   - `node --test scripts/tests/agent_os_surface_contract.test.mjs`
   - `npm run build`
   - live route check `GET /agent-rsi -> 200`
+- 2026-04-06T01:40:00Z UTC: Slice 4 landed in the live dashboard repo:
+  - `Agent RSI` now binds its shared improvement loop contract to one real seeded candidate baton:
+    - `MISSION-011`
+  - the page now shows:
+    - the first candidate flow
+    - its current queue truth
+    - Alpha-ready next slice:
+      - `Slice 1 - Shared seam hardening`
+- 2026-04-06T01:40:00Z UTC: Slice 4 verification completed:
+  - `node --test scripts/tests/agent_os_surface_contract.test.mjs`
+  - `npm run build`
+  - live route check `GET /agent-rsi -> 200`

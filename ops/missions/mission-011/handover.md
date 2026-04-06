@@ -31,3 +31,6 @@ Intent:
   - provenance collapse where published/runtime/effective state gets compressed into generic chip text
 - 2026-04-06T00:14:00Z UTC: Mission 012 admitted Mission 011 as the first seeded queued candidate for the Agent RSI engine.
 - 2026-04-06T00:14:00Z UTC: Mission 011 remains the next concrete surface-hardening run, but the top-level active Golden Run slot now belongs to Mission 012.
+- 2026-04-06T01:40:00Z UTC: Mission 012 bound Mission 011 into the live `Agent RSI` surface as the first real candidate baton.
+- 2026-04-06T01:40:00Z UTC: The first bounded Alpha execution slice is now explicit on the live product seam:
+  - `Slice 1 - Shared seam hardening`

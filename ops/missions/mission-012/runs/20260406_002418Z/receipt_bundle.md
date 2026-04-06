@@ -62,6 +62,34 @@ Verification:
 - live route check:
   - `GET /agent-rsi -> 200`
 
+## Slice 4 completion
+
+Slice 4 is now landed in the dashboard repo.
+
+Delivered:
+
+- the shared `Agent RSI` loop contract is now bound to one real seeded candidate baton:
+  - `MISSION-011`
+- the live product surface now shows:
+  - first candidate flow
+  - queue truth
+  - Alpha-ready next slice:
+    - `Slice 1 - Shared seam hardening`
+
+Why this slice matters:
+
+- it proves `Agent RSI` can point to one real next mission instead of only describing an abstract engine
+- it makes the handoff boundary explicit:
+  - Mission 012 owns the engine/proof framing
+  - Strike Team Alpha owns the next bounded execution slice
+
+Verification:
+
+- `node --test scripts/tests/agent_os_surface_contract.test.mjs`
+- `npm run build`
+- live route check:
+  - `GET /agent-rsi -> 200`
+
 ## Slice 3 completion
 
 Slice 3 is now landed in the dashboard repo.
