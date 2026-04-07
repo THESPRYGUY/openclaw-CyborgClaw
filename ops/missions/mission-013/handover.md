@@ -13,8 +13,9 @@ Why this packet was selected:
 
 - highest converged vote from mission lead, real `codex`, and real `voltaris-v2`
 - strongest combination of operator-truth value, reliability leverage, and bounded proof path
-- restored after Mission 014, but now queued behind Mission 015 because the
-  OpenClaw `2026.4.5` upgrade only reached `HOLD`
+- restored after Mission 014, then paused behind Mission 015 to close the
+  local-memory packaging blocker
+- still queued while Mission 014 is reevaluated with that blocker removed
 
 What this mission should not become:
 

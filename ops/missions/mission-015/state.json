@@ -1,9 +1,9 @@
 {
   "mission": "mission-015",
-  "status": "QUEUED",
+  "status": "CONCLUDED_GO",
   "owner": "president-a",
-  "updatedUtc": "2026-04-07T00:22:09Z",
+  "updatedUtc": "2026-04-07T01:26:11Z",
   "currentDeliverable": "deliverable-001",
-  "latestRunDir": "",
-  "notes": "Mission 015 is the immediate next seam because Mission 014 only reached HOLD. The OpenClaw 2026.4.5 host upgrade works, but local memory still depends on a non-reproducible node-llama-cpp runtime repair."
+  "latestRunDir": "ops/missions/mission-015/runs/20260407_012611Z",
+  "notes": "Mission 015 closed with a unanimous GO vote after proving node-llama-cpp restores on a clean npm install path and imports successfully without host-specific symlinks."
 }
