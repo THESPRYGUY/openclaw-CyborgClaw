@@ -79,6 +79,10 @@ For VPS/cloud hosts, avoid third-party "1-click" marketplace images when possibl
         openclaw onboard --install-daemon
         ```
 
+        <Note>
+        The npm install also restores the optional `node-llama-cpp` runtime used by local memory/QMD. If local embeddings still show as unavailable after an update, rerun the install on Node 22+.
+        </Note>
+
         <Accordion title="sharp build errors?">
           If you have libvips installed globally (common on macOS via Homebrew) and `sharp` fails, force prebuilt binaries:
 

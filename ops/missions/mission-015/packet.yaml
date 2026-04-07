@@ -1,0 +1,66 @@
+missionId: MISSION-015
+simulation: false
+missionType: openclaw-upgrade-hardening
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-07T00:22:09Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Fix local-memory packaging reproducibility for OpenClaw npm installs.
+  detail: >
+    Mission 015 closes the seam exposed by Mission 014. The live host now runs
+    OpenClaw 2026.4.5, but local memory only works because of manual runtime
+    repair. This mission must make npm-installed OpenClaw carry the
+    node-llama-cpp local-memory runtime path reproducibly, update operator
+    guidance to match that behavior, and add a release guard so the packaging
+    contract cannot silently drift again.
+
+scope:
+  inScope:
+    - npm packaging contract for node-llama-cpp
+    - release guardrails for local-memory packaging
+    - memory/install/update guidance
+    - targeted proof of the packaging seam
+  outOfScope:
+    - broad memory redesign
+    - dreaming feature work
+    - Mission 013 control-plane hardening
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - voltaris-v2
+    - codex
+    - STUD
+  agentsToBeSpawned: []
+
+instructions:
+  leadInstructions:
+    - Keep the seam bounded to packaging reproducibility and truthful operator guidance.
+    - Do not expand into general memory product work.
+    - Leave a clean return path to Mission 013 once this upgrade blocker is removed.
+  downstreamInstructions:
+    - target: voltaris-v2
+      instructions:
+        - Keep the operator install/update story honest and supportable.
+        - Reject any solution that still depends on hidden repair knowledge.
+    - target: codex
+      instructions:
+        - Ground the fix in the package contract, release guard, and targeted proof.
+        - Prefer a minimal reproducibility fix over a large memory refactor.
+
+successCriteria:
+  - node-llama-cpp is carried by a reproducible runtime packaging contract
+  - release-check fails if the contract drifts
+  - operator guidance matches the real install behavior
+  - targeted proof lands without relying on host-specific surgery
+
+failureCriteria:
+  - local-memory support still depends on hidden manual repair
+  - release packaging can regress silently
+  - docs continue promising behavior the package does not deliver

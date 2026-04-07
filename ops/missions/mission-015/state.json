@@ -1,0 +1,9 @@
+{
+  "mission": "mission-015",
+  "status": "QUEUED",
+  "owner": "president-a",
+  "updatedUtc": "2026-04-07T00:22:09Z",
+  "currentDeliverable": "deliverable-001",
+  "latestRunDir": "",
+  "notes": "Mission 015 is the immediate next seam because Mission 014 only reached HOLD. The OpenClaw 2026.4.5 host upgrade works, but local memory still depends on a non-reproducible node-llama-cpp runtime repair."
+}

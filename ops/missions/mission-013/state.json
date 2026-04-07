@@ -2,8 +2,8 @@
   "mission": "mission-013",
   "status": "QUEUED",
   "owner": "president-a",
-  "updatedUtc": "2026-04-06T19:51:28Z",
+  "updatedUtc": "2026-04-07T00:22:09Z",
   "currentDeliverable": "deliverable-001",
   "latestRunDir": "",
-  "notes": "Mission 014 concluded with a unanimous NO-GO decision, so Mission 013 returns as the next queued Golden Run hardening packet."
+  "notes": "Mission 013 stays queued, but the immediate next seam is Mission 015 because Mission 014 only reached HOLD and the OpenClaw 2026.4.5 upgrade path still needs a reproducible local-memory runtime fix."
 }

@@ -164,3 +164,30 @@ Recommended now:
 
 This keeps the upgrade from contaminating the current Golden Run hardening lane
 while still treating `2026.4.5` as strategically important.
+
+## Actual host outcome
+
+This packet started as a pure evaluation, but the follow-on RSI loop did run the
+live host upgrade.
+
+What is true now on this machine:
+
+- runtime CLI: `2026.4.5`
+- gateway app: `2026.4.5`
+- `codex` memory: healthy again (`934` files / `34014` chunks)
+- `voltaris-v2` memory: healthy again (`934` files / `15995` chunks)
+- `openclaw doctor --non-interactive`: clean
+
+Why the final decision is still `HOLD` instead of `GO`:
+
+- the machine only reached a healthy state after two manual remediations:
+  - remove a stale user-systemd override that still pinned the gateway to the
+    old `2026.4.3` checkout
+  - restore the local memory runtime by wiring `node-llama-cpp` and its
+    platform packages back into the installed npm runtime
+
+So:
+
+- the upgrade is live and operational
+- but it is not yet a clean, reproducible, supportable upgrade path
+- the next bounded seam is packaging/runtime reproducibility for local memory

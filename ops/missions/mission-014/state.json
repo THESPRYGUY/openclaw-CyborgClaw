@@ -1,9 +1,9 @@
 {
   "mission": "mission-014",
-  "status": "CONCLUDED_NO_GO",
+  "status": "CONCLUDED_HOLD",
   "owner": "president-a",
-  "updatedUtc": "2026-04-06T19:51:28Z",
+  "updatedUtc": "2026-04-07T00:22:09Z",
   "currentDeliverable": "deliverable-001",
-  "latestRunDir": "ops/missions/mission-014/runs/20260406_195128Z",
-  "notes": "Mission 014 concluded with a unanimous NO-GO vote from mission lead, real codex, and real voltaris-v2. The OpenClaw 2026.4.5 upgrade was not performed because the current memory estate is too uneven for a trustworthy hardening-phase rollout."
+  "latestRunDir": "ops/missions/mission-014/runs/20260407_002209Z",
+  "notes": "Mission 014 upgraded this host to OpenClaw 2026.4.5 and restored gateway plus codex/voltaris memory health, but the closeout vote remains HOLD because the working state depends on manual systemd and local-memory runtime remediations."
 }

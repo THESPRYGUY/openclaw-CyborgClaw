@@ -57,6 +57,12 @@ pnpm add -g openclaw@latest
 
 We do **not** recommend Bun for the Gateway runtime (WhatsApp/Telegram bugs).
 
+If you rely on local memory or QMD, the npm/installer path should also restore the optional `node-llama-cpp` runtime. After updating, verify with:
+
+```bash
+openclaw memory status --deep
+```
+
 To switch update channels (git + npm installs):
 
 ```bash

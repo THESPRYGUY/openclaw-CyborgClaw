@@ -19,7 +19,11 @@ const forbiddenPrefixes = ["dist/OpenClaw.app/"];
 type PackageJson = {
   name?: string;
   version?: string;
+  optionalDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
 };
+
+const localEmbeddingRuntimePackage = "node-llama-cpp";
 
 function normalizePluginSyncVersion(version: string): string {
   const normalized = version.trim().replace(/^v/, "");
@@ -28,6 +32,11 @@ function normalizePluginSyncVersion(version: string): string {
     return base;
   }
   return normalized.replace(/[-+].*$/, "");
+}
+
+function readRootPackageJson(): PackageJson {
+  const rootPackagePath = resolve("package.json");
+  return JSON.parse(readFileSync(rootPackagePath, "utf8")) as PackageJson;
 }
 
 function runPackDry(): PackResult[] {
@@ -39,9 +48,7 @@ function runPackDry(): PackResult[] {
   return JSON.parse(raw) as PackResult[];
 }
 
-function checkPluginVersions() {
-  const rootPackagePath = resolve("package.json");
-  const rootPackage = JSON.parse(readFileSync(rootPackagePath, "utf8")) as PackageJson;
+function checkPluginVersions(rootPackage: PackageJson) {
   const targetVersion = rootPackage.version;
   const targetBaseVersion = targetVersion ? normalizePluginSyncVersion(targetVersion) : null;
 
@@ -87,8 +94,34 @@ function checkPluginVersions() {
   }
 }
 
+function checkLocalEmbeddingPackagingContract(rootPackage: PackageJson) {
+  const optionalVersion = rootPackage.optionalDependencies?.[localEmbeddingRuntimePackage];
+  const peerVersion = rootPackage.peerDependencies?.[localEmbeddingRuntimePackage];
+
+  if (!optionalVersion) {
+    console.error(
+      `release-check: ${localEmbeddingRuntimePackage} must be declared in optionalDependencies so npm installs can restore local memory runtime support.`,
+    );
+    process.exit(1);
+  }
+  if (optionalVersion !== optionalVersion.trim() || /^[~^]/.test(optionalVersion)) {
+    console.error(
+      `release-check: ${localEmbeddingRuntimePackage} optional dependency must be pinned to an exact version (found "${optionalVersion}").`,
+    );
+    process.exit(1);
+  }
+  if (peerVersion) {
+    console.error(
+      `release-check: ${localEmbeddingRuntimePackage} must not remain in peerDependencies once the optional runtime packaging contract is enabled.`,
+    );
+    process.exit(1);
+  }
+}
+
 function main() {
-  checkPluginVersions();
+  const rootPackage = readRootPackageJson();
+  checkPluginVersions(rootPackage);
+  checkLocalEmbeddingPackagingContract(rootPackage);
 
   const results = runPackDry();
   const files = results.flatMap((entry) => entry.files ?? []);

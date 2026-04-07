@@ -13,7 +13,8 @@ Why this packet was selected:
 
 - highest converged vote from mission lead, real `codex`, and real `voltaris-v2`
 - strongest combination of operator-truth value, reliability leverage, and bounded proof path
-- restored as the next queued packet after Mission 014 concluded with a unanimous `NO-GO`
+- restored after Mission 014, but now queued behind Mission 015 because the
+  OpenClaw `2026.4.5` upgrade only reached `HOLD`
 
 What this mission should not become:
 

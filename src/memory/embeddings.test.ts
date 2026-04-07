@@ -351,7 +351,9 @@ describe("embedding provider local fallback", () => {
 
   it("throws a helpful error when local is requested and fallback is none", async () => {
     mockMissingLocalEmbeddingDependency();
-    await expect(createLocalProvider()).rejects.toThrow(/optional dependency node-llama-cpp/i);
+    await expect(createLocalProvider()).rejects.toThrow(
+      /local-memory runtime dependency node-llama-cpp/i,
+    );
   });
 
   it("mentions every remote provider in local setup guidance", async () => {

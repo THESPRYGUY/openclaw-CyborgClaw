@@ -107,7 +107,7 @@ Defaults:
   4. `voyage` if a Voyage key can be resolved.
   5. `mistral` if a Mistral key can be resolved.
   6. Otherwise memory search stays disabled until configured.
-- Local mode uses node-llama-cpp and may require `pnpm approve-builds`.
+- Local mode uses `node-llama-cpp`. npm installs and the website installer should pull it automatically; pnpm installs may still require `pnpm approve-builds`.
 - Uses sqlite-vec (when available) to accelerate vector search inside SQLite.
 
 Remote embeddings **require** an API key for the embedding provider. OpenClaw
