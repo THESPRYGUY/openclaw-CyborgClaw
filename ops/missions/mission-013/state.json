@@ -1,9 +1,9 @@
 {
   "mission": "mission-013",
-  "status": "QUEUED",
+  "status": "PAUSED_BEHIND_MISSION_016",
   "owner": "president-a",
-  "updatedUtc": "2026-04-07T01:37:11Z",
+  "updatedUtc": "2026-04-07T14:00:00Z",
   "currentDeliverable": "deliverable-001",
   "latestRunDir": "",
-  "notes": "Mission 013 is restored as the next queued Golden Run hardening packet now that Mission 014 closed with a unanimous GO vote for the OpenClaw 2026.4.5 upgrade readiness."
+  "notes": "Mission 013 is paused behind Mission 016, the bounded Break-Out Room card-truth De-Bug Golden Run. It should resume once the BORF/participant live render-path seam is closed."
 }

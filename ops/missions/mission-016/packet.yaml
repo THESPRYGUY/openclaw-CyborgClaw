@@ -1,0 +1,69 @@
+missionId: MISSION-016
+simulation: false
+missionType: breakout-room-card-truth-debug-golden-run
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-07T14:00:00Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Debug the Break-Out Room card reversion seam and prove one canonical card path for BORF and participants.
+  detail: >
+    Mission 016 treats the Break-Out Room BORF/participant card flicker as a
+    bounded De-Bug Golden Run. The mission must isolate the live hydration seam,
+    remove the fallback to bespoke facilitator/occupant markup, prove BORF and
+    participants stay on one canonical card species after live data loads, and
+    close with operator-visible before/after proof.
+
+scope:
+  inScope:
+    - BORF live render path
+    - participant live render path
+    - Break-Out Room hydration reversion seam
+    - canonical manager/seat card truth on this page
+    - focused before/after proof
+  outOfScope:
+    - broad Agent OS redesign
+    - general breakout-room feature expansion
+    - unrelated card migrations
+    - Mission 013 control-plane hardening
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - voltaris-v2
+    - codex
+    - STUD
+    - BORF
+  agentsToBeSpawned: []
+
+instructions:
+  leadInstructions:
+    - Keep the packet focused on card-truth stability, not new breakout-room features.
+    - Require one explicit live render-path proof before calling the page fixed.
+    - Restore Mission 013 as the next queue item after closeout.
+  downstreamInstructions:
+    - target: voltaris-v2
+      instructions:
+        - Judge the page on operator trust and semantics, not novelty.
+        - Reject any solution that still lets BORF or seats shift card species after load.
+    - target: codex
+      instructions:
+        - Ground the debug in the real live render path inside the Break-Out Room page.
+        - Remove fallback markup only where the proof shows it is the reversion seam.
+
+successCriteria:
+  - BORF stays on the canonical manager/card path after hydration
+  - participants stay on the canonical seat-card path after hydration
+  - live role/state semantics remain correct
+  - one focused before/after proof is filed
+
+failureCriteria:
+  - the page still flickers or reverts between card species
+  - BORF and participants use mixed semantic paths after live data loads
+  - the packet widens into general UI redesign
+

@@ -1,0 +1,9 @@
+{
+  "mission": "mission-016",
+  "status": "QUEUED",
+  "owner": "president-a",
+  "updatedUtc": "2026-04-07T14:00:00Z",
+  "currentDeliverable": "deliverable-001",
+  "latestRunDir": "",
+  "notes": "Mission 016 is the next bounded De-Bug Golden Run, focused on fixing the Break-Out Room BORF/participant card reversion seam before Mission 013 resumes."
+}

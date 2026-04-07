@@ -16,6 +16,8 @@ Why this packet was selected:
 - restored after Mission 014, then paused behind Mission 015 to close the
   local-memory packaging blocker
 - restored again as the next queued packet after Mission 014 closed `GO`
+- paused again behind Mission 016 because the Break-Out Room card-truth seam is
+  now a more immediate operator-trust breakage
 
 What this mission should not become:
 
