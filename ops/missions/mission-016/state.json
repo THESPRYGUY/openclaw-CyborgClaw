@@ -1,9 +1,9 @@
 {
   "mission": "mission-016",
-  "status": "QUEUED",
+  "status": "IN_PROGRESS",
   "owner": "president-a",
-  "updatedUtc": "2026-04-07T14:00:00Z",
+  "updatedUtc": "2026-04-07T16:11:00Z",
   "currentDeliverable": "deliverable-001",
-  "latestRunDir": "",
-  "notes": "Mission 016 is the next bounded De-Bug Golden Run, focused on fixing the Break-Out Room BORF/participant card reversion seam before Mission 013 resumes."
+  "latestRunDir": "ops/missions/mission-016/runs/20260407_143100Z",
+  "notes": "Mission 016 is live on the Sprytly runway as the active Alpha Golden Run. Flesh / Stress / Value salon sessions are now recorded in the Ideas Incubator so the Golden Flow board and promoted idea tile can derive the same shaping truth before execution closeout."
 }
