@@ -1,9 +1,9 @@
 {
   "mission": "mission-014",
-  "status": "CONCLUDED_HOLD",
+  "status": "CONCLUDED_GO",
   "owner": "president-a",
-  "updatedUtc": "2026-04-07T00:22:09Z",
+  "updatedUtc": "2026-04-07T01:37:11Z",
   "currentDeliverable": "deliverable-001",
-  "latestRunDir": "ops/missions/mission-014/runs/20260407_002209Z",
-  "notes": "Mission 014 upgraded this host to OpenClaw 2026.4.5 and restored gateway plus codex/voltaris memory health, but the closeout vote remains HOLD because the working state depends on manual systemd and local-memory runtime remediations."
+  "latestRunDir": "ops/missions/mission-014/runs/20260407_013711Z",
+  "notes": "Mission 014 closed with a unanimous GO vote. The host is running OpenClaw 2026.4.5, gateway plus codex/voltaris memory are healthy, and Mission 015 proved the local-memory packaging path is reproducible without manual symlinks."
 }

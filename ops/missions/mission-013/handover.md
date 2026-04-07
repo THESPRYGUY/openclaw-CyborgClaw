@@ -15,7 +15,7 @@ Why this packet was selected:
 - strongest combination of operator-truth value, reliability leverage, and bounded proof path
 - restored after Mission 014, then paused behind Mission 015 to close the
   local-memory packaging blocker
-- still queued while Mission 014 is reevaluated with that blocker removed
+- restored again as the next queued packet after Mission 014 closed `GO`
 
 What this mission should not become:
 
