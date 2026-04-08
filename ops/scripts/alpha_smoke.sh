@@ -10,6 +10,13 @@ trap '[[ "${KEEP_TMP:-0}" == "1" ]] || rm -f "${TMP}-"*.out "${TMP}-"*.json 2>/d
 
 echo "[alpha_smoke] run_id=$RUN_ID tmp=$TMP reviewer_agent=$REVIEWER_AGENT"
 
+emit_provenance_line () {
+  local role="$1" agent="$2" prov="$3" modl="$4"
+  local ts_now
+  ts_now="$(date +%s)"
+  echo "[alpha_smoke][provenance] role=$role job_id=UNKNOWN run_id=$RUN_ID agent_uuid=UNKNOWN agent_fingerprint=UNKNOWN agent_profile_id=$agent node_id=UNKNOWN provider_id=${prov:-UNKNOWN} model_id=${modl:-UNKNOWN} timestamp=$ts_now"
+}
+
 run_role () {
   role="$1"; agent="$2"; tok="$3"; expP="$4"; expM="$5"
   sid="A${RUN_ID}${role}"
@@ -28,7 +35,7 @@ run_role () {
       err="$(sed -n '1,200p' "${TMP}-${role}-reset.out" 2>/dev/null | python3 -c 'import json,sys; s=sys.stdin.read(); print(json.dumps(s))')"
     fi
     cat > "${TMP}-${role}.json" <<EOF
-{"status":"error","summary":"agent_failed","result":{"payloads":[]},"meta":{"aborted":false},"error":{"role":"$role","agent":"$agent","sessionId":"$sid","exitCode":$rc,"message":$err}}
+{"status":"error","summary":"agent_failed","result":{"payloads":[]},"meta":{"aborted":false},"error":{"role":"$role","agent":"$agent","sessionId":"$sid","exitCode":$rc,"message":$err},"provenance":{"job_id":null,"run_id":"$RUN_ID","agent_uuid":null,"agent_fingerprint":null,"agent_profile_id":"$agent","node_id":null,"provider_id":null,"model_id":null,"timestamp":$(date +%s)}}
 EOF
   fi
 
@@ -36,6 +43,7 @@ EOF
   text="$(jq -r ".result.payloads[0].text // empty" "${TMP}-${role}.json" 2>/dev/null || true)"
   prov="$(jq -r ".result.meta.agentMeta.provider // empty" "${TMP}-${role}.json" 2>/dev/null || true)"
   modl="$(jq -r ".result.meta.agentMeta.model // empty" "${TMP}-${role}.json" 2>/dev/null || true)"
+  emit_provenance_line "$role" "$agent" "$prov" "$modl"
 
   # One deterministic retry only for known reviewer heartbeat contamination case.
   if [[ "$role" == "reviewer" && "$text" == "HEARTBEAT_OK" ]]; then
@@ -46,7 +54,7 @@ EOF
     rc=$?
     err="$(sed -n '1,200p' "${TMP}-${role}-retry.json" 2>/dev/null | python3 -c 'import json,sys; s=sys.stdin.read(); print(json.dumps(s))')"
     cat > "${TMP}-${role}-retry.json" <<EOR
-{"status":"error","summary":"agent_failed_retry","result":{"payloads":[]},"meta":{"aborted":false},"error":{"role":"$role","agent":"$agent","sessionId":"$sid","exitCode":$rc,"message":$err}}
+{"status":"error","summary":"agent_failed_retry","result":{"payloads":[]},"meta":{"aborted":false},"error":{"role":"$role","agent":"$agent","sessionId":"$sid","exitCode":$rc,"message":$err},"provenance":{"job_id":null,"run_id":"$RUN_ID","agent_uuid":null,"agent_fingerprint":null,"agent_profile_id":"$agent","node_id":null,"provider_id":null,"model_id":null,"timestamp":$(date +%s)}}
 EOR
   fi
 
@@ -54,6 +62,7 @@ EOR
   text="$(jq -r ".result.payloads[0].text // empty" "${TMP}-${role}-retry.json" 2>/dev/null || true)"
   prov="$(jq -r ".result.meta.agentMeta.provider // empty" "${TMP}-${role}-retry.json" 2>/dev/null || true)"
   modl="$(jq -r ".result.meta.agentMeta.model // empty" "${TMP}-${role}-retry.json" 2>/dev/null || true)"
+  emit_provenance_line "$role" "$agent" "$prov" "$modl"
 fi
 }
 

@@ -1,0 +1,10 @@
+{
+  "task_id": "task-011",
+  "mission": "mission-auto",
+  "title": "Add task dir to scan log",
+  "owner": "strike-team-alpha",
+  "goal": "Update ops/scripts/task_runner.sh so the scanning-for-tasks log line also includes task_dir=ops/tasks.",
+  "acceptance_criteria": ["task executed successfully", "gate_archive PASS"],
+  "status": "complete",
+  "target_file": "ops/scripts/task_runner.sh"
+}

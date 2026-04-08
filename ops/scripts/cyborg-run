@@ -15,7 +15,7 @@ run() {
     --invoke-timeout 240000 \
     --timeout 240000 \
     --params "$(jq -nc --arg c "$cmd" "{command:[\"/usr/bin/bash\",\"-lc\",\$c]}")" \
-    --json | jq "{ok,nodeId,command,payload:{exitCode:.payload.exitCode,success:.payload.success,timedOut:.payload.timedOut,stdout:.payload.stdout,stderr:.payload.stderr,error:.payload.error}}"
+    --json | jq '{ok,nodeId,command,payload:{exitCode:.payload.exitCode,success:.payload.success,timedOut:.payload.timedOut,stdout:.payload.stdout,stderr:.payload.stderr,error:.payload.error},provenance:{job_id:null,run_id:null,agent_uuid:null,agent_fingerprint:null,agent_profile_id:null,node_id:.nodeId,provider_id:null,model_id:null,timestamp:(now|floor)}}'
   echo
 }
 

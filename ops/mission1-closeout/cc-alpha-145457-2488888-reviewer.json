@@ -1,0 +1,266 @@
+{
+  "runId": "c647c096-0d73-48ff-b8f6-d26a6fec632d",
+  "status": "ok",
+  "summary": "completed",
+  "result": {
+    "payloads": [
+      {
+        "text": "ALPHA_REVIEWER_OK_v1",
+        "mediaUrl": null
+      }
+    ],
+    "meta": {
+      "durationMs": 2417,
+      "agentMeta": {
+        "sessionId": "7bfefd26-1d77-433c-b147-4482e8ccfa2e",
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-6",
+        "usage": {
+          "input": 3,
+          "output": 13,
+          "cacheRead": 14749,
+          "cacheWrite": 93,
+          "total": 14858
+        },
+        "lastCallUsage": {
+          "input": 3,
+          "output": 13,
+          "cacheRead": 14749,
+          "cacheWrite": 93,
+          "total": 14858
+        },
+        "promptTokens": 14845
+      },
+      "aborted": false,
+      "systemPromptReport": {
+        "source": "run",
+        "generatedAt": 1773154530160,
+        "sessionId": "7bfefd26-1d77-433c-b147-4482e8ccfa2e",
+        "sessionKey": "agent:president-a:main",
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-6",
+        "workspaceDir": "/home/spryguy/openclaw-workspace/agents/president-a",
+        "bootstrapMaxChars": 20000,
+        "bootstrapTotalMaxChars": 150000,
+        "sandbox": {
+          "mode": "off",
+          "sandboxed": false
+        },
+        "systemPrompt": {
+          "chars": 27625,
+          "projectContextChars": 13729,
+          "nonProjectContextChars": 13896
+        },
+        "injectedWorkspaceFiles": [
+          {
+            "name": "AGENTS.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-a/AGENTS.md",
+            "missing": false,
+            "rawChars": 7804,
+            "injectedChars": 7804,
+            "truncated": false
+          },
+          {
+            "name": "SOUL.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-a/SOUL.md",
+            "missing": false,
+            "rawChars": 1664,
+            "injectedChars": 1664,
+            "truncated": false
+          },
+          {
+            "name": "TOOLS.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-a/TOOLS.md",
+            "missing": false,
+            "rawChars": 850,
+            "injectedChars": 850,
+            "truncated": false
+          },
+          {
+            "name": "IDENTITY.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-a/IDENTITY.md",
+            "missing": false,
+            "rawChars": 633,
+            "injectedChars": 633,
+            "truncated": false
+          },
+          {
+            "name": "USER.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-a/USER.md",
+            "missing": false,
+            "rawChars": 474,
+            "injectedChars": 474,
+            "truncated": false
+          },
+          {
+            "name": "HEARTBEAT.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-a/HEARTBEAT.md",
+            "missing": false,
+            "rawChars": 167,
+            "injectedChars": 167,
+            "truncated": false
+          },
+          {
+            "name": "BOOTSTRAP.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-a/BOOTSTRAP.md",
+            "missing": false,
+            "rawChars": 1449,
+            "injectedChars": 1449,
+            "truncated": false
+          }
+        ],
+        "skills": {
+          "promptChars": 3378,
+          "entries": [
+            {
+              "name": "gh-issues",
+              "blockChars": 504
+            },
+            {
+              "name": "github",
+              "blockChars": 568
+            },
+            {
+              "name": "healthcheck",
+              "blockChars": 487
+            },
+            {
+              "name": "session-logs",
+              "blockChars": 249
+            },
+            {
+              "name": "skill-creator",
+              "blockChars": 292
+            },
+            {
+              "name": "tmux",
+              "blockChars": 251
+            },
+            {
+              "name": "video-frames",
+              "blockChars": 225
+            },
+            {
+              "name": "weather",
+              "blockChars": 412
+            }
+          ]
+        },
+        "tools": {
+          "listChars": 2129,
+          "schemaChars": 11418,
+          "entries": [
+            {
+              "name": "browser",
+              "summaryChars": 1251,
+              "schemaChars": 1897,
+              "propertiesCount": 28
+            },
+            {
+              "name": "canvas",
+              "summaryChars": 106,
+              "schemaChars": 661,
+              "propertiesCount": 18
+            },
+            {
+              "name": "cron",
+              "summaryChars": 2689,
+              "schemaChars": 662,
+              "propertiesCount": 13
+            },
+            {
+              "name": "message",
+              "summaryChars": 102,
+              "schemaChars": 4181,
+              "propertiesCount": 85
+            },
+            {
+              "name": "tts",
+              "summaryChars": 152,
+              "schemaChars": 223,
+              "propertiesCount": 2
+            },
+            {
+              "name": "gateway",
+              "summaryChars": 354,
+              "schemaChars": 465,
+              "propertiesCount": 11
+            },
+            {
+              "name": "agents_list",
+              "summaryChars": 118,
+              "schemaChars": 33,
+              "propertiesCount": 0
+            },
+            {
+              "name": "sessions_list",
+              "summaryChars": 54,
+              "schemaChars": 212,
+              "propertiesCount": 4
+            },
+            {
+              "name": "sessions_history",
+              "summaryChars": 36,
+              "schemaChars": 161,
+              "propertiesCount": 3
+            },
+            {
+              "name": "sessions_send",
+              "summaryChars": 84,
+              "schemaChars": 273,
+              "propertiesCount": 5
+            },
+            {
+              "name": "sessions_spawn",
+              "summaryChars": 134,
+              "schemaChars": 492,
+              "propertiesCount": 12
+            },
+            {
+              "name": "subagents",
+              "summaryChars": 105,
+              "schemaChars": 191,
+              "propertiesCount": 4
+            },
+            {
+              "name": "session_status",
+              "summaryChars": 207,
+              "schemaChars": 89,
+              "propertiesCount": 2
+            },
+            {
+              "name": "web_search",
+              "summaryChars": 175,
+              "schemaChars": 895,
+              "propertiesCount": 6
+            },
+            {
+              "name": "web_fetch",
+              "summaryChars": 129,
+              "schemaChars": 374,
+              "propertiesCount": 3
+            },
+            {
+              "name": "image",
+              "summaryChars": 260,
+              "schemaChars": 342,
+              "propertiesCount": 6
+            },
+            {
+              "name": "memory_search",
+              "summaryChars": 334,
+              "schemaChars": 139,
+              "propertiesCount": 3
+            },
+            {
+              "name": "memory_get",
+              "summaryChars": 151,
+              "schemaChars": 128,
+              "propertiesCount": 3
+            }
+          ]
+        }
+      }
+    }
+  }
+}

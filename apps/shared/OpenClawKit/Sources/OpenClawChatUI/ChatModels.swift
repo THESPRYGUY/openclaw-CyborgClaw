@@ -3,6 +3,18 @@ import Foundation
 
 // NOTE: keep this file lightweight; decode must be resilient to varying transcript formats.
 
+public struct OpenClawCanonicalProvenance: Codable, Sendable {
+    public let job_id: String?
+    public let run_id: String?
+    public let agent_uuid: String?
+    public let agent_fingerprint: String?
+    public let agent_profile_id: String?
+    public let node_id: String?
+    public let provider_id: String?
+    public let model_id: String?
+    public let timestamp: Int?
+}
+
 #if canImport(AppKit)
 import AppKit
 
@@ -263,6 +275,9 @@ public struct OpenClawChatSendResponse: Codable, Sendable {
 
 public struct OpenClawChatEventPayload: Codable, Sendable {
     public let runId: String?
+    public let run_id: String?
+    public let timestamp: Int?
+    public let provenance: OpenClawCanonicalProvenance?
     public let sessionKey: String?
     public let state: String?
     public let message: AnyCodable?
@@ -272,9 +287,12 @@ public struct OpenClawChatEventPayload: Codable, Sendable {
 public struct OpenClawAgentEventPayload: Codable, Sendable, Identifiable {
     public var id: String { "\(self.runId)-\(self.seq ?? -1)" }
     public let runId: String
+    public let run_id: String?
     public let seq: Int?
     public let stream: String
     public let ts: Int?
+    public let timestamp: Int?
+    public let provenance: OpenClawCanonicalProvenance?
     public let data: [String: AnyCodable]
 }
 

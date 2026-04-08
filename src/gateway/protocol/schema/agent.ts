@@ -2,12 +2,30 @@ import { Type } from "@sinclair/typebox";
 import { INPUT_PROVENANCE_KIND_VALUES } from "../../../sessions/input-provenance.js";
 import { NonEmptyString, SessionLabelString } from "./primitives.js";
 
+export const CanonicalProvenanceSchema = Type.Object(
+  {
+    job_id: Type.Union([NonEmptyString, Type.Null()]),
+    run_id: Type.Union([NonEmptyString, Type.Null()]),
+    agent_uuid: Type.Union([NonEmptyString, Type.Null()]),
+    agent_fingerprint: Type.Union([NonEmptyString, Type.Null()]),
+    agent_profile_id: Type.Union([NonEmptyString, Type.Null()]),
+    node_id: Type.Union([NonEmptyString, Type.Null()]),
+    provider_id: Type.Union([NonEmptyString, Type.Null()]),
+    model_id: Type.Union([NonEmptyString, Type.Null()]),
+    timestamp: Type.Union([Type.Integer({ minimum: 0 }), Type.Null()]),
+  },
+  { additionalProperties: false },
+);
+
 export const AgentEventSchema = Type.Object(
   {
     runId: NonEmptyString,
+    run_id: Type.Optional(NonEmptyString),
     seq: Type.Integer({ minimum: 0 }),
     stream: NonEmptyString,
     ts: Type.Integer({ minimum: 0 }),
+    timestamp: Type.Optional(Type.Integer({ minimum: 0 })),
+    provenance: Type.Optional(CanonicalProvenanceSchema),
     data: Type.Record(Type.String(), Type.Unknown()),
   },
   { additionalProperties: false },
@@ -92,6 +110,7 @@ export const AgentParamsSchema = Type.Object(
     idempotencyKey: NonEmptyString,
     label: Type.Optional(SessionLabelString),
     spawnedBy: Type.Optional(Type.String()),
+    provenance: Type.Optional(CanonicalProvenanceSchema),
   },
   { additionalProperties: false },
 );

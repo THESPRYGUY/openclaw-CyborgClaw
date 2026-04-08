@@ -1,0 +1,270 @@
+{
+  "runId": "ff0ad11b-5620-4cc0-9ba6-cb653222383e",
+  "status": "ok",
+  "summary": "completed",
+  "result": {
+    "payloads": [
+      {
+        "text": "ALPHA_DOCS_OK_v1",
+        "mediaUrl": null
+      }
+    ],
+    "meta": {
+      "durationMs": 3069,
+      "agentMeta": {
+        "sessionId": "d9e5b613-07c3-46f6-ab87-6131a1974307",
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "usage": {
+          "input": 11805,
+          "output": 176,
+          "total": 11981
+        },
+        "lastCallUsage": {
+          "input": 11805,
+          "output": 176,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 11981
+        },
+        "promptTokens": 11805
+      },
+      "aborted": false,
+      "systemPromptReport": {
+        "source": "run",
+        "generatedAt": 1773154560045,
+        "sessionId": "d9e5b613-07c3-46f6-ab87-6131a1974307",
+        "sessionKey": "agent:president-b:main",
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "workspaceDir": "/home/spryguy/openclaw-workspace/agents/president-b",
+        "bootstrapMaxChars": 20000,
+        "bootstrapTotalMaxChars": 150000,
+        "sandbox": {
+          "mode": "off",
+          "sandboxed": false
+        },
+        "systemPrompt": {
+          "chars": 17892,
+          "projectContextChars": 3467,
+          "nonProjectContextChars": 14425
+        },
+        "injectedWorkspaceFiles": [
+          {
+            "name": "AGENTS.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-b/AGENTS.md",
+            "missing": false,
+            "rawChars": 490,
+            "injectedChars": 490,
+            "truncated": false
+          },
+          {
+            "name": "SOUL.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-b/SOUL.md",
+            "missing": false,
+            "rawChars": 208,
+            "injectedChars": 208,
+            "truncated": false
+          },
+          {
+            "name": "TOOLS.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-b/TOOLS.md",
+            "missing": false,
+            "rawChars": 850,
+            "injectedChars": 850,
+            "truncated": false
+          },
+          {
+            "name": "IDENTITY.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-b/IDENTITY.md",
+            "missing": false,
+            "rawChars": 139,
+            "injectedChars": 139,
+            "truncated": false
+          },
+          {
+            "name": "USER.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-b/USER.md",
+            "missing": false,
+            "rawChars": 474,
+            "injectedChars": 474,
+            "truncated": false
+          },
+          {
+            "name": "HEARTBEAT.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-b/HEARTBEAT.md",
+            "missing": false,
+            "rawChars": 36,
+            "injectedChars": 36,
+            "truncated": false
+          },
+          {
+            "name": "BOOTSTRAP.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/president-b/BOOTSTRAP.md",
+            "missing": false,
+            "rawChars": 582,
+            "injectedChars": 582,
+            "truncated": false
+          }
+        ],
+        "skills": {
+          "promptChars": 3378,
+          "entries": [
+            {
+              "name": "gh-issues",
+              "blockChars": 504
+            },
+            {
+              "name": "github",
+              "blockChars": 568
+            },
+            {
+              "name": "healthcheck",
+              "blockChars": 487
+            },
+            {
+              "name": "session-logs",
+              "blockChars": 249
+            },
+            {
+              "name": "skill-creator",
+              "blockChars": 292
+            },
+            {
+              "name": "tmux",
+              "blockChars": 251
+            },
+            {
+              "name": "video-frames",
+              "blockChars": 225
+            },
+            {
+              "name": "weather",
+              "blockChars": 412
+            }
+          ]
+        },
+        "tools": {
+          "listChars": 2189,
+          "schemaChars": 12616,
+          "entries": [
+            {
+              "name": "browser",
+              "summaryChars": 1251,
+              "schemaChars": 1869,
+              "propertiesCount": 28
+            },
+            {
+              "name": "canvas",
+              "summaryChars": 106,
+              "schemaChars": 661,
+              "propertiesCount": 18
+            },
+            {
+              "name": "nodes",
+              "summaryChars": 115,
+              "schemaChars": 1500,
+              "propertiesCount": 33
+            },
+            {
+              "name": "cron",
+              "summaryChars": 2689,
+              "schemaChars": 581,
+              "propertiesCount": 13
+            },
+            {
+              "name": "message",
+              "summaryChars": 102,
+              "schemaChars": 4181,
+              "propertiesCount": 85
+            },
+            {
+              "name": "tts",
+              "summaryChars": 152,
+              "schemaChars": 223,
+              "propertiesCount": 2
+            },
+            {
+              "name": "gateway",
+              "summaryChars": 354,
+              "schemaChars": 465,
+              "propertiesCount": 11
+            },
+            {
+              "name": "agents_list",
+              "summaryChars": 118,
+              "schemaChars": 33,
+              "propertiesCount": 0
+            },
+            {
+              "name": "sessions_list",
+              "summaryChars": 54,
+              "schemaChars": 176,
+              "propertiesCount": 4
+            },
+            {
+              "name": "sessions_history",
+              "summaryChars": 36,
+              "schemaChars": 149,
+              "propertiesCount": 3
+            },
+            {
+              "name": "sessions_send",
+              "summaryChars": 84,
+              "schemaChars": 203,
+              "propertiesCount": 5
+            },
+            {
+              "name": "sessions_spawn",
+              "summaryChars": 134,
+              "schemaChars": 468,
+              "propertiesCount": 12
+            },
+            {
+              "name": "subagents",
+              "summaryChars": 105,
+              "schemaChars": 179,
+              "propertiesCount": 4
+            },
+            {
+              "name": "session_status",
+              "summaryChars": 207,
+              "schemaChars": 89,
+              "propertiesCount": 2
+            },
+            {
+              "name": "web_search",
+              "summaryChars": 175,
+              "schemaChars": 870,
+              "propertiesCount": 6
+            },
+            {
+              "name": "web_fetch",
+              "summaryChars": 129,
+              "schemaChars": 360,
+              "propertiesCount": 3
+            },
+            {
+              "name": "image",
+              "summaryChars": 260,
+              "schemaChars": 342,
+              "propertiesCount": 6
+            },
+            {
+              "name": "memory_search",
+              "summaryChars": 334,
+              "schemaChars": 139,
+              "propertiesCount": 3
+            },
+            {
+              "name": "memory_get",
+              "summaryChars": 151,
+              "schemaChars": 128,
+              "propertiesCount": 3
+            }
+          ]
+        }
+      }
+    }
+  }
+}

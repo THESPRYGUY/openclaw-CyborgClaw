@@ -1,0 +1,6 @@
+branch=feat/golden-branch-loop-preflight
+sha=61fab11ab2573290eb15b6b93478489912140a80
+status=GREEN
+run1=145457-2488888
+run2=145907-2494352
+addendum=Reconciliation pass confirmed run IDs 145457-2488888 and 145907-2494352 only in ops/mission1-closeout artifacts, with no matching canonical ledger receipt pair in ops/ledger; canonical receipt-location rule remains to be explicitly defined.

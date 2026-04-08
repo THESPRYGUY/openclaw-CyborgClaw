@@ -1,0 +1,170 @@
+{
+  "runId": "ba7b732e-2d75-4e02-9e16-26903fad6951",
+  "status": "ok",
+  "summary": "completed",
+  "result": {
+    "payloads": [
+      {
+        "text": "ALPHA_IMPLEMENTER_OK_v1",
+        "mediaUrl": null
+      }
+    ],
+    "meta": {
+      "durationMs": 3038,
+      "agentMeta": {
+        "sessionId": "b8e7c702-d8ef-4466-a1f5-2fb72f095f4c",
+        "provider": "openai-codex",
+        "model": "gpt-5.3-codex",
+        "usage": {
+          "input": 6852,
+          "output": 91,
+          "total": 6943
+        },
+        "lastCallUsage": {
+          "input": 6852,
+          "output": 91,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 6943
+        },
+        "promptTokens": 6852
+      },
+      "aborted": false,
+      "systemPromptReport": {
+        "source": "run",
+        "generatedAt": 1773154761455,
+        "sessionId": "b8e7c702-d8ef-4466-a1f5-2fb72f095f4c",
+        "sessionKey": "agent:exec-02:main",
+        "provider": "openai-codex",
+        "model": "gpt-5.3-codex",
+        "workspaceDir": "/home/spryguy/openclaw-workspace/agents/exec-02",
+        "bootstrapMaxChars": 20000,
+        "bootstrapTotalMaxChars": 150000,
+        "sandbox": {
+          "mode": "off",
+          "sandboxed": false
+        },
+        "systemPrompt": {
+          "chars": 23602,
+          "projectContextChars": 14607,
+          "nonProjectContextChars": 8995
+        },
+        "injectedWorkspaceFiles": [
+          {
+            "name": "AGENTS.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/exec-02/AGENTS.md",
+            "missing": false,
+            "rawChars": 8272,
+            "injectedChars": 8272,
+            "truncated": false
+          },
+          {
+            "name": "SOUL.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/exec-02/SOUL.md",
+            "missing": false,
+            "rawChars": 1829,
+            "injectedChars": 1829,
+            "truncated": false
+          },
+          {
+            "name": "TOOLS.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/exec-02/TOOLS.md",
+            "missing": false,
+            "rawChars": 850,
+            "injectedChars": 850,
+            "truncated": false
+          },
+          {
+            "name": "IDENTITY.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/exec-02/IDENTITY.md",
+            "missing": false,
+            "rawChars": 633,
+            "injectedChars": 633,
+            "truncated": false
+          },
+          {
+            "name": "USER.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/exec-02/USER.md",
+            "missing": false,
+            "rawChars": 230,
+            "injectedChars": 230,
+            "truncated": false
+          },
+          {
+            "name": "HEARTBEAT.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/exec-02/HEARTBEAT.md",
+            "missing": false,
+            "rawChars": 684,
+            "injectedChars": 684,
+            "truncated": false
+          },
+          {
+            "name": "BOOTSTRAP.md",
+            "path": "/home/spryguy/openclaw-workspace/agents/exec-02/BOOTSTRAP.md",
+            "missing": false,
+            "rawChars": 1449,
+            "injectedChars": 1449,
+            "truncated": false
+          }
+        ],
+        "skills": {
+          "promptChars": 1604,
+          "entries": [
+            {
+              "name": "healthcheck",
+              "blockChars": 482
+            },
+            {
+              "name": "skill-creator",
+              "blockChars": 287
+            },
+            {
+              "name": "tmux",
+              "blockChars": 246
+            },
+            {
+              "name": "weather",
+              "blockChars": 211
+            }
+          ]
+        },
+        "tools": {
+          "listChars": 429,
+          "schemaChars": 4931,
+          "entries": [
+            {
+              "name": "message",
+              "summaryChars": 110,
+              "schemaChars": 4196,
+              "propertiesCount": 85
+            },
+            {
+              "name": "sessions_list",
+              "summaryChars": 54,
+              "schemaChars": 212,
+              "propertiesCount": 4
+            },
+            {
+              "name": "sessions_history",
+              "summaryChars": 36,
+              "schemaChars": 161,
+              "propertiesCount": 3
+            },
+            {
+              "name": "sessions_send",
+              "summaryChars": 84,
+              "schemaChars": 273,
+              "propertiesCount": 5
+            },
+            {
+              "name": "session_status",
+              "summaryChars": 207,
+              "schemaChars": 89,
+              "propertiesCount": 2
+            }
+          ]
+        }
+      }
+    }
+  }
+}

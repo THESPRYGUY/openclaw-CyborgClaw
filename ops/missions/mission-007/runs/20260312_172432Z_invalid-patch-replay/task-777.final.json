@@ -1,0 +1,10 @@
+{
+  "task_id": "task-777",
+  "mission": "mission-007",
+  "title": "Mission 7 invalid patch replay",
+  "owner": "mission-007-validation",
+  "target_file": "ops/scripts/review_patch.sh",
+  "goal": "trigger real invalid patch apply-check path",
+  "acceptance_criteria": ["structured invalid patch emitted", "needs_human on retry exhaustion"],
+  "status": "needs_human"
+}
