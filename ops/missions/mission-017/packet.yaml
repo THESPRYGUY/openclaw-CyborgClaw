@@ -1,0 +1,72 @@
+missionId: MISSION-017
+simulation: false
+missionType: golden-run-telemetry-truth-hardening
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-08T01:40:00Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Turn the Golden Run board into an SSOT-ready telemetry truth surface.
+  detail: >
+    Mission 017 is Part 1 of a two-part Golden Run sequence. It uses a governed
+    Build-Review-Refine-Repeat loop to harden mission anchoring, source
+    precedence, provenance, freshness, and systems-check semantics for the
+    `/golden-run` board until that surface can truthfully act as an operator
+    SSOT.
+
+scope:
+  inScope:
+    - Golden Run hero mission anchoring
+    - touchpoint source-precedence rules
+    - provenance and freshness posture
+    - independent systems-check semantics
+    - operator proof bundle for SSOT readiness
+  outOfScope:
+    - broad UI redesign
+    - unrelated card feature work
+    - Break-Out Room expansion
+    - non-Golden-Run telemetry cleanup
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - voltaris-v2
+    - codex
+    - STUD
+  agentsToBeSpawned: []
+
+instructions:
+  leadInstructions:
+    - Run the mission as a bounded recursive hardening packet, not a cleanup sprint.
+    - Keep each BRRR lap focused on one telemetry seam at a time.
+    - Require one explicit source-precedence hypothesis before each mutation pass.
+    - Require one live-vs-board comparison receipt before each refine/repeat decision.
+    - Do not admit Part 2 until the board is SSOT-ready by proof.
+  downstreamInstructions:
+    - target: voltaris-v2
+      instructions:
+        - Reject fake freshness and mixed-mission compression.
+        - Keep the operator read honest even if that exposes degraded posture.
+        - Block any pass where live/derived/stale semantics remain ambiguous.
+    - target: codex
+      instructions:
+        - Ground each loop in authoritative source-precedence code paths.
+        - Prefer minimal semantic fixes over broad refactors.
+        - Reject passes that drift into redesign or new telemetry feature work.
+
+successCriteria:
+  - active Golden Run mission anchors the board first
+  - touchpoints report honest live/derived/stale posture
+  - systems check becomes an independent semantic verifier
+  - one proof bundle shows board vs live mission agreement
+
+failureCriteria:
+  - the board can still center the wrong mission
+  - live telemetry is still overstated
+  - the systems check still self-certifies broken semantics
+  - the packet widens into redesign or unrelated cleanup

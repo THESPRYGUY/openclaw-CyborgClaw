@@ -1,0 +1,9 @@
+{
+  "mission": "mission-018",
+  "status": "QUEUED_BEHIND_MISSION_017",
+  "owner": "president-a",
+  "updatedUtc": "2026-04-08T01:40:00Z",
+  "currentDeliverable": "deliverable-001",
+  "latestRunDir": "",
+  "notes": "Mission 018 is the planned Part 2 follow-on and must not open until Mission 017 proves the Golden Run board is SSOT-ready."
+}

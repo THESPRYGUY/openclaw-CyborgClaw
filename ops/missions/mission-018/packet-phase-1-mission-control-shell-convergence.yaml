@@ -1,0 +1,117 @@
+missionId: MISSION-018
+simulation: false
+missionType: mission-control-shell-convergence
+submittedTo: STUD
+submittedBy: operator
+submittedAt: 2026-04-08T00:00:00Z
+
+route:
+  targetLead: president-a
+  lane: strike-team-alpha
+  team: Strike Team Alpha
+
+objective:
+  short: Converge `/live-dev-feed` into the Mission Control foyer shell.
+  detail: >
+    Phase 1 of Mission 018 is a bounded shell-convergence slice. It renames the
+    Live Dev Feed hero to `Mission Control`, installs a six-button mission
+    launcher using the Agent Control foyer visual grammar, preserves the current
+    evidence body as a supporting rail, and avoids any fake claim that the route
+    already represents a true in-flight mission feed.
+
+dependencyGate:
+  blockedBy:
+    - MISSION-017
+  detail: >
+    Mission 018 remains queued behind Mission 017 SSOT closeout. This packet is
+    scoped so it can be prepared now, but execution must not widen into semantic
+    Golden Run re-authoring before Mission 017 is closed.
+
+scope:
+  inScope:
+    - Mission Control hero rename for `/live-dev-feed`
+    - six-button launcher shell
+    - shared launcher renderer extraction
+    - Mission Control-specific launcher contract
+    - explicit reserved placeholders for buttons 4-6
+    - preserving the existing evidence inventory as the Phase 1 supporting rail
+  outOfScope:
+    - replacing the evidence rail with a true in-flight mission feed
+    - Golden Run source-precedence changes
+    - new lifecycle authority or mission-state engine
+    - admission of future buttons 4-6 as real models
+    - broad redesign of adjacent operator surfaces
+
+participants:
+  alreadySpawnedAgents:
+    - president-a
+    - voltaris-v2
+    - codex
+    - STUD
+  agentsToBeSpawned: []
+
+instructions:
+  leadInstructions:
+    - Treat Mission Control as a foyer / router, not a new mission authority.
+    - Keep the slice strictly visual and routing-level unless a backing truth seam already exists.
+    - Preserve operator trust by refusing to relabel evidence inventory as in-flight mission truth.
+    - Prefer shared renderer extraction over duplicated launcher markup.
+  downstreamInstructions:
+    - target: voltaris-v2
+      instructions:
+        - Keep the operator read mission-first and blunt.
+        - Reject placeholder labels that pretend to be live models.
+        - Keep lawful `held` posture distinct from generic warning language.
+    - target: codex
+      instructions:
+        - Ground the slice in the current dashboard seams and avoid cross-page drift.
+        - Extract the launcher as a reusable renderer with explicit `disabled` and route-derived `current` state.
+        - Keep the existing evidence rail intact below the new Mission Control shell.
+
+phase1Launcher:
+  buttons:
+    - key: live-mission-feed
+      label: Live Mission Feed
+      state: active
+      route: /live-dev-feed
+      summary: Current route. Phase 1 keeps the evidence rail below this shell while future work makes the route truthful as in-flight-only mission view.
+    - key: mission-staging
+      label: Mission Staging
+      state: linked
+      route: /development?staging=1
+      summary: GO-cleared staging work waiting on strike-team assignment and dispatch.
+    - key: mission-prep
+      label: Mission Prep
+      state: linked
+      route: /flow
+      summary: Golden Run / Flow movement before runtime dispatch.
+    - key: reserved-04
+      label: Reserved 04
+      state: standby
+      route: null
+      summary: Placeholder only.
+    - key: reserved-05
+      label: Reserved 05
+      state: standby
+      route: null
+      summary: Placeholder only.
+    - key: reserved-06
+      label: Reserved 06
+      state: standby
+      route: null
+      summary: Placeholder only.
+
+successCriteria:
+  - `/live-dev-feed` renders a Mission Control hero instead of a plain Live Dev Feed top card
+  - the six-button launcher renders in canonical order
+  - the launcher contract is shared rather than duplicated page-local markup
+  - Reserved 04-06 are visibly reserved and do not imply live backing models
+  - the current evidence inventory remains available as supporting rail truth
+  - no copy on the page falsely claims that the route already shows only in-flight jobs
+
+failureCriteria:
+  - the slice introduces a second mission-lifecycle authority
+  - the page claims `in-flight only` without a real backing data contract
+  - the launcher is copy-pasted and drifts from the shared renderer seam
+  - placeholder buttons look active or semantically admitted
+  - the packet widens into Golden Run semantic redesign or adjacent board cleanup

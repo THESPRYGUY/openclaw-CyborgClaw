@@ -1,0 +1,9 @@
+{
+  "mission": "mission-017",
+  "status": "ACTIVE_ITEM_5_PROVEN_PENDING_CLOSEOUT",
+  "owner": "president-a",
+  "updatedUtc": "2026-04-08T13:04:28Z",
+  "currentDeliverable": "deliverable-005",
+  "latestRunDir": "",
+  "notes": "Mission 017 Item 5 is proven and waiting on mission-lead closeout. The Golden Run board now names the exact upstream promotion condition for the two truthfully held touchpoints: Mission execution waits on STUD preflight / Green-light, and Closeout waits on Development publishing / Handoff packet. Codex and Voltaris V2 both passed the result. The next bounded seam is Item 6: split stale/degraded WARN semantics from lawful dependency-held WARN semantics."
+}
