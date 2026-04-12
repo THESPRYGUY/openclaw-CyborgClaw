@@ -12,6 +12,8 @@ let setActivePluginRegistry: typeof import("../plugins/runtime.js").setActivePlu
 let createChannelTestPluginBase: typeof import("../test-utils/channel-plugins.js").createChannelTestPluginBase;
 let createTestRegistry: typeof import("../test-utils/channel-plugins.js").createTestRegistry;
 let getHealthSnapshot: typeof import("./health.js").getHealthSnapshot;
+let recordChannelActivity: typeof import("../infra/channel-activity.js").recordChannelActivity;
+let resetChannelActivityForTest: typeof import("../infra/channel-activity.js").resetChannelActivityForTest;
 
 type TelegramHealthAccount = {
   accountId: string;
@@ -56,10 +58,11 @@ async function loadFreshHealthModulesForTest() {
     logoutWeb: vi.fn(),
   }));
 
-  const [pluginsRuntime, channelTestUtils, health] = await Promise.all([
+  const [pluginsRuntime, channelTestUtils, health, channelActivity] = await Promise.all([
     import("../plugins/runtime.js"),
     import("../test-utils/channel-plugins.js"),
     import("./health.js"),
+    import("../infra/channel-activity.js"),
   ]);
 
   return {
@@ -67,6 +70,8 @@ async function loadFreshHealthModulesForTest() {
     createChannelTestPluginBase: channelTestUtils.createChannelTestPluginBase,
     createTestRegistry: channelTestUtils.createTestRegistry,
     getHealthSnapshot: health.getHealthSnapshot,
+    recordChannelActivity: channelActivity.recordChannelActivity,
+    resetChannelActivityForTest: channelActivity.resetChannelActivityForTest,
   };
 }
 
@@ -296,6 +301,43 @@ function createTelegramHealthPlugin(): Pick<
   };
 }
 
+function createWhatsAppRuntimeHealthPlugin(): Pick<
+  ChannelPlugin,
+  "id" | "meta" | "capabilities" | "config" | "status"
+> {
+  return {
+    ...createChannelTestPluginBase({ id: "whatsapp", label: "WhatsApp" }),
+    config: {
+      listAccountIds: () => ["default"],
+      resolveAccount: () => ({ accountId: "default", configured: true, enabled: true }),
+      isConfigured: () => true,
+    },
+    status: {
+      buildAccountSnapshot: ({ runtime }) => ({
+        accountId: "default",
+        configured: true,
+        enabled: true,
+        running: runtime?.running,
+        connected: runtime?.connected,
+        linked: runtime?.linked,
+        healthState: runtime?.healthState,
+        lastInboundAt: runtime?.lastInboundAt,
+        lastOutboundAt: runtime?.lastOutboundAt,
+      }),
+      buildChannelSummary: ({ snapshot }) => ({
+        accountId: snapshot.accountId,
+        configured: snapshot.configured,
+        running: snapshot.running,
+        connected: snapshot.connected,
+        linked: snapshot.linked,
+        healthState: snapshot.healthState,
+        lastInboundAt: snapshot.lastInboundAt,
+        lastOutboundAt: snapshot.lastOutboundAt,
+      }),
+    },
+  };
+}
+
 describe("getHealthSnapshot", () => {
   beforeAll(async () => {
     ({
@@ -303,6 +345,8 @@ describe("getHealthSnapshot", () => {
       createChannelTestPluginBase,
       createTestRegistry,
       getHealthSnapshot,
+      recordChannelActivity,
+      resetChannelActivityForTest,
     } = await loadFreshHealthModulesForTest());
   });
 
@@ -317,6 +361,7 @@ describe("getHealthSnapshot", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
+    resetChannelActivityForTest();
   });
 
   it("skips telegram probe when not configured", async () => {
@@ -420,6 +465,79 @@ describe("getHealthSnapshot", () => {
     expect(telegram.configured).toBe(true);
     expect(telegram.probe?.ok).toBe(false);
     expect(telegram.probe?.error).toMatch(/network down/i);
+  });
+
+  it("uses runtime snapshots and channel activity in health summaries", async () => {
+    setActivePluginRegistry(
+      createTestRegistry([
+        { pluginId: "whatsapp", plugin: createWhatsAppRuntimeHealthPlugin(), source: "test" },
+      ]),
+    );
+    testConfig = { channels: { whatsapp: { accounts: { default: {} } } } };
+    testStore = {};
+    const inboundAt = Date.now() - 2_000;
+    const outboundAt = Date.now() - 1_000;
+    recordChannelActivity({
+      channel: "whatsapp",
+      accountId: "default",
+      direction: "inbound",
+      at: inboundAt,
+    });
+    recordChannelActivity({
+      channel: "whatsapp",
+      accountId: "default",
+      direction: "outbound",
+      at: outboundAt,
+    });
+
+    const snap = await getHealthSnapshot({
+      probe: false,
+      runtimeSnapshot: {
+        channels: {
+          whatsapp: {
+            accountId: "default",
+            enabled: true,
+            configured: true,
+            linked: true,
+            running: true,
+            connected: true,
+            healthState: "healthy",
+          },
+        },
+        channelAccounts: {
+          whatsapp: {
+            default: {
+              accountId: "default",
+              enabled: true,
+              configured: true,
+              linked: true,
+              running: true,
+              connected: true,
+              healthState: "healthy",
+            },
+          },
+        },
+      },
+    });
+
+    const whatsapp = snap.channels.whatsapp as {
+      running?: boolean;
+      connected?: boolean;
+      linked?: boolean;
+      healthState?: string;
+      lastInboundAt?: number | null;
+      lastOutboundAt?: number | null;
+      accounts?: Record<string, { lastInboundAt?: number | null; lastOutboundAt?: number | null }>;
+    };
+
+    expect(whatsapp.running).toBe(true);
+    expect(whatsapp.connected).toBe(true);
+    expect(whatsapp.linked).toBe(true);
+    expect(whatsapp.healthState).toBe("healthy");
+    expect(whatsapp.lastInboundAt).toBe(inboundAt);
+    expect(whatsapp.lastOutboundAt).toBe(outboundAt);
+    expect(whatsapp.accounts?.default?.lastInboundAt).toBe(inboundAt);
+    expect(whatsapp.accounts?.default?.lastOutboundAt).toBe(outboundAt);
   });
 
   it("disables heartbeat for agents without heartbeat blocks", async () => {

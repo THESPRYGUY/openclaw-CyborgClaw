@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const gatewayClientState = vi.hoisted(() => ({
   options: null as Record<string, unknown> | null,
-  requests: [] as string[],
+  requests: [] as Array<{ method: string; params?: unknown }>,
   startMode: "hello" as "hello" | "close",
   close: { code: 1008, reason: "pairing required" },
 }));
@@ -41,10 +41,41 @@ class MockGatewayClient {
 
   stop(): void {}
 
-  async request(method: string): Promise<unknown> {
-    gatewayClientState.requests.push(method);
+  async request(method: string, params?: unknown): Promise<unknown> {
+    gatewayClientState.requests.push({ method, params });
     if (method === "system-presence") {
       return [];
+    }
+    if (method === "health") {
+      return {
+        channels: {
+          whatsapp: {
+            running: false,
+            connected: false,
+          },
+        },
+      };
+    }
+    if (method === "channels.status") {
+      return {
+        channels: {
+          whatsapp: {
+            running: true,
+            connected: true,
+            healthState: "healthy",
+          },
+        },
+        channelAccounts: {
+          whatsapp: [
+            {
+              accountId: "default",
+              running: true,
+              connected: true,
+              healthState: "healthy",
+            },
+          ],
+        },
+      };
     }
     return {};
   }
@@ -87,12 +118,30 @@ describe("probeGateway", () => {
     expect(gatewayClientState.options?.scopes).toEqual(["operator.read"]);
     expect(gatewayClientState.options?.deviceIdentity).toEqual(deviceIdentityState.value);
     expect(gatewayClientState.requests).toEqual([
-      "health",
-      "status",
-      "system-presence",
-      "config.get",
+      { method: "health", params: { probe: true } },
+      { method: "status", params: undefined },
+      { method: "system-presence", params: undefined },
+      { method: "config.get", params: {} },
+      { method: "channels.status", params: { probe: true } },
     ]);
     expect(result.ok).toBe(true);
+    expect(result.health).toMatchObject({
+      channels: {
+        whatsapp: {
+          running: true,
+          connected: true,
+          healthState: "healthy",
+          accounts: {
+            default: {
+              accountId: "default",
+              running: true,
+              connected: true,
+              healthState: "healthy",
+            },
+          },
+        },
+      },
+    });
   });
 
   it("keeps device identity enabled for remote probes", async () => {
@@ -151,10 +200,11 @@ describe("probeGateway", () => {
     expect(result.ok).toBe(true);
     expect(gatewayClientState.options?.deviceIdentity).toBeNull();
     expect(gatewayClientState.requests).toEqual([
-      "health",
-      "status",
-      "system-presence",
-      "config.get",
+      { method: "health", params: { probe: true } },
+      { method: "status", params: undefined },
+      { method: "system-presence", params: undefined },
+      { method: "config.get", params: {} },
+      { method: "channels.status", params: { probe: true } },
     ]);
   });
 
@@ -166,7 +216,7 @@ describe("probeGateway", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(gatewayClientState.requests).toEqual(["system-presence"]);
+    expect(gatewayClientState.requests).toEqual([{ method: "system-presence", params: undefined }]);
     expect(result.health).toBeNull();
     expect(result.status).toBeNull();
     expect(result.configSnapshot).toBeNull();

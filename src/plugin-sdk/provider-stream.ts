@@ -118,7 +118,9 @@ export function buildProviderStreamFamilyHooks(
             agentDir: ctx.agentDir,
           });
           return createOpenAIResponsesContextManagementWrapper(
-            createOpenAIReasoningCompatibilityWrapper(nextStreamFn),
+            createOpenAIReasoningCompatibilityWrapper(nextStreamFn, {
+              thinkingLevel: ctx.thinkingLevel,
+            }),
             ctx.extraParams,
           );
         },

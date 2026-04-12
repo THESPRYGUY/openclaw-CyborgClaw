@@ -588,6 +588,33 @@ describe("openai transport stream", () => {
     expect(params.reasoning).toEqual({ effort: "high", summary: "auto" });
   });
 
+  it("forces gpt-5.2-codex responses reasoning effort to medium", () => {
+    const params = buildOpenAIResponsesParams(
+      {
+        id: "gpt-5.2-codex",
+        name: "GPT-5.2 Codex",
+        api: "openai-codex-responses",
+        provider: "openai-codex",
+        baseUrl: "https://api.openai.com/v1",
+        reasoning: true,
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 200000,
+        maxTokens: 8192,
+      } satisfies Model<"openai-codex-responses">,
+      {
+        systemPrompt: "system",
+        messages: [],
+        tools: [],
+      } as never,
+      {
+        reasoning: "low",
+      } as never,
+    ) as { reasoning?: unknown };
+
+    expect(params.reasoning).toEqual({ effort: "medium", summary: "auto" });
+  });
+
   it.each([
     {
       label: "openai",
@@ -1084,6 +1111,36 @@ describe("openai transport stream", () => {
     ) as { reasoning_effort?: unknown };
 
     expect(params.reasoning_effort).toBe("high");
+  });
+
+  it("forces gpt-5.2-codex completions reasoning effort to medium", () => {
+    const params = buildOpenAICompletionsParams(
+      {
+        id: "gpt-5.2-codex",
+        name: "GPT-5.2 Codex",
+        api: "openai-completions",
+        provider: "openai-codex",
+        baseUrl: "https://api.openai.com/v1",
+        reasoning: true,
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 200000,
+        maxTokens: 8192,
+        compat: {
+          supportsReasoningEffort: true,
+        } as Record<string, unknown>,
+      } satisfies Model<"openai-completions">,
+      {
+        systemPrompt: "system",
+        messages: [],
+        tools: [],
+      } as never,
+      {
+        reasoning: "low",
+      } as never,
+    ) as { reasoning_effort?: unknown };
+
+    expect(params.reasoning_effort).toBe("medium");
   });
 
   it("uses system role and streaming usage compat for native Qwen completions providers", () => {

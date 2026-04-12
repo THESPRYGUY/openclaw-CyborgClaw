@@ -190,6 +190,16 @@ describe("resolveThinkingDefaultForModel", () => {
     ).toBe("low");
   });
 
+  it("defaults gpt-5.2-codex to medium", () => {
+    expect(
+      resolveThinkingDefaultForModel({
+        provider: "openai-codex",
+        model: "gpt-5.2-codex",
+        catalog: [{ provider: "openai-codex", id: "gpt-5.2-codex", reasoning: true }],
+      }),
+    ).toBe("medium");
+  });
+
   it("defaults to off when no adaptive or reasoning hint is present", () => {
     expect(
       resolveThinkingDefaultForModel({

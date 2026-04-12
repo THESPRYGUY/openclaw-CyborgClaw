@@ -36,6 +36,61 @@ export function clampProbeTimeoutMs(timeoutMs: number): number {
   return Math.min(MAX_TIMER_DELAY_MS, Math.max(MIN_PROBE_TIMEOUT_MS, timeoutMs));
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function buildChannelAccountsRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const entries = value
+    .map((entry) => {
+      const record = asRecord(entry);
+      const accountId = record && typeof record.accountId === "string" ? record.accountId : null;
+      return accountId ? [accountId, entry] : null;
+    })
+    .filter((entry): entry is [string, unknown] => entry !== null);
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
+function mergeProbeHealthWithChannelsStatus(health: unknown, channelsStatus: unknown): unknown {
+  const healthRecord = asRecord(health);
+  const channelsStatusRecord = asRecord(channelsStatus);
+  const healthChannels = asRecord(healthRecord?.channels);
+  const statusChannels = asRecord(channelsStatusRecord?.channels);
+  if (!healthRecord || !channelsStatusRecord || !healthChannels || !statusChannels) {
+    return health;
+  }
+
+  const statusChannelAccounts = asRecord(channelsStatusRecord.channelAccounts);
+  const mergedChannels: Record<string, unknown> = { ...healthChannels };
+  for (const [channelId, statusSummary] of Object.entries(statusChannels)) {
+    const statusSummaryRecord = asRecord(statusSummary);
+    const currentHealthRecord = asRecord(healthChannels[channelId]) ?? {};
+    if (!statusSummaryRecord) {
+      mergedChannels[channelId] = statusSummary;
+      continue;
+    }
+    const nextSummary: Record<string, unknown> = {
+      ...currentHealthRecord,
+      ...statusSummaryRecord,
+    };
+    const accountsRecord = buildChannelAccountsRecord(statusChannelAccounts?.[channelId]);
+    if (accountsRecord) {
+      nextSummary.accounts = accountsRecord;
+    }
+    mergedChannels[channelId] = nextSummary;
+  }
+
+  return {
+    ...healthRecord,
+    channels: mergedChannels,
+  };
+}
+
 function formatProbeCloseError(close: GatewayProbeClose): string {
   return `gateway closed (${close.code}): ${close.reason}`;
 }
@@ -174,18 +229,19 @@ export async function probeGateway(opts: {
             });
             return;
           }
-          const [health, status, presence, configSnapshot] = await Promise.all([
-            client.request("health"),
+          const [health, status, presence, configSnapshot, channelsStatus] = await Promise.all([
+            client.request("health", { probe: true }),
             client.request("status"),
             client.request("system-presence"),
             client.request("config.get", {}),
+            client.request("channels.status", { probe: true }),
           ]);
           settle({
             ok: true,
             connectLatencyMs,
             error: null,
             close,
-            health,
+            health: mergeProbeHealthWithChannelsStatus(health, channelsStatus),
             status,
             presence: Array.isArray(presence) ? (presence as SystemPresence[]) : null,
             configSnapshot,

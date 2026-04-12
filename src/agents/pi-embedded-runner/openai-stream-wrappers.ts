@@ -1,6 +1,7 @@
 import type { StreamFn } from "@mariozechner/pi-agent-core";
 import type { SimpleStreamOptions } from "@mariozechner/pi-ai";
 import { streamSimple } from "@mariozechner/pi-ai";
+import type { ThinkLevel } from "../../auto-reply/thinking.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { normalizeOptionalLowercaseString, readStringValue } from "../../shared/string-coerce.js";
 import {
@@ -67,6 +68,71 @@ function shouldApplyOpenAIReasoningCompatibility(model: {
   return resolveOpenAIRequestCapabilities(model).supportsOpenAIReasoningCompatPayload;
 }
 
+function isMediumOnlyOpenAICodexReasoningModel(model: {
+  provider?: unknown;
+  id?: unknown;
+}): boolean {
+  return (
+    readStringValue(model.provider) === "openai-codex" &&
+    readStringValue(model.id) === "gpt-5.2-codex"
+  );
+}
+
+function normalizeMediumOnlyOpenAICodexReasoningPayload(params: {
+  payloadObj: Record<string, unknown>;
+  model: { api?: unknown; provider?: unknown; id?: unknown };
+  thinkingLevel?: ThinkLevel;
+}): void {
+  if (!isMediumOnlyOpenAICodexReasoningModel(params.model) || params.thinkingLevel === "off") {
+    return;
+  }
+
+  if (params.model.api === "openai-completions") {
+    params.payloadObj.reasoning_effort = "medium";
+    delete params.payloadObj.reasoningEffort;
+    return;
+  }
+
+  const reasoning =
+    params.payloadObj.reasoning &&
+    typeof params.payloadObj.reasoning === "object" &&
+    !Array.isArray(params.payloadObj.reasoning)
+      ? { ...(params.payloadObj.reasoning as Record<string, unknown>) }
+      : {};
+  reasoning.effort = "medium";
+  if (reasoning.summary === undefined) {
+    reasoning.summary = "auto";
+  }
+  params.payloadObj.reasoning = reasoning;
+  delete params.payloadObj.reasoningEffort;
+  delete params.payloadObj.reasoning_effort;
+}
+
+function normalizeMediumOnlyOpenAICodexReasoningOptions(params: {
+  options: SimpleStreamOptions | undefined;
+  model: { provider?: unknown; id?: unknown };
+  thinkingLevel?: ThinkLevel;
+}): SimpleStreamOptions | undefined {
+  if (!isMediumOnlyOpenAICodexReasoningModel(params.model) || params.thinkingLevel === "off") {
+    return params.options;
+  }
+  const current = (params.options ?? {}) as SimpleStreamOptions & {
+    reasoning?: unknown;
+    reasoningEffort?: unknown;
+  };
+  if (
+    readStringValue(current.reasoning) === "none" ||
+    readStringValue(current.reasoningEffort) === "none"
+  ) {
+    return params.options;
+  }
+  return {
+    ...current,
+    reasoning: "medium",
+    reasoningEffort: "medium",
+  } as SimpleStreamOptions;
+}
+
 function shouldFlattenOpenAICompletionMessages(model: {
   api?: unknown;
   compat?: unknown;
@@ -115,6 +181,13 @@ function normalizeOpenAITextVerbosity(value: unknown): OpenAITextVerbosity | und
     return normalized;
   }
   return undefined;
+}
+
+function normalizeOpenAITextVerbosityForModel(
+  model: { provider?: unknown; id?: unknown },
+  verbosity: OpenAITextVerbosity,
+): OpenAITextVerbosity {
+  return isMediumOnlyOpenAICodexReasoningModel(model) ? "medium" : verbosity;
 }
 
 export function resolveOpenAITextVerbosity(
@@ -216,17 +289,31 @@ export function createOpenAIResponsesContextManagementWrapper(
 
 export function createOpenAIReasoningCompatibilityWrapper(
   baseStreamFn: StreamFn | undefined,
+  params?: { thinkingLevel?: ThinkLevel },
 ): StreamFn {
   const underlying = baseStreamFn ?? streamSimple;
   return (model, context, options) => {
-    if (!shouldApplyOpenAIReasoningCompatibility(model)) {
+    if (
+      !shouldApplyOpenAIReasoningCompatibility(model) &&
+      !isMediumOnlyOpenAICodexReasoningModel(model)
+    ) {
       return underlying(model, context, options);
     }
-    return streamWithPayloadPatch(underlying, model, context, options, (payloadObj) => {
+    const normalizedOptions = normalizeMediumOnlyOpenAICodexReasoningOptions({
+      options,
+      model,
+      thinkingLevel: params?.thinkingLevel,
+    });
+    return streamWithPayloadPatch(underlying, model, context, normalizedOptions, (payloadObj) => {
       applyOpenAIResponsesPayloadPolicy(
         payloadObj,
         resolveOpenAIResponsesPayloadPolicy(model, { storeMode: "preserve" }),
       );
+      normalizeMediumOnlyOpenAICodexReasoningPayload({
+        payloadObj,
+        model,
+        thinkingLevel: params?.thinkingLevel,
+      });
     });
   };
 }
@@ -300,6 +387,7 @@ export function createOpenAITextVerbosityWrapper(
       return underlying(model, context, options);
     }
     const shouldOverrideExistingVerbosity = model.api === "openai-codex-responses";
+    const effectiveVerbosity = normalizeOpenAITextVerbosityForModel(model, verbosity);
     const originalOnPayload = options?.onPayload;
     return underlying(model, context, {
       ...options,
@@ -311,7 +399,7 @@ export function createOpenAITextVerbosityWrapper(
               ? (payloadObj.text as Record<string, unknown>)
               : {};
           if (shouldOverrideExistingVerbosity || existingText.verbosity === undefined) {
-            payloadObj.text = { ...existingText, verbosity };
+            payloadObj.text = { ...existingText, verbosity: effectiveVerbosity };
           }
         }
         return originalOnPayload?.(payload, model);

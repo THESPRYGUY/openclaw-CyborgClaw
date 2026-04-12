@@ -739,8 +739,40 @@ function getPromptCacheRetention(
   return baseUrl?.includes("api.openai.com") ? "24h" : undefined;
 }
 
-function resolveOpenAIReasoningEffort(options: OpenAIResponsesOptions | undefined) {
-  return options?.reasoningEffort ?? options?.reasoning ?? "high";
+function isMediumOnlyOpenAICodexReasoningModel(model: {
+  provider?: unknown;
+  id?: unknown;
+}): boolean {
+  return model.provider === "openai-codex" && model.id === "gpt-5.2-codex";
+}
+
+function normalizeOpenAIReasoningEffortForModel(
+  model: {
+    provider?: unknown;
+    id?: unknown;
+  },
+  effort: OpenAIReasoningEffort | "none" | undefined,
+): OpenAIReasoningEffort | "none" | undefined {
+  if (!isMediumOnlyOpenAICodexReasoningModel(model)) {
+    return effort;
+  }
+  if (effort === "none") {
+    return effort;
+  }
+  return "medium";
+}
+
+function resolveOpenAIReasoningEffort(
+  model: {
+    provider?: unknown;
+    id?: unknown;
+  },
+  options: OpenAIResponsesOptions | undefined,
+): OpenAIReasoningEffort | "none" {
+  return normalizeOpenAIReasoningEffortForModel(
+    model,
+    options?.reasoningEffort ?? options?.reasoning ?? "high",
+  )!;
 }
 
 export function buildOpenAIResponsesParams(
@@ -789,7 +821,7 @@ export function buildOpenAIResponsesParams(
   if (model.reasoning) {
     if (options?.reasoningEffort || options?.reasoning || options?.reasoningSummary) {
       params.reasoning = {
-        effort: resolveOpenAIReasoningEffort(options),
+        effort: resolveOpenAIReasoningEffort(model, options),
         summary: options?.reasoningSummary || "auto",
       };
       params.include = ["reasoning.encrypted_content"];
@@ -1251,8 +1283,17 @@ function mapReasoningEffort(effort: string, reasoningEffortMap: Record<string, s
   return reasoningEffortMap[effort] ?? effort;
 }
 
-function resolveOpenAICompletionsReasoningEffort(options: OpenAICompletionsOptions | undefined) {
-  return options?.reasoningEffort ?? options?.reasoning ?? "high";
+function resolveOpenAICompletionsReasoningEffort(
+  model: {
+    provider?: unknown;
+    id?: unknown;
+  },
+  options: OpenAICompletionsOptions | undefined,
+): OpenAIReasoningEffort | "none" {
+  return normalizeOpenAIReasoningEffortForModel(
+    model,
+    options?.reasoningEffort ?? options?.reasoning ?? "high",
+  )!;
 }
 
 function convertTools(
@@ -1322,7 +1363,7 @@ export function buildOpenAICompletionsParams(
   } else if (hasToolHistory(context.messages)) {
     params.tools = [];
   }
-  const completionsReasoningEffort = resolveOpenAICompletionsReasoningEffort(options);
+  const completionsReasoningEffort = resolveOpenAICompletionsReasoningEffort(model, options);
   if (compat.thinkingFormat === "openrouter" && model.reasoning && completionsReasoningEffort) {
     params.reasoning = {
       effort: mapReasoningEffort(completionsReasoningEffort, compat.reasoningEffortMap),

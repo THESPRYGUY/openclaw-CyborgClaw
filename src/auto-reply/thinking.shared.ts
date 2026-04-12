@@ -103,6 +103,9 @@ export function resolveThinkingDefaultForModel(params: {
   model: string;
   catalog?: ThinkingCatalogEntry[];
 }): ThinkLevel {
+  if (params.provider === "openai-codex" && params.model === "gpt-5.2-codex") {
+    return "medium";
+  }
   const candidate = params.catalog?.find(
     (entry) => entry.provider === params.provider && entry.id === params.model,
   );

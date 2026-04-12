@@ -173,7 +173,9 @@ function createTestOpenAIProviderWrapper(
   });
   streamFn = createOpenAIStringContentWrapper(streamFn);
   return createOpenAIResponsesContextManagementWrapper(
-    createOpenAIReasoningCompatibilityWrapper(streamFn),
+    createOpenAIReasoningCompatibilityWrapper(streamFn, {
+      thinkingLevel: params.context.thinkingLevel,
+    }),
     params.context.extraParams,
   );
 }
@@ -306,6 +308,7 @@ describe("applyExtraParamsToAgent", () => {
     cfg?: Record<string, unknown>;
     extraParamsOverride?: Record<string, unknown>;
     payload?: Record<string, unknown>;
+    thinkingLevel?: Parameters<typeof applyExtraParamsToAgent>[5];
   }) {
     const payload = params.payload ?? { store: false };
     const baseStreamFn: StreamFn = (model, _context, options) => {
@@ -319,6 +322,7 @@ describe("applyExtraParamsToAgent", () => {
       params.applyProvider,
       params.applyModelId,
       params.extraParamsOverride,
+      params.thinkingLevel,
     );
     const context: Context = { messages: [] };
     void agent.streamFn?.(params.model, context, params.options ?? {});
@@ -535,6 +539,48 @@ describe("applyExtraParamsToAgent", () => {
 
     expect(payloads).toHaveLength(1);
     expect(payloads[0]).not.toHaveProperty("reasoning");
+  });
+
+  it("normalizes gpt-5.2-codex responses payload reasoning to medium", () => {
+    const payload = runResponsesPayloadMutationCase({
+      applyProvider: "openai-codex",
+      applyModelId: "gpt-5.2-codex",
+      thinkingLevel: "medium",
+      model: {
+        api: "openai-codex-responses",
+        provider: "openai-codex",
+        id: "gpt-5.2-codex",
+        baseUrl: "https://api.openai.com/v1",
+      } as Model<"openai-codex-responses">,
+      payload: {
+        model: "gpt-5.2-codex",
+        input: [],
+        reasoning: { effort: "low" },
+      },
+    });
+
+    expect(payload.reasoning).toEqual({ effort: "medium", summary: "auto" });
+    expect(payload).not.toHaveProperty("reasoning_effort");
+  });
+
+  it("injects medium reasoning for gpt-5.2-codex when thinking is active and payload is missing it", () => {
+    const payload = runResponsesPayloadMutationCase({
+      applyProvider: "openai-codex",
+      applyModelId: "gpt-5.2-codex",
+      thinkingLevel: "medium",
+      model: {
+        api: "openai-codex-responses",
+        provider: "openai-codex",
+        id: "gpt-5.2-codex",
+        baseUrl: "https://api.openai.com/v1",
+      } as Model<"openai-codex-responses">,
+      payload: {
+        model: "gpt-5.2-codex",
+        input: [],
+      },
+    });
+
+    expect(payload.reasoning).toEqual({ effort: "medium", summary: "auto" });
   });
 
   it("injects parallel_tool_calls for openai-completions payloads when configured", () => {
@@ -1352,6 +1398,27 @@ describe("applyExtraParamsToAgent", () => {
     expect(calls[0]?.openaiWsWarmup).toBe(true);
   });
 
+  it("forces gpt-5.2-codex stream options to medium reasoning", () => {
+    const { calls, agent } = createOptionsCaptureAgent();
+
+    applyExtraParamsToAgent(agent, undefined, "openai-codex", "gpt-5.2-codex", undefined, "medium");
+
+    const model = {
+      api: "openai-codex-responses",
+      provider: "openai-codex",
+      id: "gpt-5.2-codex",
+    } as Model<"openai-codex-responses">;
+    const context: Context = { messages: [] };
+    void agent.streamFn?.(model, context, { reasoning: "low" });
+
+    expect(calls).toHaveLength(1);
+    const streamOptions = calls[0] as
+      | (SimpleStreamOptions & { reasoningEffort?: string })
+      | undefined;
+    expect(streamOptions?.reasoning).toBe("medium");
+    expect(streamOptions?.reasoningEffort).toBe("medium");
+  });
+
   it("injects GPT-5 default parallel tool calls and low verbosity for OpenAI Responses payloads", () => {
     const payload = runResponsesPayloadMutationCase({
       applyProvider: "openai",
@@ -1366,6 +1433,21 @@ describe("applyExtraParamsToAgent", () => {
 
     expect(payload.parallel_tool_calls).toBe(true);
     expect(payload.text).toEqual({ verbosity: "low" });
+  });
+
+  it("defaults gpt-5.2-codex payload verbosity to medium", () => {
+    const payload = runResponsesPayloadMutationCase({
+      applyProvider: "openai-codex",
+      applyModelId: "gpt-5.2-codex",
+      model: {
+        api: "openai-codex-responses",
+        provider: "openai-codex",
+        id: "gpt-5.2-codex",
+      } as Model<"openai-codex-responses">,
+      payload: {},
+    });
+
+    expect(payload.text).toEqual({ verbosity: "medium" });
   });
 
   it("injects native Codex web_search for direct openai-codex Responses models", () => {
@@ -2064,6 +2146,37 @@ describe("applyExtraParamsToAgent", () => {
       },
     });
     expect(payload.text).toEqual({ verbosity: "high" });
+  });
+
+  it("normalizes gpt-5.2-codex text verbosity to medium", () => {
+    const payload = runResponsesPayloadMutationCase({
+      applyProvider: "openai-codex",
+      applyModelId: "gpt-5.2-codex",
+      cfg: {
+        agents: {
+          defaults: {
+            models: {
+              "openai-codex/gpt-5.2-codex": {
+                params: {
+                  text_verbosity: "low",
+                },
+              },
+            },
+          },
+        },
+      },
+      model: {
+        api: "openai-codex-responses",
+        provider: "openai-codex",
+        id: "gpt-5.2-codex",
+        baseUrl: "https://chatgpt.com/backend-api/codex/responses",
+      } as unknown as Model<"openai-codex-responses">,
+      payload: {
+        store: false,
+      },
+    });
+
+    expect(payload.text).toEqual({ verbosity: "medium" });
   });
 
   it("preserves caller-provided payload.text keys when injecting text verbosity", () => {

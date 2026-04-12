@@ -18,6 +18,7 @@ import {
 } from "./moonshot-stream-wrappers.js";
 import {
   createOpenAIResponsesContextManagementWrapper,
+  createOpenAIReasoningCompatibilityWrapper,
   createOpenAIStringContentWrapper,
 } from "./openai-stream-wrappers.js";
 import { resolveCacheRetention } from "./prompt-cache-retention.js";
@@ -197,6 +198,15 @@ function shouldApplyDefaultOpenAIGptRuntimeParams(params: {
   return /^gpt-5(?:[.-]|$)/i.test(params.modelId);
 }
 
+function resolveDefaultOpenAITextVerbosity(params: {
+  provider: string;
+  modelId: string;
+}): "low" | "medium" {
+  return params.provider === "openai-codex" && params.modelId === "gpt-5.2-codex"
+    ? "medium"
+    : "low";
+}
+
 function applyDefaultOpenAIGptRuntimeParams(
   params: { provider: string; modelId: string },
   merged: Record<string, unknown>,
@@ -211,7 +221,7 @@ function applyDefaultOpenAIGptRuntimeParams(
     merged.parallel_tool_calls = true;
   }
   if (!Object.hasOwn(merged, "text_verbosity") && !Object.hasOwn(merged, "textVerbosity")) {
-    merged.text_verbosity = "low";
+    merged.text_verbosity = resolveDefaultOpenAITextVerbosity(params);
   }
   if (!Object.hasOwn(merged, "openaiWsWarmup")) {
     merged.openaiWsWarmup = true;
@@ -403,7 +413,9 @@ function applyPostPluginStreamWrappers(
     // Force `store=true` for direct OpenAI Responses models and auto-enable
     // server-side compaction for compatible Responses payloads.
     ctx.agent.streamFn = createOpenAIResponsesContextManagementWrapper(
-      ctx.agent.streamFn,
+      createOpenAIReasoningCompatibilityWrapper(ctx.agent.streamFn, {
+        thinkingLevel: ctx.thinkingLevel,
+      }),
       ctx.effectiveExtraParams,
     );
   }

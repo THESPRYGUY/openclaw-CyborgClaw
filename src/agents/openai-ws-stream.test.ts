@@ -1811,6 +1811,32 @@ describe("createOpenAIWebSocketStreamFn", () => {
     expect(sent.store).toBe(false);
   });
 
+  it("forces gpt-5.2-codex websocket reasoning effort to medium", () => {
+    const codexModel = {
+      ...modelStub,
+      id: "gpt-5.2-codex",
+      provider: "openai-codex",
+      api: "openai-codex-responses",
+    };
+    const turnInput = planTurnInput({
+      context: contextStub as Parameters<typeof planTurnInput>[0]["context"],
+      model: codexModel as Parameters<typeof planTurnInput>[0]["model"],
+      previousResponseId: null,
+      lastContextLength: 0,
+    });
+    const sent = buildOpenAIWebSocketResponseCreatePayload({
+      model: codexModel as Parameters<typeof buildOpenAIWebSocketResponseCreatePayload>[0]["model"],
+      context: contextStub as Parameters<
+        typeof buildOpenAIWebSocketResponseCreatePayload
+      >[0]["context"],
+      options: { reasoning: "low" },
+      turnInput,
+      tools: [],
+    }) as Record<string, unknown>;
+
+    expect(sent.reasoning).toEqual({ effort: "medium" });
+  });
+
   it("emits an AssistantMessage on response.completed", async () => {
     const streamFn = createOpenAIWebSocketStreamFn("sk-test", "sess-2");
     const stream = streamFn(

@@ -1,6 +1,7 @@
 import { resolveDefaultAgentId } from "../agents/agent-scope.js";
 import { resolveChannelDefaultAccountId } from "../channels/plugins/helpers.js";
 import { getChannelPlugin, listChannelPlugins } from "../channels/plugins/index.js";
+import { buildChannelAccountSnapshot } from "../channels/plugins/status.js";
 import type { ChannelPlugin } from "../channels/plugins/types.plugin.js";
 import type { ChannelAccountSnapshot } from "../channels/plugins/types.public.js";
 import { inspectReadOnlyChannelAccount } from "../channels/read-only-account-inspect.js";
@@ -8,7 +9,9 @@ import { withProgress } from "../cli/progress.js";
 import { resolveStorePath } from "../config/sessions/paths.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { buildGatewayConnectionDetails, callGateway } from "../gateway/call.js";
+import type { ChannelRuntimeSnapshot } from "../gateway/server-channel-runtime.types.js";
 import { info } from "../globals.js";
+import { getChannelActivity } from "../infra/channel-activity.js";
 import { isTruthyEnvValue } from "../infra/env.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { resolveHeartbeatSummaryForAgent } from "../infra/heartbeat-summary.js";
@@ -377,6 +380,7 @@ export const formatHealthChannelLines = (
 export async function getHealthSnapshot(params?: {
   timeoutMs?: number;
   probe?: boolean;
+  runtimeSnapshot?: ChannelRuntimeSnapshot;
 }): Promise<HealthSummary> {
   const timeoutMs = params?.timeoutMs;
   const { loadConfig } = await import("../config/config.js");
@@ -408,6 +412,7 @@ export async function getHealthSnapshot(params?: {
   const start = Date.now();
   const cappedTimeout = timeoutMs === undefined ? DEFAULT_TIMEOUT_MS : Math.max(50, timeoutMs);
   const doProbe = params?.probe !== false;
+  const runtimeSnapshot = params?.runtimeSnapshot;
   const channels: Record<string, ChannelHealthSummary> = {};
   const channelOrder = listChannelPlugins().map((plugin) => plugin.id);
   const channelLabels: Record<string, string> = {};
@@ -444,6 +449,20 @@ export async function getHealthSnapshot(params?: {
       preferredAccountId,
       accountIdsToProbe,
     });
+    const resolveRuntimeAccountSnapshot = (
+      accountId: string,
+      accountDefaultId: string,
+    ): ChannelAccountSnapshot | undefined => {
+      if (!runtimeSnapshot) {
+        return undefined;
+      }
+      const accounts = runtimeSnapshot.channelAccounts[plugin.id];
+      const channelDefaultRuntime = runtimeSnapshot.channels[plugin.id];
+      return (
+        accounts?.[accountId] ??
+        (accountId === accountDefaultId ? channelDefaultRuntime : undefined)
+      );
+    };
     const accountSummaries: Record<string, ChannelAccountHealthSummary> = {};
 
     for (const accountId of accountIdsToProbe) {
@@ -458,6 +477,7 @@ export async function getHealthSnapshot(params?: {
 
       let probe: unknown;
       let lastProbeAt: number | null = null;
+      let audit: unknown;
       if (enabled && configured && doProbe && plugin.status?.probeAccount) {
         try {
           probe = await plugin.status.probeAccount({
@@ -471,6 +491,18 @@ export async function getHealthSnapshot(params?: {
           lastProbeAt = Date.now();
         }
       }
+      if (enabled && configured && doProbe && plugin.status?.auditAccount) {
+        try {
+          audit = await plugin.status.auditAccount({
+            account,
+            timeoutMs: cappedTimeout,
+            cfg,
+            probe,
+          });
+        } catch (err) {
+          audit = { ok: false, error: formatErrorMessage(err) };
+        }
+      }
 
       const probeRecord =
         probe && typeof probe === "object" ? (probe as Record<string, unknown>) : null;
@@ -482,16 +514,32 @@ export async function getHealthSnapshot(params?: {
         debugHealth("probe.bot", { channel: plugin.id, accountId, username: bot.username });
       }
 
-      const snapshot: ChannelAccountSnapshot = {
+      const snapshot = await buildChannelAccountSnapshot({
+        plugin,
+        cfg,
         accountId,
-        enabled,
-        configured,
-      };
-      if (probe !== undefined) {
+        runtime: resolveRuntimeAccountSnapshot(accountId, defaultAccountId),
+        probe,
+        audit,
+      });
+      if (probe !== undefined && snapshot.probe === undefined) {
         snapshot.probe = probe;
       }
-      if (lastProbeAt) {
+      if (audit !== undefined && snapshot.audit === undefined) {
+        snapshot.audit = audit;
+      }
+      if (lastProbeAt && snapshot.lastProbeAt == null) {
         snapshot.lastProbeAt = lastProbeAt;
+      }
+      const activity = getChannelActivity({
+        channel: plugin.id,
+        accountId,
+      });
+      if (snapshot.lastInboundAt == null) {
+        snapshot.lastInboundAt = activity.inboundAt;
+      }
+      if (snapshot.lastOutboundAt == null) {
+        snapshot.lastOutboundAt = activity.outboundAt;
       }
 
       const summary = plugin.status?.buildChannelSummary

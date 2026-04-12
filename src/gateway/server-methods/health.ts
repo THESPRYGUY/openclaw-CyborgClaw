@@ -8,20 +8,21 @@ import type { GatewayRequestHandlers } from "./types.js";
 const ADMIN_SCOPE = "operator.admin";
 
 export const healthHandlers: GatewayRequestHandlers = {
-  health: async ({ respond, context, params }) => {
+  health: async ({ respond, context, params, client }) => {
     const { getHealthCache, refreshHealthSnapshot, logHealth } = context;
-    const wantsProbe = params?.probe === true;
+    const wantsProbe = params?.probe === true || client?.connect?.client?.mode === "probe";
+    const runtimeSnapshot = context.getRuntimeSnapshot();
     const now = Date.now();
     const cached = getHealthCache();
     if (!wantsProbe && cached && now - cached.ts < HEALTH_REFRESH_INTERVAL_MS) {
       respond(true, cached, undefined, { cached: true });
-      void refreshHealthSnapshot({ probe: false }).catch((err) =>
+      void refreshHealthSnapshot({ probe: false, runtimeSnapshot }).catch((err) =>
         logHealth.error(`background health refresh failed: ${formatError(err)}`),
       );
       return;
     }
     try {
-      const snap = await refreshHealthSnapshot({ probe: wantsProbe });
+      const snap = await refreshHealthSnapshot({ probe: wantsProbe, runtimeSnapshot });
       respond(true, snap, undefined);
     } catch (err) {
       respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, formatForLog(err)));

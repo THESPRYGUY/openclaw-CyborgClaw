@@ -7,12 +7,20 @@ import { getUpdateAvailable } from "../../infra/update-startup.js";
 import { normalizeMainKey } from "../../routing/session-key.js";
 import { resolveGatewayAuth } from "../auth.js";
 import type { Snapshot } from "../protocol/index.js";
+import type { ChannelRuntimeSnapshot } from "../server-channel-runtime.types.js";
 
 let presenceVersion = 1;
 let healthVersion = 1;
 let healthCache: HealthSummary | null = null;
-let healthRefresh: Promise<HealthSummary> | null = null;
+let healthRefresh: {
+  promise: Promise<HealthSummary>;
+  probe: boolean;
+  hasRuntimeSnapshot: boolean;
+  seq: number;
+} | null = null;
 let broadcastHealthUpdate: ((snap: HealthSummary) => void) | null = null;
+let nextHealthRefreshSeq = 1;
+let latestAppliedHealthRefreshSeq = 0;
 
 export function buildGatewaySnapshot(opts?: { includeSensitive?: boolean }): Snapshot {
   const cfg = loadConfig();
@@ -69,19 +77,48 @@ export function setBroadcastHealthUpdate(fn: ((snap: HealthSummary) => void) | n
   broadcastHealthUpdate = fn;
 }
 
-export async function refreshGatewayHealthSnapshot(opts?: { probe?: boolean }) {
-  if (!healthRefresh) {
-    healthRefresh = (async () => {
-      const snap = await getHealthSnapshot({ probe: opts?.probe });
-      healthCache = snap;
-      healthVersion += 1;
-      if (broadcastHealthUpdate) {
-        broadcastHealthUpdate(snap);
-      }
-      return snap;
-    })().finally(() => {
-      healthRefresh = null;
-    });
+export async function refreshGatewayHealthSnapshot(opts?: {
+  probe?: boolean;
+  runtimeSnapshot?: ChannelRuntimeSnapshot;
+}) {
+  const wantsProbe = opts?.probe === true;
+  const hasRuntimeSnapshot = opts?.runtimeSnapshot !== undefined;
+  const currentRefresh = healthRefresh;
+  const canReuseRefresh =
+    currentRefresh &&
+    // Plain background refreshes can happily reuse any in-flight refresh.
+    ((!wantsProbe && !hasRuntimeSnapshot) ||
+      // Fresh probe/runtime-backed reads should only reuse another refresh that
+      // is already carrying probe-grade runtime truth.
+      currentRefresh.probe ||
+      currentRefresh.hasRuntimeSnapshot);
+  if (!canReuseRefresh) {
+    const seq = nextHealthRefreshSeq++;
+    const refreshState = {
+      probe: wantsProbe,
+      hasRuntimeSnapshot,
+      seq,
+      promise: (async () => {
+        const snap = await getHealthSnapshot({
+          probe: opts?.probe,
+          runtimeSnapshot: opts?.runtimeSnapshot,
+        });
+        if (seq >= latestAppliedHealthRefreshSeq) {
+          latestAppliedHealthRefreshSeq = seq;
+          healthCache = snap;
+          healthVersion += 1;
+          if (broadcastHealthUpdate) {
+            broadcastHealthUpdate(snap);
+          }
+        }
+        return snap;
+      })().finally(() => {
+        if (healthRefresh?.seq === seq) {
+          healthRefresh = null;
+        }
+      }),
+    };
+    healthRefresh = refreshState;
   }
-  return healthRefresh;
+  return healthRefresh!.promise;
 }

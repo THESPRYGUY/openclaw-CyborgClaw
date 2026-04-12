@@ -1584,6 +1584,65 @@ describe("gateway healthHandlers.status scope handling", () => {
   );
 });
 
+describe("gateway healthHandlers.health probe refresh behavior", () => {
+  let healthHandlers: typeof import("./health.js").healthHandlers;
+
+  beforeAll(async () => {
+    ({ healthHandlers } = await import("./health.js"));
+  });
+
+  it("forces a fresh health refresh for probe-mode clients even without explicit params", async () => {
+    const respond = vi.fn();
+    const refreshHealthSnapshot = vi.fn().mockResolvedValue({ ok: true, ts: 123 });
+
+    await healthHandlers.health({
+      req: {} as never,
+      params: {} as never,
+      respond: respond as never,
+      context: {
+        getHealthCache: () => ({ ok: true, ts: Date.now() }),
+        refreshHealthSnapshot,
+        logHealth: { error: vi.fn() },
+        getRuntimeSnapshot: () => ({ channels: {}, channelAccounts: {} }),
+      } as never,
+      client: { connect: { client: { mode: "probe" } } } as never,
+      isWebchatConnect: () => false,
+    });
+
+    expect(refreshHealthSnapshot).toHaveBeenCalledWith({
+      probe: true,
+      runtimeSnapshot: { channels: {}, channelAccounts: {} },
+    });
+    expect(respond).toHaveBeenCalledWith(true, { ok: true, ts: 123 }, undefined);
+  });
+
+  it("still serves cached health for non-probe clients", async () => {
+    const respond = vi.fn();
+    const refreshHealthSnapshot = vi.fn().mockResolvedValue({ ok: true, ts: 456 });
+    const cached = { ok: true, ts: Date.now() };
+
+    await healthHandlers.health({
+      req: {} as never,
+      params: {} as never,
+      respond: respond as never,
+      context: {
+        getHealthCache: () => cached,
+        refreshHealthSnapshot,
+        logHealth: { error: vi.fn() },
+        getRuntimeSnapshot: () => ({ channels: {}, channelAccounts: {} }),
+      } as never,
+      client: { connect: { client: { mode: "webchat" } } } as never,
+      isWebchatConnect: () => false,
+    });
+
+    expect(respond).toHaveBeenCalledWith(true, cached, undefined, { cached: true });
+    expect(refreshHealthSnapshot).toHaveBeenCalledWith({
+      probe: false,
+      runtimeSnapshot: { channels: {}, channelAccounts: {} },
+    });
+  });
+});
+
 describe("logs.tail", () => {
   const logsNoop = () => false;
 

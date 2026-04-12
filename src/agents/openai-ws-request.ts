@@ -29,6 +29,29 @@ export interface PlannedWsTurnInput {
   previousResponseId?: string;
 }
 
+function isMediumOnlyOpenAICodexReasoningModel(model: {
+  provider?: unknown;
+  id?: unknown;
+}): boolean {
+  return (
+    readStringValue(model.provider) === "openai-codex" &&
+    readStringValue(model.id) === "gpt-5.2-codex"
+  );
+}
+
+function normalizeWsReasoningEffort(params: {
+  model: WsModel;
+  requestedEffort?: string;
+}): string | undefined {
+  if (!isMediumOnlyOpenAICodexReasoningModel(params.model)) {
+    return params.requestedEffort;
+  }
+  if (params.requestedEffort === "none") {
+    return params.requestedEffort;
+  }
+  return "medium";
+}
+
 export function buildOpenAIWebSocketWarmUpPayload(params: {
   model: string;
   tools?: FunctionToolDefinition[];
@@ -70,10 +93,13 @@ export function buildOpenAIWebSocketResponseCreatePayload(params: {
     extraParams.tool_choice = streamOpts.toolChoice;
   }
 
-  const reasoningEffort =
-    streamOpts?.reasoningEffort ??
-    streamOpts?.reasoning ??
-    (params.model.reasoning ? "high" : undefined);
+  const reasoningEffort = normalizeWsReasoningEffort({
+    model: params.model,
+    requestedEffort:
+      streamOpts?.reasoningEffort ??
+      streamOpts?.reasoning ??
+      (params.model.reasoning ? "high" : undefined),
+  });
   if (reasoningEffort !== "none" && (reasoningEffort || streamOpts?.reasoningSummary)) {
     const reasoning: { effort?: string; summary?: string } = {};
     if (reasoningEffort !== undefined) {

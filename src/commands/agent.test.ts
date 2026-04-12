@@ -956,6 +956,22 @@ describe("agentCommand", () => {
     });
   });
 
+  it("defaults thinking to medium for gpt-5.2-codex", async () => {
+    await expectDefaultThinkLevel({
+      agentOverrides: {
+        model: { primary: "openai-codex/gpt-5.2-codex" },
+        models: { "openai-codex/gpt-5.2-codex": {} },
+      },
+      catalogEntry: {
+        id: "gpt-5.2-codex",
+        name: "GPT-5.2 Codex",
+        provider: "openai-codex",
+        reasoning: true,
+      },
+      expected: "medium",
+    });
+  });
+
   it("defaults thinking to adaptive for Anthropic Claude 4.6 models", async () => {
     await expectDefaultThinkLevel({
       agentOverrides: {
