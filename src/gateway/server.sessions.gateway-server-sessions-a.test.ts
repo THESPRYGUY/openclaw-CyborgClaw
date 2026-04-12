@@ -1615,6 +1615,29 @@ describe("gateway server sessions", () => {
           modelProvider: "qwencode",
           model: "qwen3.5-plus-2026-02-15",
           contextTokens: 123456,
+          skillsSnapshot: {
+            prompt: "stale room prompt",
+            skills: [],
+          },
+          systemPromptReport: {
+            source: "run",
+            generatedAt: Date.now(),
+            systemPrompt: {
+              chars: 10,
+              projectContextChars: 5,
+              nonProjectContextChars: 5,
+            },
+            injectedWorkspaceFiles: [],
+            skills: {
+              promptChars: 0,
+              entries: [],
+            },
+            tools: {
+              listChars: 0,
+              schemaChars: 0,
+              entries: [],
+            },
+          },
         },
       },
     });
@@ -1629,6 +1652,8 @@ describe("gateway server sessions", () => {
         modelProvider?: string;
         model?: string;
         contextTokens?: number;
+        skillsSnapshot?: unknown;
+        systemPromptReport?: unknown;
       };
     }>(ws, "sessions.reset", { key: "main" });
 
@@ -1639,6 +1664,8 @@ describe("gateway server sessions", () => {
     expect(reset.payload?.entry.modelProvider).toBe("openai");
     expect(reset.payload?.entry.model).toBe("gpt-test-a");
     expect(reset.payload?.entry.contextTokens).toBeUndefined();
+    expect(reset.payload?.entry.skillsSnapshot).toBeUndefined();
+    expect(reset.payload?.entry.systemPromptReport).toBeUndefined();
     await expect(fs.stat(reset.payload?.entry.sessionFile as string)).resolves.toBeTruthy();
 
     ws.close();
@@ -2534,7 +2561,9 @@ describe("gateway server sessions", () => {
     expect(deleted.ok).toBe(true);
     expect(deleted.payload?.deleted).toBe(true);
     expect(subagentLifecycleHookMocks.runSubagentEnded).toHaveBeenCalledTimes(1);
-    const event = (subagentLifecycleHookMocks.runSubagentEnded.mock.calls as unknown[][])[0]?.[0] as
+    const event = (
+      subagentLifecycleHookMocks.runSubagentEnded.mock.calls as unknown[][]
+    )[0]?.[0] as
       | { targetKind?: string; targetSessionKey?: string; reason?: string; outcome?: string }
       | undefined;
     expect(event).toMatchObject({
@@ -2850,7 +2879,9 @@ describe("gateway server sessions", () => {
     expect(reset.payload?.key).toBe("agent:main:subagent:worker");
     expect(reset.payload?.entry.sessionId).not.toBe("sess-subagent");
     expect(subagentLifecycleHookMocks.runSubagentEnded).toHaveBeenCalledTimes(1);
-    const event = (subagentLifecycleHookMocks.runSubagentEnded.mock.calls as unknown[][])[0]?.[0] as
+    const event = (
+      subagentLifecycleHookMocks.runSubagentEnded.mock.calls as unknown[][]
+    )[0]?.[0] as
       | { targetKind?: string; targetSessionKey?: string; reason?: string; outcome?: string }
       | undefined;
     expect(event).toMatchObject({

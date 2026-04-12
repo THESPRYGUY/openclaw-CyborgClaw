@@ -66,6 +66,11 @@ import { deliverAgentCommandResult } from "./command/delivery.js";
 import { resolveAgentRunContext } from "./command/run-context.js";
 import { updateSessionStoreAfterAgentRun } from "./command/session-store.js";
 import { resolveSession } from "./command/session.js";
+import {
+  buildSharedRoomContextPrompt,
+  mergeExtraSystemPrompts,
+  summarizeSharedRoomContext,
+} from "./command/shared-room-context.js";
 import type { AgentCommandIngressOpts, AgentCommandOpts } from "./command/types.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "./defaults.js";
 import { canExecRequestNode } from "./exec-defaults.js";
@@ -275,6 +280,7 @@ async function prepareAgentCommandExecution(
     sessionId: opts.sessionId,
     sessionKey: opts.sessionKey,
     agentId: agentIdOverride,
+    sharedRoomContext: opts.sharedRoomContext,
   });
 
   const {
@@ -298,6 +304,11 @@ async function prepareAgentCommandExecution(
     agentId: sessionAgentId,
     sessionKey,
   });
+  const sharedRoomState = summarizeSharedRoomContext(opts.sharedRoomContext);
+  const mergedExtraSystemPrompt = mergeExtraSystemPrompts(
+    buildSharedRoomContextPrompt(opts.sharedRoomContext),
+    opts.extraSystemPrompt,
+  );
   // Internal callers (for example subagent spawns) may pin workspace inheritance.
   const workspaceDirRaw =
     normalizedSpawned.workspaceDir ?? resolveAgentWorkspaceDir(cfg, sessionAgentId);
@@ -340,6 +351,8 @@ async function prepareAgentCommandExecution(
     runId,
     acpManager,
     acpResolution,
+    sharedRoomState,
+    mergedExtraSystemPrompt,
   };
 }
 
@@ -372,8 +385,14 @@ async function agentCommandInternal(
     runId,
     acpManager,
     acpResolution,
+    sharedRoomState,
+    mergedExtraSystemPrompt,
   } = prepared;
   let sessionEntry = prepared.sessionEntry;
+  const optsWithMergedExtraSystemPrompt =
+    mergedExtraSystemPrompt !== opts.extraSystemPrompt
+      ? { ...opts, extraSystemPrompt: mergedExtraSystemPrompt }
+      : opts;
 
   try {
     if (opts.deliver === true) {
@@ -568,6 +587,9 @@ async function agentCommandInternal(
       const next: SessionEntry = { ...entry, sessionId, updatedAt: Date.now() };
       if (thinkOverride) {
         next.thinkingLevel = thinkOverride;
+      }
+      if (sharedRoomState) {
+        next.sharedRoom = sharedRoomState;
       }
       applyVerboseOverride(next, verboseOverride);
       await persistSessionEntry({
@@ -806,7 +828,7 @@ async function agentCommandInternal(
               resolvedThinkLevel,
               timeoutMs,
               runId,
-              opts,
+              opts: optsWithMergedExtraSystemPrompt,
               runContext,
               spawnedBy,
               messageChannel,

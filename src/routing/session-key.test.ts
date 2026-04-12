@@ -7,6 +7,7 @@ import {
   resolveThreadParentSessionKey,
 } from "../sessions/session-key-utils.js";
 import {
+  buildAgentRoomSessionKey,
   classifySessionKeyShape,
   isValidAgentId,
   parseAgentSessionKey,
@@ -149,6 +150,26 @@ describe("session key canonicalization", () => {
     },
   ] as const)("$name", ({ run }) => {
     expectSessionKeyCanonicalizationCase({ run });
+  });
+});
+
+describe("buildAgentRoomSessionKey", () => {
+  it("builds a stable room-scoped session key from the room id", () => {
+    const key = buildAgentRoomSessionKey({
+      agentId: "Codex",
+      roomId: "Break-Out Room 60 Minute Meet and Greet",
+    });
+
+    expect(key).toMatch(/^agent:codex:room:break-out-room-60-minute-meet-and-greet-[a-f0-9]{8}$/);
+  });
+
+  it("hash-suffixes oversized room ids so the segment stays bounded", () => {
+    const key = buildAgentRoomSessionKey({
+      agentId: "main",
+      roomId: `Room ${"x".repeat(100)}`,
+    });
+    expect(key).toMatch(/^agent:main:room:[a-z0-9._-]+-[a-f0-9]{8}$/);
+    expect(key.length).toBeLessThanOrEqual("agent:main:room:".length + 64);
   });
 });
 

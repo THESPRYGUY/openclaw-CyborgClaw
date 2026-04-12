@@ -74,6 +74,10 @@ describe("resetReplyRunSession", () => {
       modelProvider: "qwencode",
       model: "qwen",
       contextTokens: 123,
+      skillsSnapshot: {
+        prompt: "stale snapshot",
+        skills: [],
+      },
       fallbackNoticeSelectedModel: "anthropic/claude",
       fallbackNoticeActiveModel: "openai/gpt",
       fallbackNoticeReason: "rate limit",
@@ -118,6 +122,7 @@ describe("resetReplyRunSession", () => {
     expect(activeSessionEntry?.modelProvider).toBeUndefined();
     expect(activeSessionEntry?.model).toBeUndefined();
     expect(activeSessionEntry?.contextTokens).toBeUndefined();
+    expect(activeSessionEntry?.skillsSnapshot).toBeUndefined();
     expect(activeSessionEntry?.fallbackNoticeSelectedModel).toBeUndefined();
     expect(activeSessionEntry?.fallbackNoticeActiveModel).toBeUndefined();
     expect(activeSessionEntry?.fallbackNoticeReason).toBeUndefined();

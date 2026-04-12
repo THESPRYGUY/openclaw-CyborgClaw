@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { listAgentIds } from "../../agents/agent-scope.js";
+import { summarizeSharedRoomContext } from "../../agents/command/shared-room-context.js";
 import type { AgentInternalEvent } from "../../agents/internal-events.js";
 import {
   normalizeSpawnedRunMetadata,
@@ -25,7 +26,11 @@ import {
 import { shouldDowngradeDeliveryToSessionOnly } from "../../infra/outbound/best-effort-delivery.js";
 import { resolveMessageChannelSelection } from "../../infra/outbound/channel-selection.js";
 import type { PromptImageOrderEntry } from "../../media/prompt-image-order.js";
-import { classifySessionKeyShape, normalizeAgentId } from "../../routing/session-key.js";
+import {
+  buildAgentRoomSessionKey,
+  classifySessionKeyShape,
+  normalizeAgentId,
+} from "../../routing/session-key.js";
 import { defaultRuntime } from "../../runtime.js";
 import { normalizeInputProvenance, type InputProvenance } from "../../sessions/input-provenance.js";
 import { resolveSendPolicy } from "../../sessions/send-policy.js";
@@ -312,6 +317,29 @@ export const agentHandlers: GatewayRequestHandlers = {
       groupSpace?: string;
       lane?: string;
       extraSystemPrompt?: string;
+      sharedRoomContext?: {
+        roomId: string;
+        roomLabel?: string;
+        truthModel?: string;
+        participantId?: string;
+        participantLabel?: string;
+        seenThroughSeq?: number;
+        participants?: Array<{
+          id: string;
+          label?: string;
+          role?: string;
+          agentId?: string;
+          seat?: string;
+        }>;
+        messages?: Array<{
+          seq: number;
+          author: string;
+          text: string;
+          participantId?: string;
+          kind?: string;
+          timestampMs?: number;
+        }>;
+      };
       bootstrapContextMode?: "full" | "lightweight";
       bootstrapContextRunKind?: "default" | "heartbeat" | "cron";
       internalEvents?: AgentInternalEvent[];
@@ -349,6 +377,7 @@ export const agentHandlers: GatewayRequestHandlers = {
     let resolvedGroupChannel: string | undefined = normalizedSpawned.groupChannel;
     let resolvedGroupSpace: string | undefined = normalizedSpawned.groupSpace;
     let spawnedByValue: string | undefined;
+    const sharedRoomState = summarizeSharedRoomContext(request.sharedRoomContext);
     const inputProvenance = normalizeInputProvenance(request.inputProvenance);
     const cached = context.dedupe.get(`agent:${idem}`);
     if (cached) {
@@ -468,6 +497,12 @@ export const agentHandlers: GatewayRequestHandlers = {
     }
     let requestedSessionKey =
       requestedSessionKeyRaw ??
+      (agentId && request.sharedRoomContext?.roomId
+        ? buildAgentRoomSessionKey({
+            agentId,
+            roomId: request.sharedRoomContext.roomId,
+          })
+        : undefined) ??
       resolveExplicitAgentSessionKey({
         cfg,
         agentId,
@@ -600,6 +635,7 @@ export const agentHandlers: GatewayRequestHandlers = {
         lastTo: effectiveDeliveryFields.lastTo ?? entry?.lastTo,
         lastAccountId: effectiveDeliveryFields.lastAccountId ?? entry?.lastAccountId,
         lastThreadId: effectiveDeliveryFields.lastThreadId ?? entry?.lastThreadId,
+        sharedRoom: sharedRoomState ?? entry?.sharedRoom,
         modelOverride: entry?.modelOverride,
         providerOverride: entry?.providerOverride,
         label: labelValue,
@@ -853,6 +889,7 @@ export const agentHandlers: GatewayRequestHandlers = {
         runId,
         lane: request.lane,
         extraSystemPrompt: request.extraSystemPrompt,
+        sharedRoomContext: request.sharedRoomContext,
         bootstrapContextMode: request.bootstrapContextMode,
         bootstrapContextRunKind: request.bootstrapContextRunKind,
         internalEvents: request.internalEvents,

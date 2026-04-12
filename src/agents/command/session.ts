@@ -19,10 +19,15 @@ import {
   type SessionEntry,
 } from "../../config/sessions.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
-import { normalizeAgentId, normalizeMainKey } from "../../routing/session-key.js";
+import {
+  buildAgentRoomSessionKey,
+  normalizeAgentId,
+  normalizeMainKey,
+} from "../../routing/session-key.js";
 import { resolveSessionIdMatchSelection } from "../../sessions/session-id-resolution.js";
 import { listAgentIds } from "../agent-scope.js";
 import { clearBootstrapSnapshotOnSessionRollover } from "../bootstrap-cache.js";
+import type { SharedRoomContext } from "./types.js";
 
 export type SessionResolution = {
   sessionId: string;
@@ -132,12 +137,24 @@ export function resolveSessionKeyForRequest(opts: {
   sessionId?: string;
   sessionKey?: string;
   agentId?: string;
+  sharedRoomContext?: SharedRoomContext;
 }): SessionKeyResolution {
   const sessionCfg = opts.cfg.session;
   const scope = sessionCfg?.scope ?? "per-sender";
   const mainKey = normalizeMainKey(sessionCfg?.mainKey);
+  const derivedRoomSessionKey =
+    !opts.sessionKey?.trim() &&
+    !opts.sessionId?.trim() &&
+    opts.agentId &&
+    opts.sharedRoomContext?.roomId
+      ? buildAgentRoomSessionKey({
+          agentId: opts.agentId,
+          roomId: opts.sharedRoomContext.roomId,
+        })
+      : undefined;
   const explicitSessionKey =
     opts.sessionKey?.trim() ||
+    derivedRoomSessionKey ||
     resolveExplicitAgentSessionKey({
       cfg: opts.cfg,
       agentId: opts.agentId,
@@ -198,6 +215,7 @@ export function resolveSession(opts: {
   sessionId?: string;
   sessionKey?: string;
   agentId?: string;
+  sharedRoomContext?: SharedRoomContext;
 }): SessionResolution {
   const sessionCfg = opts.cfg.session;
   const { sessionKey, sessionStore, storePath } = resolveSessionKeyForRequest({
@@ -206,6 +224,7 @@ export function resolveSession(opts: {
     sessionId: opts.sessionId,
     sessionKey: opts.sessionKey,
     agentId: opts.agentId,
+    sharedRoomContext: opts.sharedRoomContext,
   });
   const now = Date.now();
 

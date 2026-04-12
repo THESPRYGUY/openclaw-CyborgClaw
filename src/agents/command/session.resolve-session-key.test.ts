@@ -124,4 +124,23 @@ describe("resolveSessionKeyForRequest", () => {
     expect(result.storePath).toBe("/stores/embedded-agent.json");
     expect(hoisted.loadSessionStoreMock).toHaveBeenCalledTimes(1);
   });
+
+  it("derives a room-scoped session key when shared room context is present", () => {
+    hoisted.loadSessionStoreMock.mockReturnValue({});
+
+    const result = resolveSessionKeyForRequest({
+      cfg: {
+        session: {
+          store: "/stores/{agentId}.json",
+        },
+      } satisfies OpenClawConfig,
+      agentId: "codex",
+      sharedRoomContext: {
+        roomId: "Break-Out Room 2026 04 12",
+      },
+    });
+
+    expect(result.sessionKey).toMatch(/^agent:codex:room:break-out-room-2026-04-12-[a-f0-9]{8}$/);
+    expect(result.storePath).toBe("/stores/main.json");
+  });
 });

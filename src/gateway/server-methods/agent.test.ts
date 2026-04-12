@@ -1103,6 +1103,56 @@ describe("gateway agent handler", () => {
     );
   });
 
+  it("derives a room-scoped session key and forwards shared room context", async () => {
+    mocks.agentCommand.mockClear();
+    mocks.loadSessionEntry.mockReturnValue({
+      cfg: {},
+      storePath: "/tmp/sessions.json",
+      entry: undefined,
+      canonicalKey: "agent:main:room:borf-redesign-workshop",
+    });
+    mocks.updateSessionStore.mockResolvedValue({
+      sessionId: "room-session-id",
+      updatedAt: Date.now(),
+      sharedRoom: {
+        roomId: "BORF redesign workshop",
+        seenThroughSeq: 42,
+      },
+    });
+    mocks.agentCommand.mockResolvedValue({
+      payloads: [{ text: "ok" }],
+      meta: { durationMs: 100 },
+    });
+
+    await invokeAgent(
+      {
+        message: "review the last room message",
+        agentId: "main",
+        sharedRoomContext: {
+          roomId: "BORF redesign workshop",
+          participantId: "seat-1",
+          participantLabel: "Codex",
+          seenThroughSeq: 42,
+          messages: [{ seq: 42, author: "Voltaris V2", text: "Here is the latest point." }],
+        },
+        idempotencyKey: "test-shared-room-context",
+      },
+      { reqId: "4-room" },
+    );
+
+    await waitForAssertion(() => expect(mocks.agentCommand).toHaveBeenCalledTimes(1));
+    const call = mocks.agentCommand.mock.calls.at(-1);
+    expect(call?.[0]).toEqual(
+      expect.objectContaining({
+        sessionKey: "agent:main:room:borf-redesign-workshop",
+        sharedRoomContext: expect.objectContaining({
+          roomId: "BORF redesign workshop",
+          seenThroughSeq: 42,
+        }),
+      }),
+    );
+  });
+
   it("rejects /reset for write-scoped gateway callers", async () => {
     mockMainSessionEntry({ sessionId: "existing-session-id" });
     mocks.performGatewaySessionReset.mockClear();

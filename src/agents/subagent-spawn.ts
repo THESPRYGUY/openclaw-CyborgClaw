@@ -298,11 +298,9 @@ async function ensureThreadBindingForSubagentSpawn(params: {
 }): Promise<{ status: "ok" } | { status: "error"; error: string }> {
   const hookRunner = params.hookRunner;
   if (!hookRunner?.hasHooks("subagent_spawning")) {
-    return {
-      status: "error",
-      error:
-        "thread=true is unavailable because no channel plugin registered subagent_spawning hooks.",
-    };
+    // Room-scoped or hookless session transports can still keep the child
+    // session active even when there is no channel-specific thread binder.
+    return { status: "ok" };
   }
 
   try {

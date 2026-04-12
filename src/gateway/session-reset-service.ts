@@ -58,6 +58,7 @@ function stripRuntimeModelState(entry?: SessionEntry): SessionEntry | undefined 
     model: undefined,
     modelProvider: undefined,
     contextTokens: undefined,
+    skillsSnapshot: undefined,
     systemPromptReport: undefined,
   };
 }
@@ -634,7 +635,6 @@ export async function performGatewaySessionReset(params: {
       lastTo: currentEntry?.lastTo,
       lastAccountId: currentEntry?.lastAccountId,
       lastThreadId: currentEntry?.lastThreadId,
-      skillsSnapshot: currentEntry?.skillsSnapshot,
       acp: currentEntry?.acp,
       inputTokens: 0,
       outputTokens: 0,

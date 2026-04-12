@@ -29,6 +29,7 @@ const hoisted = vi.hoisted(() => ({
 }));
 
 const hookRunnerMocks = vi.hoisted(() => ({
+  hasSubagentSpawningHook: true,
   hasSubagentEndedHook: true,
   runSubagentSpawning: vi.fn(async (event: unknown) => {
     const input = event as {
@@ -158,7 +159,7 @@ beforeAll(async () => {
     loadConfig: () => hoisted.configOverride,
     hookRunner: {
       hasHooks: (hookName: string) =>
-        hookName === "subagent_spawning" ||
+        (hookName === "subagent_spawning" && hookRunnerMocks.hasSubagentSpawningHook) ||
         hookName === "subagent_spawned" ||
         (hookName === "subagent_ended" && hookRunnerMocks.hasSubagentEndedHook),
       runSubagentSpawning: hookRunnerMocks.runSubagentSpawning,
@@ -174,6 +175,7 @@ describe("sessions_spawn subagent lifecycle hooks", () => {
   beforeEach(() => {
     resetSubagentRegistryForTests();
     hoisted.callGatewayMock.mockReset();
+    hookRunnerMocks.hasSubagentSpawningHook = true;
     hookRunnerMocks.hasSubagentEndedHook = true;
     hookRunnerMocks.runSubagentSpawning.mockClear();
     hookRunnerMocks.runSubagentSpawned.mockClear();
@@ -281,6 +283,26 @@ describe("sessions_spawn subagent lifecycle hooks", () => {
         to: "channel:123",
       },
     });
+  });
+
+  it("keeps a persistent session active when no subagent_spawning hook is registered", async () => {
+    hookRunnerMocks.hasSubagentSpawningHook = false;
+
+    const result = await spawn({
+      thread: true,
+      mode: "session",
+      agentChannel: "signal",
+      agentTo: "+123",
+    });
+
+    expect(result).toMatchObject({
+      status: "accepted",
+      mode: "session",
+      note: "persistent subagent session stays active after this task; continue in-session for follow-ups.",
+    });
+    expect(hookRunnerMocks.runSubagentSpawning).not.toHaveBeenCalled();
+    expect(hookRunnerMocks.runSubagentSpawned).toHaveBeenCalledTimes(1);
+    expect(getGatewayMethods()).not.toContain("sessions.delete");
   });
 
   it("respects explicit mode=run when thread binding is requested", async () => {
