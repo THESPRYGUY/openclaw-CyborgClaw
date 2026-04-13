@@ -30,6 +30,17 @@ describe("resolveFallbackRetryPrompt", () => {
     ).toBe("Continue where you left off. The previous model attempt failed or timed out.");
   });
 
+  it("preserves original body for inter-session fallback retry even with session history", () => {
+    expect(
+      resolveFallbackRetryPrompt({
+        body: originalBody,
+        isFallbackRetry: true,
+        sessionHasHistory: true,
+        isInterSession: true,
+      }),
+    ).toBe(originalBody);
+  });
+
   it("preserves original body for fallback retry when session has no history (subagent spawn)", () => {
     expect(
       resolveFallbackRetryPrompt({

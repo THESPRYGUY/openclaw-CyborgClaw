@@ -120,6 +120,7 @@ export function resolveFallbackRetryPrompt(params: {
   body: string;
   isFallbackRetry: boolean;
   sessionHasHistory?: boolean;
+  isInterSession?: boolean;
 }): string {
   if (!params.isFallbackRetry) {
     return params.body;
@@ -130,6 +131,11 @@ export function resolveFallbackRetryPrompt(params: {
   // recovery prompt and lose the original task entirely.  Preserve the
   // original body in that case so the fallback model can execute the task.
   if (!params.sessionHasHistory) {
+    return params.body;
+  }
+  // Inter-session messages must also have their body preserved, as it
+  // contains the full payload from the sending agent.
+  if (params.isInterSession) {
     return params.body;
   }
   return "Continue where you left off. The previous model attempt failed or timed out.";
@@ -356,6 +362,7 @@ export function runAgentAttempt(params: {
     body: params.body,
     isFallbackRetry: params.isFallbackRetry,
     sessionHasHistory: params.sessionHasHistory,
+    isInterSession: params.opts.inputProvenance?.kind === "inter_session",
   });
   const bootstrapPromptWarningSignaturesSeen = resolveBootstrapWarningSignaturesSeen(
     params.sessionEntry?.systemPromptReport,
