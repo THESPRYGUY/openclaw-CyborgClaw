@@ -77,6 +77,7 @@ export type TaskRecord = {
   progressSummary?: string;
   terminalSummary?: string;
   terminalOutcome?: TaskTerminalOutcome;
+  reconciledByLateProof?: boolean;
 };
 
 export type TaskRegistrySnapshot = {

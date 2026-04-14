@@ -22,7 +22,12 @@ import {
 } from "./task-registry.audit.js";
 import type { TaskAuditSummary } from "./task-registry.audit.js";
 import { summarizeTaskRecords } from "./task-registry.summary.js";
-import type { TaskRecord, TaskRegistrySummary } from "./task-registry.types.js";
+import type {
+  TaskRecord,
+  TaskRegistrySummary,
+  TaskStatus,
+  TaskTerminalOutcome,
+} from "./task-registry.types.js";
 
 const TASK_RECONCILE_GRACE_MS = 5 * 60_000;
 const TASK_RETENTION_MS = 7 * 24 * 60 * 60_000;
@@ -220,10 +225,32 @@ function projectTaskLost(task: TaskRecord, now: number): TaskRecord {
 
 export function reconcileTaskRecordForOperatorInspection(task: TaskRecord): TaskRecord {
   const now = Date.now();
-  if (!shouldMarkLost(task, now)) {
-    return task;
+  let projectedTask = { ...task };
+
+  // If a late proof has arrived for a task that is currently timed_out or lost,
+  // project its status to 'succeeded' with a 'blocked' outcome.
+  if (
+    projectedTask.reconciledByLateProof &&
+    (projectedTask.status === "timed_out" || projectedTask.status === "lost")
+  ) {
+    projectedTask = {
+      ...projectedTask,
+      status: "succeeded" as TaskStatus,
+      terminalOutcome: "blocked" as TaskTerminalOutcome,
+      lastEventAt: now,
+      endedAt: projectedTask.endedAt ?? now,
+      error: undefined,
+    };
+    return projectedTask; // Return immediately after late proof reconciliation.
   }
-  return projectTaskLost(task, now);
+
+  // If it's not a late-proof reconciliation, then apply the standard "mark lost" logic
+  // if the task is currently active and should be marked lost.
+  if (shouldMarkLost(projectedTask, now)) {
+    projectedTask = projectTaskLost(projectedTask, now);
+  }
+
+  return projectedTask;
 }
 
 export function reconcileInspectableTasks(): TaskRecord[] {

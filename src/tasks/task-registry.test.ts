@@ -1530,6 +1530,74 @@ describe("task-registry", () => {
     });
   });
 
+  it("reconciles timed_out tasks with late proof to succeeded/blocked", async () => {
+    await withTaskRegistryTempDir(async (root) => {
+      process.env.OPENCLAW_STATE_DIR = root;
+      resetTaskRegistryForTests();
+
+      const task = createTaskRecord({
+        runtime: "acp",
+        ownerKey: "agent:main:main",
+        scopeKind: "session",
+        childSessionKey: "agent:main:acp:child",
+        runId: "run-late-proof",
+        task: "Task with late proof",
+        status: "timed_out",
+        deliveryStatus: "pending",
+        startedAt: 100,
+        reconciledByLateProof: true,
+      });
+
+      const tasks = reconcileInspectableTasks();
+      const reconciledTask = tasks.find((t) => t.taskId === task.taskId);
+
+      expect(reconciledTask).toMatchObject({
+        status: "succeeded",
+        terminalOutcome: "blocked",
+        reconciledByLateProof: true,
+      });
+      // Ensure the original task in the registry is not mutated by inspection
+      expect(getTaskById(task.taskId)).toMatchObject({
+        status: "timed_out",
+        reconciledByLateProof: true,
+      });
+    });
+  });
+
+  it("reconciles lost tasks with late proof to succeeded/blocked", async () => {
+    await withTaskRegistryTempDir(async (root) => {
+      process.env.OPENCLAW_STATE_DIR = root;
+      resetTaskRegistryForTests();
+
+      const task = createTaskRecord({
+        runtime: "acp",
+        ownerKey: "agent:main:main",
+        scopeKind: "session",
+        childSessionKey: "agent:main:acp:missing",
+        runId: "run-lost-late-proof",
+        task: "Lost task with late proof",
+        status: "lost",
+        deliveryStatus: "pending",
+        startedAt: 100,
+        reconciledByLateProof: true,
+      });
+
+      const tasks = reconcileInspectableTasks();
+      const reconciledTask = tasks.find((t) => t.taskId === task.taskId);
+
+      expect(reconciledTask).toMatchObject({
+        status: "succeeded",
+        terminalOutcome: "blocked",
+        reconciledByLateProof: true,
+      });
+      // Ensure the original task in the registry is not mutated by inspection
+      expect(getTaskById(task.taskId)).toMatchObject({
+        status: "lost",
+        reconciledByLateProof: true,
+      });
+    });
+  });
+
   it("summarizes inspectable task audit findings", async () => {
     await withTaskRegistryTempDir(async (root) => {
       process.env.OPENCLAW_STATE_DIR = root;
