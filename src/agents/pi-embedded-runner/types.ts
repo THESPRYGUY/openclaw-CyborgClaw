@@ -5,6 +5,7 @@ export type EmbeddedPiAgentMeta = {
   sessionId: string;
   provider: string;
   model: string;
+  agentHarnessId?: string;
   cliSessionBinding?: CliSessionBinding;
   compactionCount?: number;
   promptTokens?: number;
@@ -31,6 +32,67 @@ export type EmbeddedPiAgentMeta = {
   };
 };
 
+export type TraceAttempt = {
+  provider: string;
+  model: string;
+  result:
+    | "success"
+    | "timeout"
+    | "surface_error"
+    | "candidate_failed"
+    | "rotate_profile"
+    | "fallback_model"
+    | "aborted"
+    | "error";
+  reason?: string;
+  stage?: "prompt" | "assistant";
+  elapsedMs?: number;
+  status?: number;
+};
+
+export type ExecutionTrace = {
+  winnerProvider?: string;
+  winnerModel?: string;
+  attempts?: TraceAttempt[];
+  fallbackUsed?: boolean;
+  runner?: "embedded" | "cli";
+};
+
+export type RequestShapingTrace = {
+  authMode?: string;
+  thinking?: string;
+  reasoning?: string;
+  verbose?: string;
+  trace?: string;
+  fallbackEligible?: boolean;
+  blockStreaming?: string;
+};
+
+export type PromptSegmentTrace = {
+  key: string;
+  chars: number;
+};
+
+export type ToolSummaryTrace = {
+  calls: number;
+  tools: string[];
+  failures?: number;
+  totalToolTimeMs?: number;
+};
+
+export type CompletionTrace = {
+  finishReason?: string;
+  stopReason?: string;
+  refusal?: boolean;
+};
+
+export type ContextManagementTrace = {
+  sessionCompactions?: number;
+  lastTurnCompactions?: number;
+  preflightCompactionApplied?: boolean;
+  postCompactionContextInjected?: boolean;
+};
+
 export type EmbeddedRunLivenessState = "working" | "paused" | "blocked" | "abandoned";
 
 export type EmbeddedPiRunMeta = {
@@ -38,7 +100,9 @@ export type EmbeddedPiRunMeta = {
   agentMeta?: EmbeddedPiAgentMeta;
   aborted?: boolean;
   systemPromptReport?: SessionSystemPromptReport;
+  finalPromptText?: string;
   finalAssistantVisibleText?: string;
+  finalAssistantRawText?: string;
   replayInvalid?: boolean;
   livenessState?: EmbeddedRunLivenessState;
   error?: {
@@ -58,6 +122,12 @@ export type EmbeddedPiRunMeta = {
     name: string;
     arguments: string;
   }>;
+  executionTrace?: ExecutionTrace;
+  requestShaping?: RequestShapingTrace;
+  promptSegments?: PromptSegmentTrace[];
+  toolSummary?: ToolSummaryTrace;
+  completion?: CompletionTrace;
+  contextManagement?: ContextManagementTrace;
 };
 
 export type EmbeddedPiRunResult = {
@@ -71,8 +141,8 @@ export type EmbeddedPiRunResult = {
     audioAsVoice?: boolean;
   }>;
   meta: EmbeddedPiRunMeta;
-  // True if a messaging tool (telegram, whatsapp, discord, slack, sessions_send)
-  // successfully sent a message. Used to suppress agent's confirmation text.
+  // True if a messaging tool successfully sent a message.
+  // Used to suppress agent's confirmation text.
   didSendViaMessagingTool?: boolean;
   // Texts successfully sent via messaging tools during the run.
   messagingToolSentTexts?: string[];

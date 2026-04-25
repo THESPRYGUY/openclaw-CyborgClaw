@@ -5,6 +5,7 @@ import { getAgentRunContext } from "../infra/agent-events.js";
 import { parseAgentSessionKey } from "../routing/session-key.js";
 import { deriveSessionChatType } from "../sessions/session-chat-type.js";
 import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
+import { tryRecoverTaskBeforeMarkLost } from "./detached-task-runtime.js";
 import {
   deleteTaskRecordById,
   ensureTaskRegistryReady,
@@ -82,6 +83,7 @@ let taskRegistryMaintenanceRuntime: TaskRegistryMaintenanceRuntime =
 
 export type TaskRegistryMaintenanceSummary = {
   reconciled: number;
+  recovered: number;
   cleanupStamped: number;
   pruned: number;
 };
@@ -277,6 +279,9 @@ export function reconcileTaskLookupToken(token: string): TaskRecord | undefined 
   return task ? reconcileTaskRecordForOperatorInspection(task) : undefined;
 }
 
+// Preview is synchronous and cannot call the async detached-task recovery hook,
+// so recovered tasks are counted under reconciled here. The real sweep
+// in runTaskRegistryMaintenance splits them into reconciled vs recovered.
 export function previewTaskRegistryMaintenance(): TaskRegistryMaintenanceSummary {
   taskRegistryMaintenanceRuntime.ensureTaskRegistryReady();
   const now = Date.now();
@@ -296,7 +301,7 @@ export function previewTaskRegistryMaintenance(): TaskRegistryMaintenanceSummary
       cleanupStamped += 1;
     }
   }
-  return { reconciled, cleanupStamped, pruned };
+  return { reconciled, recovered: 0, cleanupStamped, pruned };
 }
 
 /**
@@ -313,15 +318,17 @@ function startScheduledSweep() {
     return;
   }
   sweepInProgress = true;
-  void sweepTaskRegistry().finally(() => {
+  const clearSweepInProgress = () => {
     sweepInProgress = false;
-  });
+  };
+  sweepTaskRegistry().then(clearSweepInProgress, clearSweepInProgress);
 }
 
 export async function runTaskRegistryMaintenance(): Promise<TaskRegistryMaintenanceSummary> {
   taskRegistryMaintenanceRuntime.ensureTaskRegistryReady();
   const now = Date.now();
   let reconciled = 0;
+  let recovered = 0;
   let cleanupStamped = 0;
   let pruned = 0;
   const tasks = taskRegistryMaintenanceRuntime.listTaskRecords();
@@ -332,7 +339,29 @@ export async function runTaskRegistryMaintenance(): Promise<TaskRegistryMaintena
       continue;
     }
     if (shouldMarkLost(current, now)) {
-      const next = markTaskLost(current, now);
+      const recovery = await tryRecoverTaskBeforeMarkLost({
+        taskId: current.taskId,
+        runtime: current.runtime,
+        task: current,
+        now,
+      });
+      const freshAfterHook = taskRegistryMaintenanceRuntime.getTaskById(current.taskId);
+      if (!freshAfterHook || !shouldMarkLost(freshAfterHook, now)) {
+        processed += 1;
+        if (processed % SWEEP_YIELD_BATCH_SIZE === 0) {
+          await yieldToEventLoop();
+        }
+        continue;
+      }
+      if (recovery.recovered) {
+        recovered += 1;
+        processed += 1;
+        if (processed % SWEEP_YIELD_BATCH_SIZE === 0) {
+          await yieldToEventLoop();
+        }
+        continue;
+      }
+      const next = markTaskLost(freshAfterHook, now);
       if (next.status === "lost") {
         reconciled += 1;
       }
@@ -367,7 +396,7 @@ export async function runTaskRegistryMaintenance(): Promise<TaskRegistryMaintena
       await yieldToEventLoop();
     }
   }
-  return { reconciled, cleanupStamped, pruned };
+  return { reconciled, recovered, cleanupStamped, pruned };
 }
 
 export async function sweepTaskRegistry(): Promise<TaskRegistryMaintenanceSummary> {

@@ -4,10 +4,8 @@ read_when:
   - Generating videos via the agent
   - Configuring video generation providers and models
   - Understanding the video_generate tool parameters
-title: "Video Generation"
+title: "Video generation"
 ---
-
-# Video Generation
 
 OpenClaw agents can generate videos from text prompts, reference images, or existing videos. Fourteen provider backends are supported, each with different model options, input modes, and feature sets. The agent picks the right provider automatically based on your configuration and available API keys.
 
@@ -172,6 +170,7 @@ dimensions). Providers that do not declare it surface the value via
 | `action`          | string | `"generate"` (default), `"status"`, or `"list"`                                                                                                                                                                                                                                                                                                      |
 | `model`           | string | Provider/model override (e.g. `runway/gen4.5`)                                                                                                                                                                                                                                                                                                       |
 | `filename`        | string | Output filename hint                                                                                                                                                                                                                                                                                                                                 |
+| `timeoutMs`       | number | Optional provider request timeout in milliseconds                                                                                                                                                                                                                                                                                                    |
 | `providerOptions` | object | Provider-specific options as a JSON object (e.g. `{"seed": 42, "draft": true}`). Providers that declare a typed schema validate the keys and types; unknown keys or mismatches skip the candidate during fallback. Providers without a declared schema receive the options as-is. Run `video_generate action=list` to see what each provider accepts |
 
 Not all providers support all parameters. OpenClaw already normalizes duration to the closest provider-supported value, and it also remaps translated geometry hints such as size-to-aspect-ratio when a fallback provider exposes a different control surface. Truly unsupported overrides are ignored on a best-effort basis and reported as warnings in the tool result. Hard capability limits (such as too many reference inputs) fail before submission.
@@ -316,10 +315,23 @@ pnpm test:live:media video
 ```
 
 This live file loads missing provider env vars from `~/.profile`, prefers
-live/env API keys ahead of stored auth profiles by default, and runs the
-declared modes it can exercise safely with local media:
+live/env API keys ahead of stored auth profiles by default, and runs a
+release-safe smoke by default:
 
-- `generate` for every provider in the sweep
+- `generate` for every non-FAL provider in the sweep
+- one-second lobster prompt
+- per-provider operation cap from `OPENCLAW_LIVE_VIDEO_GENERATION_TIMEOUT_MS`
+  (`180000` by default)
+
+FAL is opt-in because provider-side queue latency can dominate release time:
+
+```bash
+pnpm test:live:media video --video-providers fal
+```
+
+Set `OPENCLAW_LIVE_VIDEO_GENERATION_FULL_MODES=1` to also run declared transform
+modes the shared sweep can exercise safely with local media:
+
 - `imageToVideo` when `capabilities.imageToVideo.enabled`
 - `videoToVideo` when `capabilities.videoToVideo.enabled` and the provider/model
   accepts buffer-backed local video input in the shared sweep

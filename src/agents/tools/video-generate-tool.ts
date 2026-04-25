@@ -1,8 +1,9 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { loadConfig } from "../../config/config.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { formatErrorMessage } from "../../infra/errors.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
+import { resolveConfiguredMediaMaxBytes } from "../../media/configured-max-bytes.js";
 import { saveMediaBuffer } from "../../media/store.js";
 import { loadWebMedia } from "../../media/web-media.js";
 import { readSnakeCaseParamRaw } from "../../param-key.js";
@@ -31,6 +32,7 @@ import {
   buildTaskRunDetails,
   normalizeMediaReferenceInputs,
   readBooleanToolParam,
+  readGenerationTimeoutMs,
   resolveCapabilityModelConfigForTool,
   resolveGenerateAction,
   resolveMediaToolLocalRoots,
@@ -202,6 +204,12 @@ const VideoGenerateToolSchema = Type.Object({
         "via its capabilities; unknown keys or type mismatches skip the candidate during fallback " +
         "and never silently reach the wrong provider. Run `video_generate action=list` to see which " +
         "keys each provider accepts.",
+    }),
+  ),
+  timeoutMs: Type.Optional(
+    Type.Number({
+      description: "Optional provider request timeout in milliseconds.",
+      minimum: 1,
     }),
   ),
 });
@@ -561,6 +569,7 @@ async function executeVideoGenerationJob(params: {
   loadedReferenceAudios: LoadedReferenceAsset[];
   taskHandle?: VideoGenerationTaskHandle | null;
   providerOptions?: Record<string, unknown>;
+  timeoutMs?: number;
 }): Promise<ExecutedVideoGeneration> {
   if (params.taskHandle) {
     recordVideoGenerationTaskProgress({
@@ -583,6 +592,7 @@ async function executeVideoGenerationJob(params: {
     inputVideos: params.loadedReferenceVideos.map((entry) => entry.sourceAsset),
     inputAudios: params.loadedReferenceAudios.map((entry) => entry.sourceAsset),
     providerOptions: params.providerOptions,
+    timeoutMs: params.timeoutMs,
   });
   if (params.taskHandle) {
     recordVideoGenerationTaskProgress({
@@ -611,13 +621,14 @@ async function executeVideoGenerationJob(params: {
     );
   }
 
+  const configuredMediaMaxBytes = resolveConfiguredMediaMaxBytes(params.effectiveCfg);
   const savedVideos = await Promise.all(
     bufferVideos.map((video) =>
       saveMediaBuffer(
         video.buffer,
         video.mimeType,
         "tool-video-generation",
-        undefined,
+        configuredMediaMaxBytes,
         params.filename || video.fileName,
       ),
     ),
@@ -745,6 +756,7 @@ async function executeVideoGenerationJob(params: {
         ? { watermark: params.watermark }
         : {}),
       ...(params.filename ? { filename: params.filename } : {}),
+      ...(params.timeoutMs !== undefined ? { timeoutMs: params.timeoutMs } : {}),
       attempts: result.attempts,
       ...(result.normalization ? { normalization: result.normalization } : {}),
       metadata: result.metadata,
@@ -823,6 +835,7 @@ export function createVideoGenerateTool(options?: {
       });
       const audio = readBooleanToolParam(args, "audio");
       const watermark = readBooleanToolParam(args, "watermark");
+      const timeoutMs = readGenerationTimeoutMs(args);
       // providerOptions must be a plain object. Arrays are objects in JS, so
       // exclude them explicitly — a bogus call like `providerOptions: ["seed", 42]`
       // would otherwise be cast to `Record<string, unknown>` with numeric-string
@@ -958,6 +971,7 @@ export function createVideoGenerateTool(options?: {
               loadedReferenceAudios,
               taskHandle,
               providerOptions,
+              timeoutMs,
             });
             completeVideoGenerationTaskRun({
               handle: taskHandle,
@@ -1030,6 +1044,7 @@ export function createVideoGenerateTool(options?: {
             ...(typeof audio === "boolean" ? { audio } : {}),
             ...(typeof watermark === "boolean" ? { watermark } : {}),
             ...(filename ? { filename } : {}),
+            ...(timeoutMs !== undefined ? { timeoutMs } : {}),
           },
         };
       }
@@ -1052,6 +1067,7 @@ export function createVideoGenerateTool(options?: {
           loadedReferenceAudios,
           taskHandle,
           providerOptions,
+          timeoutMs,
         });
         completeVideoGenerationTaskRun({
           handle: taskHandle,

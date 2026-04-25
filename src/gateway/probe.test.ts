@@ -3,14 +3,33 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const gatewayClientState = vi.hoisted(() => ({
   options: null as Record<string, unknown> | null,
   requests: [] as Array<{ method: string; params?: unknown }>,
-  startMode: "hello" as "hello" | "close",
+  startMode: "hello" as "hello" | "close" | "connect-error-close",
   close: { code: 1008, reason: "pairing required" },
+  helloAuth: {
+    role: "operator",
+    scopes: ["operator.read"],
+  } as { role?: string; scopes?: string[] } | undefined,
+  connectError: "scope upgrade pending approval (requestId: req-123)",
+  connectErrorDetails: {
+    code: "PAIRING_REQUIRED",
+    reason: "scope-upgrade",
+    requestId: "req-123",
+  } as Record<string, unknown> | null,
 }));
 
 const deviceIdentityState = vi.hoisted(() => ({
   value: { id: "test-device-identity" } as Record<string, unknown>,
   throwOnLoad: false,
 }));
+
+class MockGatewayClientRequestError extends Error {
+  readonly details?: unknown;
+
+  constructor(error: { message?: string; details?: unknown }) {
+    super(error.message ?? "gateway request failed");
+    this.details = error.details;
+  }
+}
 
 class MockGatewayClient {
   private readonly opts: Record<string, unknown>;
@@ -31,9 +50,28 @@ class MockGatewayClient {
           }
           return;
         }
+        if (gatewayClientState.startMode === "connect-error-close") {
+          const onConnectError = this.opts.onConnectError;
+          if (typeof onConnectError === "function") {
+            onConnectError(
+              new MockGatewayClientRequestError({
+                message: gatewayClientState.connectError,
+                details: gatewayClientState.connectErrorDetails,
+              }),
+            );
+          }
+          const onClose = this.opts.onClose;
+          if (typeof onClose === "function") {
+            onClose(gatewayClientState.close.code, gatewayClientState.close.reason);
+          }
+          return;
+        }
         const onHelloOk = this.opts.onHelloOk;
         if (typeof onHelloOk === "function") {
-          await onHelloOk();
+          await onHelloOk({
+            type: "hello-ok",
+            auth: gatewayClientState.helloAuth,
+          });
         }
       })
       .catch(() => {});
@@ -83,6 +121,7 @@ class MockGatewayClient {
 
 vi.mock("./client.js", () => ({
   GatewayClient: MockGatewayClient,
+  GatewayClientRequestError: MockGatewayClientRequestError,
 }));
 
 vi.mock("../infra/device-identity.js", () => ({
@@ -101,6 +140,16 @@ describe("probeGateway", () => {
     deviceIdentityState.throwOnLoad = false;
     gatewayClientState.startMode = "hello";
     gatewayClientState.close = { code: 1008, reason: "pairing required" };
+    gatewayClientState.helloAuth = {
+      role: "operator",
+      scopes: ["operator.read"],
+    };
+    gatewayClientState.connectError = "scope upgrade pending approval (requestId: req-123)";
+    gatewayClientState.connectErrorDetails = {
+      code: "PAIRING_REQUIRED",
+      reason: "scope-upgrade",
+      requestId: "req-123",
+    };
   });
 
   it("clamps probe timeout to timer-safe bounds", () => {
@@ -141,6 +190,11 @@ describe("probeGateway", () => {
           },
         },
       },
+    });
+    expect(result.auth).toMatchObject({
+      role: "operator",
+      scopes: ["operator.read"],
+      capability: "read_only",
     });
   });
 
@@ -248,7 +302,78 @@ describe("probeGateway", () => {
       ok: false,
       error: "gateway closed (1008): pairing required",
       close: { code: 1008, reason: "pairing required" },
+      auth: { capability: "pairing_pending" },
     });
     expect(gatewayClientState.requests).toEqual([]);
+  });
+
+  it("reports write-capable auth when hello-ok scopes include operator.write", async () => {
+    gatewayClientState.helloAuth = {
+      role: "operator",
+      scopes: ["operator.write"],
+    };
+
+    const result = await probeGateway({
+      url: "ws://127.0.0.1:18789",
+      auth: { token: "secret" },
+      timeoutMs: 1_000,
+      includeDetails: false,
+    });
+
+    expect(result.auth).toMatchObject({
+      scopes: ["operator.write"],
+      capability: "write_capable",
+    });
+  });
+
+  it("keeps capability unknown when hello-ok omits auth metadata", async () => {
+    gatewayClientState.helloAuth = undefined;
+
+    const result = await probeGateway({
+      url: "ws://127.0.0.1:18789",
+      auth: { token: "secret" },
+      timeoutMs: 1_000,
+      includeDetails: false,
+    });
+
+    expect(result.auth).toMatchObject({
+      role: null,
+      scopes: [],
+      capability: "unknown",
+    });
+  });
+
+  it("reports connect-only only when hello-ok explicitly includes empty auth metadata", async () => {
+    gatewayClientState.helloAuth = {};
+
+    const result = await probeGateway({
+      url: "ws://127.0.0.1:18789",
+      auth: { token: "secret" },
+      timeoutMs: 1_000,
+      includeDetails: false,
+    });
+
+    expect(result.auth).toMatchObject({
+      role: null,
+      scopes: [],
+      capability: "connected_no_operator_scope",
+    });
+  });
+
+  it("prefers the structured connect error over the generic close reason", async () => {
+    gatewayClientState.startMode = "connect-error-close";
+
+    const result = await probeGateway({
+      url: "ws://127.0.0.1:18789",
+      auth: { token: "secret" },
+      timeoutMs: 5_000,
+      includeDetails: false,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: "scope upgrade pending approval (requestId: req-123)",
+      close: { code: 1008, reason: "pairing required" },
+    });
   });
 });
