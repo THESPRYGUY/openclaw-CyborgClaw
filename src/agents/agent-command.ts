@@ -800,6 +800,7 @@ async function agentCommandInternal(
           cfg,
           agentId: sessionAgentId,
           hasSessionModelOverride: Boolean(storedModelOverride),
+          hasExplicitRunOverride,
         });
 
         let fallbackAttemptIndex = 0;

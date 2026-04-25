@@ -233,6 +233,22 @@ describe("resolveAgentConfig", () => {
         hasSessionModelOverride: true,
       }),
     ).toEqual([]);
+    expect(
+      resolveEffectiveModelFallbacks({
+        cfg: cfgInheritDefaults,
+        agentId: "linus",
+        hasSessionModelOverride: false,
+        hasExplicitRunOverride: true,
+      }),
+    ).toEqual([]);
+    expect(
+      resolveEffectiveModelFallbacks({
+        cfg,
+        agentId: "linus",
+        hasSessionModelOverride: false,
+        hasExplicitRunOverride: true,
+      }),
+    ).toEqual(["openai/gpt-5.4"]);
   });
 
   it("resolves fallback agent id from explicit agent id first", () => {

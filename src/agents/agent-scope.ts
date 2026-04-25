@@ -267,8 +267,14 @@ export function resolveEffectiveModelFallbacks(params: {
   cfg: OpenClawConfig;
   agentId: string;
   hasSessionModelOverride: boolean;
+  hasExplicitRunOverride?: boolean;
 }): string[] | undefined {
   const agentFallbacksOverride = resolveAgentModelFallbacksOverride(params.cfg, params.agentId);
+  if (params.hasExplicitRunOverride) {
+    // Per-run provider/model requests should stay pinned unless the agent
+    // explicitly defines its own fallback chain for that seat.
+    return agentFallbacksOverride ?? [];
+  }
   if (!params.hasSessionModelOverride) {
     return agentFallbacksOverride;
   }
