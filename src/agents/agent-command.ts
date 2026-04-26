@@ -352,9 +352,12 @@ async function prepareAgentCommandExecution(
     agentId: sessionAgentId,
     sessionKey,
   });
-  const sharedRoomState = summarizeSharedRoomContext(opts.sharedRoomContext);
+  const sharedRoomState = summarizeSharedRoomContext(
+    opts.sharedRoomContext,
+    sessionEntryRaw?.sharedRoom,
+  );
   const mergedExtraSystemPrompt = mergeExtraSystemPrompts(
-    buildSharedRoomContextPrompt(opts.sharedRoomContext),
+    buildSharedRoomContextPrompt(opts.sharedRoomContext, sessionEntryRaw?.sharedRoom),
     opts.extraSystemPrompt,
   );
   // Internal callers (for example subagent spawns) may pin workspace inheritance.

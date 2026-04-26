@@ -409,7 +409,6 @@ export const agentHandlers: GatewayRequestHandlers = {
     let resolvedGroupChannel: string | undefined = normalizedSpawned.groupChannel;
     let resolvedGroupSpace: string | undefined = normalizedSpawned.groupSpace;
     let spawnedByValue: string | undefined;
-    const sharedRoomState = summarizeSharedRoomContext(request.sharedRoomContext);
     const inputProvenance = normalizeInputProvenance(request.inputProvenance);
     const cached = context.dedupe.get(`agent:${idem}`);
     if (cached) {
@@ -701,6 +700,10 @@ export const agentHandlers: GatewayRequestHandlers = {
       const effectiveDeliveryFields = normalizeSessionDeliveryFields({
         deliveryContext: effectiveDelivery,
       });
+      const sharedRoomState = summarizeSharedRoomContext(
+        request.sharedRoomContext,
+        entry?.sharedRoom,
+      );
       const nextEntryPatch: SessionEntry = {
         sessionId,
         updatedAt: now,

@@ -1551,6 +1551,68 @@ describe("gateway agent handler", () => {
     );
   });
 
+  it("does not rewind stored shared room cursors for stale same-epoch context", async () => {
+    mocks.agentCommand.mockClear();
+    const canonicalKey =
+      "agent:main:room:borf-redesign-workshop:epoch:bor-rsi-sprint-001-review-20260426t172400z";
+    const existingEntry = {
+      sessionId: "room-session-id",
+      updatedAt: Date.now(),
+      sharedRoom: {
+        roomId: "BORF redesign workshop",
+        roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
+        seenThroughSeq: 42,
+        lastMessageSeq: 42,
+      },
+    };
+    mocks.loadSessionEntry.mockReturnValue({
+      cfg: {},
+      storePath: "/tmp/sessions.json",
+      entry: existingEntry,
+      canonicalKey,
+    });
+    let capturedEntry: Record<string, unknown> | undefined;
+    mocks.updateSessionStore.mockImplementation(async (_path, updater) => {
+      const store: Record<string, unknown> = {
+        [canonicalKey]: structuredClone(existingEntry),
+      };
+      const result = await updater(store);
+      capturedEntry = result as Record<string, unknown>;
+      return result;
+    });
+    mocks.agentCommand.mockResolvedValue({
+      payloads: [{ text: "ok" }],
+      meta: { durationMs: 100 },
+    });
+
+    await invokeAgent(
+      {
+        message: "review the stale room message",
+        agentId: "main",
+        sharedRoomContext: {
+          roomId: "BORF redesign workshop",
+          roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
+          participantId: "seat-1",
+          participantLabel: "Codex",
+          seenThroughSeq: 9,
+          messages: [{ seq: 9, author: "Voltaris V2", text: "Older point." }],
+        },
+        idempotencyKey: "test-stale-shared-room-context",
+      },
+      { reqId: "4-room-stale" },
+    );
+
+    await waitForAssertion(() => expect(mocks.agentCommand).toHaveBeenCalledTimes(1));
+    expect(capturedEntry?.sharedRoom).toMatchObject({
+      roomId: "BORF redesign workshop",
+      roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
+      participantId: "seat-1",
+      participantLabel: "Codex",
+      seenThroughSeq: 42,
+      lastMessageSeq: 42,
+    });
+  });
+
   it("rejects /reset for write-scoped gateway callers", async () => {
     mockMainSessionEntry({ sessionId: "existing-session-id" });
     mocks.performGatewaySessionReset.mockClear();
