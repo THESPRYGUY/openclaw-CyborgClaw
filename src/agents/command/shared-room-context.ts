@@ -1,4 +1,9 @@
-import type { SessionSharedRoomState } from "../../config/sessions/types.js";
+import {
+  isSessionSharedRoomStateRegressive,
+  mergeSessionSharedRoomState,
+  resolveSessionSharedRoomCursorSeq,
+  type SessionSharedRoomState,
+} from "../../config/sessions/types.js";
 import { sanitizeForPromptLiteral } from "../sanitize-for-prompt.js";
 import type { SharedRoomContext, SharedRoomMessage } from "./types.js";
 
@@ -10,11 +15,16 @@ function sanitizeRoomLine(value: string | undefined): string | undefined {
   return sanitizeForPromptLiteral(trimmed);
 }
 
-function getAdmittedMessages(context: SharedRoomContext): SharedRoomMessage[] {
+function getAdmittedMessages(
+  context: SharedRoomContext,
+  seenThroughSeqOverride?: number,
+): SharedRoomMessage[] {
   const seenThroughSeq =
-    typeof context.seenThroughSeq === "number" && Number.isFinite(context.seenThroughSeq)
-      ? context.seenThroughSeq
-      : undefined;
+    typeof seenThroughSeqOverride === "number" && Number.isFinite(seenThroughSeqOverride)
+      ? seenThroughSeqOverride
+      : typeof context.seenThroughSeq === "number" && Number.isFinite(context.seenThroughSeq)
+        ? context.seenThroughSeq
+        : undefined;
   const messages = Array.isArray(context.messages) ? context.messages : [];
   return messages
     .filter((message) => Number.isFinite(message.seq))
@@ -22,7 +32,7 @@ function getAdmittedMessages(context: SharedRoomContext): SharedRoomMessage[] {
     .toSorted((left, right) => left.seq - right.seq);
 }
 
-export function summarizeSharedRoomContext(
+function summarizeIncomingSharedRoomContext(
   context: SharedRoomContext | undefined,
 ): SessionSharedRoomState | undefined {
   const roomId = sanitizeRoomLine(context?.roomId);
@@ -54,12 +64,16 @@ export function summarizeSharedRoomContext(
 
 export function buildSharedRoomContextPrompt(
   context: SharedRoomContext | undefined,
+  previousState?: SessionSharedRoomState,
 ): string | undefined {
-  const summary = summarizeSharedRoomContext(context);
-  if (!summary) {
+  const incomingSummary = summarizeIncomingSharedRoomContext(context);
+  if (!incomingSummary) {
     return undefined;
   }
-  const admitted = context ? getAdmittedMessages(context) : [];
+  const summary = mergeSessionSharedRoomState(previousState, incomingSummary) ?? incomingSummary;
+  const isRegressive = isSessionSharedRoomStateRegressive(previousState, incomingSummary);
+  const admitted =
+    context && !isRegressive ? getAdmittedMessages(context, summary.seenThroughSeq) : [];
   const lines: string[] = ["## Shared Room Context"];
   const roomLabel = summary.roomLabel ?? summary.roomId;
   lines.push(`You are seated in the shared room "${roomLabel}".`);
@@ -77,6 +91,16 @@ export function buildSharedRoomContextPrompt(
   if (typeof summary.seenThroughSeq === "number") {
     lines.push(
       `Your admitted room context includes room events through seq ${summary.seenThroughSeq}.`,
+    );
+  }
+  if (isRegressive) {
+    const storedCursor = resolveSessionSharedRoomCursorSeq(previousState);
+    const incomingCursor = resolveSessionSharedRoomCursorSeq(incomingSummary);
+    lines.push(
+      incomingCursor === undefined
+        ? `The supplied room context has no current cursor; the stored room cursor is seq ${storedCursor}.`
+        : `The supplied room context cursor seq ${incomingCursor} is stale or regressive compared with stored room cursor seq ${storedCursor}.`,
+      "Do not count supplied room messages in this turn as current room proof.",
     );
   }
   lines.push(
@@ -101,7 +125,9 @@ export function buildSharedRoomContextPrompt(
     }
   }
 
-  if (admitted.length > 0) {
+  if (isRegressive) {
+    lines.push("", "Admitted room messages: none from the supplied stale context.");
+  } else if (admitted.length > 0) {
     lines.push("", "Admitted room messages:");
     for (const message of admitted) {
       const author = sanitizeRoomLine(message.author) ?? "Unknown";
@@ -116,6 +142,17 @@ export function buildSharedRoomContextPrompt(
   }
 
   return lines.join("\n");
+}
+
+export function summarizeSharedRoomContext(
+  context: SharedRoomContext | undefined,
+  previousState?: SessionSharedRoomState,
+): SessionSharedRoomState | undefined {
+  const incomingSummary = summarizeIncomingSharedRoomContext(context);
+  if (!incomingSummary) {
+    return undefined;
+  }
+  return mergeSessionSharedRoomState(previousState, incomingSummary);
 }
 
 export function mergeExtraSystemPrompts(...prompts: Array<string | undefined>): string | undefined {

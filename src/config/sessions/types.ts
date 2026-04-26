@@ -63,6 +63,104 @@ export type SessionSharedRoomState = {
   participantCount?: number;
 };
 
+function normalizeSharedRoomIdentity(value: string | undefined): string | undefined {
+  return normalizeOptionalString(value);
+}
+
+function resolveSharedRoomSeq(value: number | undefined): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
+export function isSameSessionSharedRoomLane(
+  existing: SessionSharedRoomState | undefined,
+  incoming: SessionSharedRoomState | undefined,
+): boolean {
+  const existingRoomId = normalizeSharedRoomIdentity(existing?.roomId);
+  const incomingRoomId = normalizeSharedRoomIdentity(incoming?.roomId);
+  if (!existingRoomId || !incomingRoomId || existingRoomId !== incomingRoomId) {
+    return false;
+  }
+  return (
+    normalizeSharedRoomIdentity(existing?.roomEpochId) ===
+    normalizeSharedRoomIdentity(incoming?.roomEpochId)
+  );
+}
+
+export function resolveSessionSharedRoomCursorSeq(
+  state: SessionSharedRoomState | undefined,
+): number | undefined {
+  const seenThroughSeq = resolveSharedRoomSeq(state?.seenThroughSeq);
+  const lastMessageSeq = resolveSharedRoomSeq(state?.lastMessageSeq);
+  if (seenThroughSeq === undefined) {
+    return lastMessageSeq;
+  }
+  if (lastMessageSeq === undefined) {
+    return seenThroughSeq;
+  }
+  return Math.max(seenThroughSeq, lastMessageSeq);
+}
+
+export function isSessionSharedRoomStateRegressive(
+  existing: SessionSharedRoomState | undefined,
+  incoming: SessionSharedRoomState | undefined,
+): boolean {
+  if (!isSameSessionSharedRoomLane(existing, incoming)) {
+    return false;
+  }
+  const existingCursor = resolveSessionSharedRoomCursorSeq(existing);
+  if (existingCursor === undefined) {
+    return false;
+  }
+  const incomingCursor = resolveSessionSharedRoomCursorSeq(incoming);
+  return incomingCursor === undefined || incomingCursor < existingCursor;
+}
+
+export function mergeSessionSharedRoomState(
+  existing: SessionSharedRoomState | undefined,
+  incoming: SessionSharedRoomState | undefined,
+): SessionSharedRoomState | undefined {
+  if (!incoming) {
+    return existing;
+  }
+  if (!existing || !isSameSessionSharedRoomLane(existing, incoming)) {
+    return incoming;
+  }
+
+  const existingSeenThroughSeq = resolveSharedRoomSeq(existing.seenThroughSeq);
+  const incomingSeenThroughSeq = resolveSharedRoomSeq(incoming.seenThroughSeq);
+  const existingLastMessageSeq = resolveSharedRoomSeq(existing.lastMessageSeq);
+  const incomingLastMessageSeq = resolveSharedRoomSeq(incoming.lastMessageSeq);
+  const next: SessionSharedRoomState = {
+    ...existing,
+    ...incoming,
+  };
+
+  const seenThroughSeq =
+    existingSeenThroughSeq === undefined
+      ? incomingSeenThroughSeq
+      : incomingSeenThroughSeq === undefined
+        ? existingSeenThroughSeq
+        : Math.max(existingSeenThroughSeq, incomingSeenThroughSeq);
+  const lastMessageSeq =
+    existingLastMessageSeq === undefined
+      ? incomingLastMessageSeq
+      : incomingLastMessageSeq === undefined
+        ? existingLastMessageSeq
+        : Math.max(existingLastMessageSeq, incomingLastMessageSeq);
+
+  if (seenThroughSeq === undefined) {
+    delete next.seenThroughSeq;
+  } else {
+    next.seenThroughSeq = seenThroughSeq;
+  }
+  if (lastMessageSeq === undefined) {
+    delete next.lastMessageSeq;
+  } else {
+    next.lastMessageSeq = lastMessageSeq;
+  }
+  return next;
+}
+
 export type AcpSessionRuntimeOptions = {
   /**
    * ACP runtime mode set via session/set_mode (for example: "plan", "normal", "auto").
@@ -395,6 +493,9 @@ export function mergeSessionEntryWithPolicy(
     return normalizeSessionRuntimeModelFields({ ...patch, sessionId, updatedAt });
   }
   const next = { ...existing, ...patch, sessionId, updatedAt };
+  if (patch.sharedRoom) {
+    next.sharedRoom = mergeSessionSharedRoomState(existing.sharedRoom, patch.sharedRoom);
+  }
 
   // Guard against stale provider carry-over when callers patch runtime model
   // without also patching runtime provider.

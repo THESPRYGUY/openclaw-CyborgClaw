@@ -254,6 +254,64 @@ describe("session store lock (Promise chain mutex)", () => {
     expect(merged.modelProvider).toBeUndefined();
   });
 
+  it("keeps shared room cursors monotonic for the same room epoch", () => {
+    const merged = mergeSessionEntry(
+      {
+        sessionId: "sess-room",
+        updatedAt: 100,
+        sharedRoom: {
+          roomId: "Break-Out Room Patch Review",
+          roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
+          seenThroughSeq: 42,
+          lastMessageSeq: 42,
+        },
+      },
+      {
+        sharedRoom: {
+          roomId: "Break-Out Room Patch Review",
+          roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
+          seenThroughSeq: 9,
+        },
+      },
+    );
+
+    expect(merged.sharedRoom).toMatchObject({
+      roomId: "Break-Out Room Patch Review",
+      roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
+      seenThroughSeq: 42,
+      lastMessageSeq: 42,
+    });
+  });
+
+  it("lets a new shared room epoch reset the cursor lane", () => {
+    const merged = mergeSessionEntry(
+      {
+        sessionId: "sess-room",
+        updatedAt: 100,
+        sharedRoom: {
+          roomId: "Break-Out Room Patch Review",
+          roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
+          seenThroughSeq: 42,
+          lastMessageSeq: 42,
+        },
+      },
+      {
+        sharedRoom: {
+          roomId: "Break-Out Room Patch Review",
+          roomEpochId: "bor-rsi-sprint-002-review-20260426T183000Z",
+          seenThroughSeq: 3,
+          lastMessageSeq: 3,
+        },
+      },
+    );
+
+    expect(merged.sharedRoom).toMatchObject({
+      roomEpochId: "bor-rsi-sprint-002-review-20260426T183000Z",
+      seenThroughSeq: 3,
+      lastMessageSeq: 3,
+    });
+  });
+
   it("normalizes orphan modelProvider fields at store write boundary", async () => {
     const key = "agent:main:orphan-provider";
     const { storePath } = await makeTmpStore({
