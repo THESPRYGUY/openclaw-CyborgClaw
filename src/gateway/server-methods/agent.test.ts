@@ -1502,13 +1502,15 @@ describe("gateway agent handler", () => {
       cfg: {},
       storePath: "/tmp/sessions.json",
       entry: undefined,
-      canonicalKey: "agent:main:room:borf-redesign-workshop",
+      canonicalKey:
+        "agent:main:room:borf-redesign-workshop:epoch:bor-rsi-sprint-001-review-20260426t172400z",
     });
     mocks.updateSessionStore.mockResolvedValue({
       sessionId: "room-session-id",
       updatedAt: Date.now(),
       sharedRoom: {
         roomId: "BORF redesign workshop",
+        roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
         seenThroughSeq: 42,
       },
     });
@@ -1523,6 +1525,7 @@ describe("gateway agent handler", () => {
         agentId: "main",
         sharedRoomContext: {
           roomId: "BORF redesign workshop",
+          roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
           participantId: "seat-1",
           participantLabel: "Codex",
           seenThroughSeq: 42,
@@ -1537,9 +1540,11 @@ describe("gateway agent handler", () => {
     const call = mocks.agentCommand.mock.calls.at(-1);
     expect(call?.[0]).toEqual(
       expect.objectContaining({
-        sessionKey: "agent:main:room:borf-redesign-workshop",
+        sessionKey:
+          "agent:main:room:borf-redesign-workshop:epoch:bor-rsi-sprint-001-review-20260426t172400z",
         sharedRoomContext: expect.objectContaining({
           roomId: "BORF redesign workshop",
+          roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
           seenThroughSeq: 42,
         }),
       }),

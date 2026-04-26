@@ -151,10 +151,19 @@ function normalizeSessionSegment(value: string, fallback: string): string {
   return `${base}-${hash}`;
 }
 
-export function buildAgentRoomSessionKey(params: { agentId: string; roomId: string }): string {
+export function buildAgentRoomSessionKey(params: {
+  agentId: string;
+  roomId: string;
+  roomEpochId?: string | undefined;
+}): string {
   const agentId = normalizeAgentId(params.agentId);
   const roomSegment = normalizeSessionSegment(params.roomId, "room");
-  return `agent:${agentId}:room:${roomSegment}`;
+  const roomEpochId = params.roomEpochId?.trim();
+  if (!roomEpochId) {
+    return `agent:${agentId}:room:${roomSegment}`;
+  }
+  const epochSegment = normalizeSessionSegment(roomEpochId, "epoch");
+  return `agent:${agentId}:room:${roomSegment}:epoch:${epochSegment}`;
 }
 
 export function buildAgentPeerSessionKey(params: {

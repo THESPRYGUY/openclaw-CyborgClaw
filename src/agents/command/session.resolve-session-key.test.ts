@@ -145,4 +145,26 @@ describe("resolveSessionKeyForRequest", () => {
     expect(result.sessionKey).toMatch(/^agent:codex:room:break-out-room-2026-04-12-[a-f0-9]{8}$/);
     expect(result.storePath).toBe("/stores/main.json");
   });
+
+  it("uses roomEpochId when deriving room-scoped session keys", () => {
+    hoisted.loadSessionStoreMock.mockReturnValue({});
+
+    const result = resolveSessionKeyForRequest({
+      cfg: {
+        session: {
+          store: "/stores/{agentId}.json",
+        },
+      } satisfies OpenClawConfig,
+      agentId: "codex",
+      sharedRoomContext: {
+        roomId: "Break-Out Room Patch Review",
+        roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
+      },
+    });
+
+    expect(result.sessionKey).toMatch(
+      /^agent:codex:room:break-out-room-patch-review-[a-f0-9]{8}:epoch:bor-rsi-sprint-001-review-20260426t172400z$/,
+    );
+    expect(result.storePath).toBe("/stores/main.json");
+  });
 });
