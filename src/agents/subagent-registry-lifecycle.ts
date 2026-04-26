@@ -589,6 +589,7 @@ export function createSubagentRegistryLifecycleController(params: {
         childRunId: entry.runId,
         requesterSessionKey: entry.requesterSessionKey,
         requesterOrigin,
+        requesterRouteReceipt: entry.requesterRouteReceipt,
         requesterDisplayKey: entry.requesterDisplayKey,
         task: entry.task,
         timeoutMs: params.subagentAnnounceTimeoutMs,

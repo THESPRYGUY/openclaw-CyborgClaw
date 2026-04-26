@@ -42,6 +42,7 @@ import {
   waitForEmbeddedPiRunEnd,
 } from "./subagent-announce.runtime.js";
 import { getSubagentDepthFromSessionStore } from "./subagent-depth.js";
+import type { SubagentRequesterRouteReceipt } from "./subagent-registry.types.js";
 import type { SpawnSubagentMode } from "./subagent-spawn.types.js";
 import { isAnnounceSkip } from "./tools/sessions-send-tokens.js";
 
@@ -101,6 +102,25 @@ function hasUsableSessionEntry(entry: unknown): boolean {
   }
   const sessionId = (entry as { sessionId?: unknown }).sessionId;
   return typeof sessionId !== "string" || sessionId.trim() !== "";
+}
+
+function resolveDirectOriginForCompletion(params: {
+  entry?: Parameters<typeof resolveAnnounceOrigin>[0];
+  requesterOrigin?: DeliveryContext;
+  routeReceipt?: SubagentRequesterRouteReceipt;
+}): DeliveryContext | undefined {
+  if (!params.routeReceipt) {
+    return resolveAnnounceOrigin(params.entry, params.requesterOrigin);
+  }
+  const receiptOrigin = normalizeDeliveryContext(params.routeReceipt.origin);
+  if (params.routeReceipt.complete && receiptOrigin?.channel && receiptOrigin.to) {
+    return receiptOrigin;
+  }
+  return normalizeDeliveryContext({
+    channel: receiptOrigin?.channel ?? params.requesterOrigin?.channel,
+    accountId: receiptOrigin?.accountId ?? params.requesterOrigin?.accountId,
+    threadId: receiptOrigin?.threadId ?? params.requesterOrigin?.threadId,
+  });
 }
 
 function buildDescendantWakeMessage(params: { findings: string; taskLabel: string }): string {
@@ -223,6 +243,7 @@ export async function runSubagentAnnounceFlow(params: {
   childRunId: string;
   requesterSessionKey: string;
   requesterOrigin?: DeliveryContext;
+  requesterRouteReceipt?: SubagentRequesterRouteReceipt;
   requesterDisplayKey: string;
   task: string;
   timeoutMs: number;
@@ -524,7 +545,11 @@ export async function runSubagentAnnounceFlow(params: {
     let directOrigin = targetRequesterOrigin;
     if (!requesterIsSubagent) {
       const { entry } = loadRequesterSessionEntry(targetRequesterSessionKey);
-      directOrigin = resolveAnnounceOrigin(entry, targetRequesterOrigin);
+      directOrigin = resolveDirectOriginForCompletion({
+        entry,
+        requesterOrigin: targetRequesterOrigin,
+        routeReceipt: params.requesterRouteReceipt,
+      });
     }
     const completionDirectOrigin =
       expectsCompletionMessage && !requesterIsSubagent
@@ -558,6 +583,7 @@ export async function runSubagentAnnounceFlow(params: {
       targetRequesterSessionKey,
       requesterIsSubagent,
       expectsCompletionMessage: expectsCompletionMessage,
+      allowSessionRouteFallback: !params.requesterRouteReceipt,
       bestEffortDeliver: params.bestEffortDeliver,
       directIdempotencyKey,
       signal: params.signal,

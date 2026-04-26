@@ -393,6 +393,39 @@ describe("subagent registry persistence", () => {
     });
   });
 
+  it("persists a spawn-time requester route receipt", async () => {
+    tempStateDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-subagent-"));
+    process.env.OPENCLAW_STATE_DIR = tempStateDir;
+
+    vi.mocked(callGateway).mockImplementationOnce(async () => await new Promise(() => {}));
+
+    registerSubagentRun({
+      runId: "run-route-receipt",
+      childSessionKey: "agent:main:subagent:route-receipt",
+      requesterSessionKey: "agent:main:main",
+      requesterDisplayKey: "main",
+      requesterOrigin: {
+        channel: " telegram ",
+        accountId: " bot:123 ",
+      },
+      task: "route receipt",
+      cleanup: "keep",
+      expectsCompletionMessage: true,
+    });
+
+    const registryPath = path.join(tempStateDir, "subagents", "runs.json");
+    const entry = await readPersistedRun<SubagentRunRecord>(registryPath, "run-route-receipt");
+
+    expect(entry?.requesterRouteReceipt).toEqual({
+      origin: {
+        channel: "telegram",
+        accountId: "bot-123",
+      },
+      complete: false,
+      capturedAt: expect.any(Number),
+    });
+  });
+
   it("retries cleanup announce after a failed announce", async () => {
     const persisted = createPersistedEndedRun({
       runId: "run-3",

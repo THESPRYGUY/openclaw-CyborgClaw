@@ -27,6 +27,7 @@ export type AnnounceQueueItem = {
   sessionKey: string;
   origin?: DeliveryContext;
   originKey?: string;
+  allowSessionRouteFallback?: boolean;
   sourceSessionKey?: string;
   sourceChannel?: string;
   sourceTool?: string;

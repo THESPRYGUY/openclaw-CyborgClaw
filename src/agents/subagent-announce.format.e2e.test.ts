@@ -2938,6 +2938,76 @@ describe("subagent announce formatting", () => {
     expect(call?.params?.to).toBe("telegram:123");
   });
 
+  it("does not backfill direct completion delivery from stale session targets when route receipt is incomplete", async () => {
+    sessionStore = {
+      "agent:main:main": {
+        sessionId: "session-stale-direct-route",
+        lastChannel: "telegram",
+        lastTo: "telegram:stale-room",
+        lastAccountId: "stale-bot",
+      },
+    };
+
+    const didAnnounce = await runSubagentAnnounceFlow({
+      childSessionKey: "agent:main:subagent:test",
+      childRunId: "run-incomplete-direct-route",
+      requesterSessionKey: "main",
+      requesterOrigin: { channel: "telegram" },
+      requesterRouteReceipt: {
+        origin: { channel: "telegram" },
+        complete: false,
+        capturedAt: 1,
+      },
+      requesterDisplayKey: "main",
+      ...defaultOutcomeAnnounce,
+      expectsCompletionMessage: true,
+    });
+
+    expect(didAnnounce).toBe(true);
+    const params = await getSingleAgentCallParams();
+    expect(params.deliver).toBe(false);
+    expect(params.channel).toBe("telegram");
+    expect(params.to).toBeUndefined();
+    expect(params.accountId).toBeUndefined();
+  });
+
+  it("does not backfill queued completion delivery from stale session targets when route receipt is incomplete", async () => {
+    embeddedRunMock.isEmbeddedPiRunActive.mockReturnValue(true);
+    embeddedRunMock.isEmbeddedPiRunStreaming.mockReturnValue(false);
+    sessionStore = {
+      "agent:main:main": {
+        sessionId: "session-stale-queued-route",
+        lastChannel: "telegram",
+        lastTo: "telegram:stale-queue-room",
+        lastAccountId: "stale-bot",
+        queueMode: "collect",
+        queueDebounceMs: 0,
+      },
+    };
+
+    const didAnnounce = await runSubagentAnnounceFlow({
+      childSessionKey: "agent:main:subagent:test",
+      childRunId: "run-incomplete-queued-route",
+      requesterSessionKey: "main",
+      requesterOrigin: { channel: "telegram" },
+      requesterRouteReceipt: {
+        origin: { channel: "telegram" },
+        complete: false,
+        capturedAt: 1,
+      },
+      requesterDisplayKey: "main",
+      ...defaultOutcomeAnnounce,
+      expectsCompletionMessage: true,
+    });
+
+    expect(didAnnounce).toBe(true);
+    const params = await getSingleAgentCallParams();
+    expect(params.deliver).toBe(false);
+    expect(params.channel).toBe("telegram");
+    expect(params.to).toBeUndefined();
+    expect(params.accountId).toBeUndefined();
+  });
+
   it("routes or falls back for ended parent subagent sessions (#18037)", async () => {
     const cases = [
       {

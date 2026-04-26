@@ -350,6 +350,9 @@ async function sendAnnounce(item: AnnounceQueueItem) {
   const announceTimeoutMs = resolveSubagentAnnounceTimeoutMs(cfg);
   const requesterIsSubagent = isInternalAnnounceRequesterSession(item.sessionKey);
   const origin = item.origin;
+  const hasExplicitTarget = Boolean(origin?.channel && origin.to);
+  const deliver =
+    !requesterIsSubagent && (item.allowSessionRouteFallback !== false || hasExplicitTarget);
   const threadId =
     origin?.threadId != null && origin.threadId !== "" ? String(origin.threadId) : undefined;
   const idempotencyKey = buildAnnounceIdempotencyKey(
@@ -368,7 +371,7 @@ async function sendAnnounce(item: AnnounceQueueItem) {
       accountId: requesterIsSubagent ? undefined : origin?.accountId,
       to: requesterIsSubagent ? undefined : origin?.to,
       threadId: requesterIsSubagent ? undefined : threadId,
-      deliver: !requesterIsSubagent,
+      deliver,
       internalEvents: item.internalEvents,
       inputProvenance: {
         kind: "inter_session",
@@ -415,6 +418,7 @@ async function maybeQueueSubagentAnnounce(params: {
   steerMessage: string;
   summaryLine?: string;
   requesterOrigin?: DeliveryContext;
+  allowSessionRouteFallback?: boolean;
   sourceSessionKey?: string;
   sourceChannel?: string;
   sourceTool?: string;
@@ -454,7 +458,10 @@ async function maybeQueueSubagentAnnounce(params: {
     queueSettings.mode === "steer-backlog" ||
     queueSettings.mode === "interrupt";
   if (isActive && (shouldFollowup || queueSettings.mode === "steer")) {
-    const origin = resolveAnnounceOrigin(entry, params.requesterOrigin);
+    const origin =
+      params.allowSessionRouteFallback === false
+        ? normalizeDeliveryContext(params.requesterOrigin)
+        : resolveAnnounceOrigin(entry, params.requesterOrigin);
     const didQueue = enqueueAnnounce({
       key: buildAnnounceQueueKey(canonicalKey, origin),
       item: {
@@ -465,6 +472,7 @@ async function maybeQueueSubagentAnnounce(params: {
         enqueuedAt: Date.now(),
         sessionKey: canonicalKey,
         origin,
+        allowSessionRouteFallback: params.allowSessionRouteFallback,
         sourceSessionKey: params.sourceSessionKey,
         sourceChannel: params.sourceChannel,
         sourceTool: params.sourceTool,
@@ -638,6 +646,7 @@ export async function deliverSubagentAnnouncement(params: {
   targetRequesterSessionKey: string;
   requesterIsSubagent: boolean;
   expectsCompletionMessage: boolean;
+  allowSessionRouteFallback?: boolean;
   bestEffortDeliver?: boolean;
   directIdempotencyKey: string;
   signal?: AbortSignal;
@@ -653,6 +662,7 @@ export async function deliverSubagentAnnouncement(params: {
         steerMessage: params.steerMessage,
         summaryLine: params.summaryLine,
         requesterOrigin: params.requesterOrigin,
+        allowSessionRouteFallback: params.allowSessionRouteFallback,
         sourceSessionKey: params.sourceSessionKey,
         sourceChannel: params.sourceChannel,
         sourceTool: params.sourceTool,

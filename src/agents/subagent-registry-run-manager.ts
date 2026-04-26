@@ -27,12 +27,26 @@ import {
   resolveArchiveAfterMs,
   safeRemoveAttachmentsDir,
 } from "./subagent-registry-helpers.js";
-import type { SubagentRunRecord } from "./subagent-registry.types.js";
+import type {
+  SubagentRequesterRouteReceipt,
+  SubagentRunRecord,
+} from "./subagent-registry.types.js";
 
 const log = createSubsystemLogger("agents/subagent-registry");
 
 function shouldDeleteAttachments(entry: SubagentRunRecord) {
   return entry.cleanup === "delete" || !entry.retainAttachmentsOnKeep;
+}
+
+function createRequesterRouteReceipt(
+  origin: DeliveryContext | undefined,
+  capturedAt: number,
+): SubagentRequesterRouteReceipt {
+  return {
+    ...(origin ? { origin } : {}),
+    complete: Boolean(origin?.channel && origin.to),
+    capturedAt,
+  };
 }
 
 export type RegisterSubagentRunParams = {
@@ -310,12 +324,14 @@ export function createSubagentRunManager(params: {
     const runTimeoutSeconds = registerParams.runTimeoutSeconds ?? 0;
     const waitTimeoutMs = params.resolveSubagentWaitTimeoutMs(cfg, runTimeoutSeconds);
     const requesterOrigin = normalizeDeliveryContext(registerParams.requesterOrigin);
+    const requesterRouteReceipt = createRequesterRouteReceipt(requesterOrigin, now);
     const entry: SubagentRunRecord = {
       runId,
       childSessionKey,
       controllerSessionKey,
       requesterSessionKey,
       requesterOrigin,
+      requesterRouteReceipt,
       requesterDisplayKey: registerParams.requesterDisplayKey,
       task: registerParams.task,
       cleanup: registerParams.cleanup,

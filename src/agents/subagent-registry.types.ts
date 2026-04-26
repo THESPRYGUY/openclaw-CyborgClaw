@@ -3,12 +3,19 @@ import type { SubagentRunOutcome } from "./subagent-announce-output.js";
 import type { SubagentLifecycleEndedReason } from "./subagent-lifecycle-events.js";
 import type { SpawnSubagentMode } from "./subagent-spawn.types.js";
 
+export type SubagentRequesterRouteReceipt = {
+  origin?: DeliveryContext;
+  complete: boolean;
+  capturedAt: number;
+};
+
 export type SubagentRunRecord = {
   runId: string;
   childSessionKey: string;
   controllerSessionKey?: string;
   requesterSessionKey: string;
   requesterOrigin?: DeliveryContext;
+  requesterRouteReceipt?: SubagentRequesterRouteReceipt;
   requesterDisplayKey: string;
   task: string;
   cleanup: "delete" | "keep";
