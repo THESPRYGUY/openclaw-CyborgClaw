@@ -243,6 +243,41 @@ describe("subagent registry lifecycle hardening", () => {
     );
   });
 
+  it("passes requester route receipts into the cleanup announce flow", async () => {
+    const requesterRouteReceipt = {
+      origin: { channel: "telegram" },
+      complete: false,
+      capturedAt: 1_234,
+    };
+    const entry = createRunEntry({
+      endedAt: 4_000,
+      expectsCompletionMessage: true,
+      requesterOrigin: { channel: "telegram" },
+      requesterRouteReceipt,
+    });
+    const runSubagentAnnounceFlow = vi.fn(async () => true);
+
+    const controller = createLifecycleController({ entry, runSubagentAnnounceFlow });
+
+    await expect(
+      controller.completeSubagentRun({
+        runId: entry.runId,
+        endedAt: 4_000,
+        outcome: { status: "ok" },
+        reason: SUBAGENT_ENDED_REASON_COMPLETE,
+        triggerCleanup: true,
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(runSubagentAnnounceFlow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requesterOrigin: { channel: "telegram" },
+        requesterRouteReceipt,
+        expectsCompletionMessage: true,
+      }),
+    );
+  });
+
   it("retires bundle MCP runtimes when run-mode cleanup completes", async () => {
     const entry = createRunEntry({
       endedAt: 4_000,
