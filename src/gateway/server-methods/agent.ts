@@ -349,6 +349,7 @@ export const agentHandlers: GatewayRequestHandlers = {
       extraSystemPrompt?: string;
       sharedRoomContext?: {
         roomId: string;
+        roomEpochId?: string;
         roomLabel?: string;
         truthModel?: string;
         participantId?: string;
@@ -532,6 +533,7 @@ export const agentHandlers: GatewayRequestHandlers = {
         ? buildAgentRoomSessionKey({
             agentId,
             roomId: request.sharedRoomContext.roomId,
+            roomEpochId: request.sharedRoomContext.roomEpochId,
           })
         : undefined;
     let requestedSessionKey =

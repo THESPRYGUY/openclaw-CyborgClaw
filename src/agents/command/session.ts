@@ -158,6 +158,7 @@ export function resolveSessionKeyForRequest(opts: {
       ? buildAgentRoomSessionKey({
           agentId: requestedAgentId,
           roomId: opts.sharedRoomContext.roomId,
+          roomEpochId: opts.sharedRoomContext.roomEpochId,
         })
       : undefined;
   const explicitSessionKey =

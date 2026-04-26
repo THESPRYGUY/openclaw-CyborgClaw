@@ -53,6 +53,7 @@ export type SessionAcpMeta = {
 
 export type SessionSharedRoomState = {
   roomId: string;
+  roomEpochId?: string;
   roomLabel?: string;
   truthModel?: string;
   participantId?: string;

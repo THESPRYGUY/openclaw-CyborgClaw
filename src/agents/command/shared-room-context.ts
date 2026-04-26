@@ -33,6 +33,7 @@ export function summarizeSharedRoomContext(
   const lastMessageSeq = admitted.length > 0 ? admitted.at(-1)?.seq : undefined;
   return {
     roomId,
+    roomEpochId: sanitizeRoomLine(context?.roomEpochId),
     roomLabel: sanitizeRoomLine(context?.roomLabel),
     truthModel: sanitizeRoomLine(context?.truthModel),
     participantId: sanitizeRoomLine(context?.participantId),
@@ -62,6 +63,9 @@ export function buildSharedRoomContextPrompt(
   const lines: string[] = ["## Shared Room Context"];
   const roomLabel = summary.roomLabel ?? summary.roomId;
   lines.push(`You are seated in the shared room "${roomLabel}".`);
+  if (summary.roomEpochId) {
+    lines.push(`Room epoch: ${summary.roomEpochId}.`);
+  }
   if (summary.truthModel) {
     lines.push(`Room truth model: ${summary.truthModel}.`);
   }

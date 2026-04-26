@@ -158,6 +158,7 @@ export const AgentParamsSchema = Type.Object(
       Type.Object(
         {
           roomId: NonEmptyString,
+          roomEpochId: Type.Optional(Type.String()),
           roomLabel: Type.Optional(Type.String()),
           truthModel: Type.Optional(Type.String()),
           participantId: Type.Optional(Type.String()),

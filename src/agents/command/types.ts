@@ -44,6 +44,7 @@ export type SharedRoomMessage = {
 
 export type SharedRoomContext = {
   roomId: string;
+  roomEpochId?: string;
   roomLabel?: string;
   truthModel?: string;
   participantId?: string;

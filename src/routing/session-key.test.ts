@@ -177,6 +177,27 @@ describe("buildAgentRoomSessionKey", () => {
     expect(key).toMatch(/^agent:main:room:[a-z0-9._-]+-[a-f0-9]{8}$/);
     expect(key.length).toBeLessThanOrEqual("agent:main:room:".length + 64);
   });
+
+  it("uses the room epoch to keep reused room labels from sharing stale proof", () => {
+    const stale = buildAgentRoomSessionKey({
+      agentId: "codex",
+      roomId: "Break-Out Room Patch Review",
+      roomEpochId: "bor-rsi-sprint-001-review-20260426T172400Z",
+    });
+    const fresh = buildAgentRoomSessionKey({
+      agentId: "codex",
+      roomId: "Break-Out Room Patch Review",
+      roomEpochId: "bor-rsi-sprint-002-review-20260426T183000Z",
+    });
+
+    expect(stale).not.toBe(fresh);
+    expect(stale).toMatch(
+      /^agent:codex:room:break-out-room-patch-review-[a-f0-9]{8}:epoch:bor-rsi-sprint-001-review-20260426t172400z$/,
+    );
+    expect(fresh).toMatch(
+      /^agent:codex:room:break-out-room-patch-review-[a-f0-9]{8}:epoch:bor-rsi-sprint-002-review-20260426t183000z$/,
+    );
+  });
 });
 
 describe("isValidAgentId", () => {
